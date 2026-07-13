@@ -51,11 +51,11 @@ export class SignalPropagator {
     seeds: string[],
     components: Record<string, ComponentInstance>,
   ): PropagationResult {
+    let oscillation = false;
     const ranks = this.graph.getTopologicalRanks();
     const queue = new EventQueue();
     const evalCount = new Map<string, number>();
     const changed = new Set<string>();
-    let oscillation = false;
 
     // Seed: queue direct downstream of each seed component
     for (const seedId of seeds) {
@@ -69,25 +69,35 @@ export class SignalPropagator {
     while (!queue.isEmpty()) {
       const compId = queue.dequeue()!;
       const comp = components[compId];
-      if (!comp) continue;
+
+      if (!comp) {
+        continue;
+      }
 
       const def = this.library.get(comp.type);
 
       // Oscillation guard
       const evals = (evalCount.get(compId) ?? 0) + 1;
       evalCount.set(compId, evals);
+
       if (evals > MAX_EVALS_PER_COMPONENT) {
         oscillation = true;
+
         break;
       }
 
       // Build current input signals by reading connected source outputs
       const inputs: SignalValue[] = new Array(def.inputs).fill(false);
+
       for (let pin = 0; pin < def.inputs; pin++) {
         const wire = this.graph.getInputWire(compId, pin);
+
         if (wire) {
           const src = components[wire.from.comp];
-          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
+
+          if (src) {
+            inputs[pin] = src.outputs[wire.from.pin] ?? false;
+          }
         }
       }
 
@@ -100,6 +110,7 @@ export class SignalPropagator {
       for (let i = 0; i < result.outputs.length; i++) {
         if (result.outputs[i] !== comp.outputs[i]) {
           outputChanged = true;
+
           break;
         }
       }
@@ -117,6 +128,7 @@ export class SignalPropagator {
           outputs: result.outputs,
           state: result.state ?? comp.state,
         };
+
         changed.add(compId);
 
         if (outputChanged) {

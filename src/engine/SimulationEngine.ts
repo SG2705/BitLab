@@ -43,7 +43,7 @@ export class SimulationEngine {
 
   constructor(
     private readonly components: Record<string, ComponentInstance>,
-    private readonly graph: GraphManager,
+    private readonly _: GraphManager,
     private readonly library: ComponentLibrary,
     private readonly propagator: SignalPropagator,
     options: SimulationEngineOptions = {},

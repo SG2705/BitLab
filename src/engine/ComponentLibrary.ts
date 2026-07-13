@@ -219,13 +219,16 @@ const DEFINITIONS: ComponentDefinition[] = [
     tick(state, dt) {
       const period = (state?.period as number) ?? 500;
       const acc = ((state?.acc as number) ?? 0) + dt;
+
       if (acc >= period) {
         const on = !(state?.on as boolean);
+
         return {
           outputs: [on],
           state: { ...(state ?? {}), on, acc: acc - period },
         };
       }
+
       return { outputs: [!!state?.on], state: { ...(state ?? {}), acc } };
     },
   },
@@ -283,6 +286,7 @@ const DEFINITIONS: ComponentDefinition[] = [
         (b(i[2]) ? 4 : 0) |
         (b(i[1]) ? 2 : 0) |
         (b(i[0]) ? 1 : 0);
+
       return { outputs: [], state: { value } };
     },
   },
@@ -306,8 +310,13 @@ const DEFINITIONS: ComponentDefinition[] = [
       let q = !!s?.q;
       const S = b(i[0]),
         R = b(i[1]);
-      if (S && !R) q = true;
-      else if (!S && R) q = false;
+
+      if (S && !R) {
+        q = true;
+      } else if (!S && R) {
+        q = false;
+      }
+
       // S=1 R=1 is an invalid state; hold
       return { outputs: [q, !q], state: { q } };
     },
@@ -329,8 +338,12 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i, s) => {
       const clk = b(i[1]);
       let q = !!s?.q;
+
       // Sample D on rising clock edge
-      if (clk && !s?.prevClk) q = b(i[0]);
+      if (clk && !s?.prevClk) {
+        q = b(i[0]);
+      }
+
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
   },
@@ -351,13 +364,19 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i, s) => {
       const clk = b(i[2]);
       let q = !!s?.q;
+
       if (clk && !s?.prevClk) {
         const J = b(i[0]),
           K = b(i[1]);
-        if (J && !K) q = true;
-        else if (!J && K) q = false;
-        else if (J && K) q = !q; // toggle
+        if (J && !K) {
+          q = true;
+        } else if (!J && K) {
+          q = false;
+        } else if (J && K) {
+          q = !q; // toggle
+        }
       }
+
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
   },
@@ -378,7 +397,11 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i, s) => {
       const clk = b(i[1]);
       let q = !!s?.q;
-      if (clk && !s?.prevClk && b(i[0])) q = !q;
+
+      if (clk && !s?.prevClk && b(i[0])) {
+        q = !q;
+      }
+
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
   },
@@ -399,7 +422,11 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i, s) => {
       const clk = b(i[8]);
       let bits: boolean[] = (s?.bits as boolean[]) ?? new Array(8).fill(false);
-      if (clk && !s?.prevClk) bits = i.slice(0, 8).map(b);
+
+      if (clk && !s?.prevClk) {
+        bits = i.slice(0, 8).map(b);
+      }
+
       return { outputs: [...bits], state: { bits, prevClk: clk } };
     },
   },
@@ -430,6 +457,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "Σ",
     evaluate: (i) => {
       const s = (b(i[0]) ? 1 : 0) + (b(i[1]) ? 1 : 0) + (b(i[2]) ? 1 : 0);
+
       return { outputs: [s % 2 === 1, s >= 2], state: null };
     },
   }),
@@ -500,12 +528,15 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "ENC",
     evaluate: (i) => {
       let idx = 0;
+
       for (let j = 3; j >= 0; j--) {
         if (b(i[j])) {
           idx = j;
+
           break;
         }
       }
+
       return { outputs: [!!(idx & 1), !!(idx & 2)], state: null };
     },
   }),
@@ -521,6 +552,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i) => {
       const a = b(i[0]) ? 1 : 0,
         bv = b(i[1]) ? 1 : 0;
+
       return { outputs: [a < bv, a === bv, a > bv], state: null };
     },
   }),
@@ -532,7 +564,9 @@ export class ComponentLibrary {
   private byType: Map<string, ComponentDefinition> = new Map();
 
   constructor(defs: ComponentDefinition[] = DEFINITIONS) {
-    for (const d of defs) this.byType.set(d.type, d);
+    for (const d of defs) {
+      this.byType.set(d.type, d);
+    }
   }
 
   get(type: string): ComponentDefinition {

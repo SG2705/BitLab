@@ -96,6 +96,7 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
         setCanRedo(project.canRedo());
       }
     });
+
     return unsub;
   }, [manager, project]);
 
