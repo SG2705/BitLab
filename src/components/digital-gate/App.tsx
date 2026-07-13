@@ -54,7 +54,8 @@ function snap(v: number) {
 }
 
 export function DigitalGateApp() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
+
   useEffect(() => {
     document.documentElement.classList.toggle("light", theme === "light");
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -103,11 +104,17 @@ export function DigitalGateApp() {
 
   useEffect(() => {
     const el = canvasRef.current;
-    if (!el) return;
+
+    if (!el) {
+      return;
+    }
+
     const ro = new ResizeObserver(() =>
       setSize({ w: el.clientWidth, h: el.clientHeight }),
     );
+
     ro.observe(el);
+
     return () => ro.disconnect();
   }, []);
 
@@ -115,9 +122,12 @@ export function DigitalGateApp() {
     (c: Circuit) => {
       setHistory((h) => {
         const next = h.slice(0, histIdx + 1);
+
         next.push(c);
+
         return next.slice(-50);
       });
+
       setHistIdx((i) => Math.min(i + 1, 49));
     },
     [histIdx],
@@ -127,7 +137,11 @@ export function DigitalGateApp() {
     (updater: (c: Circuit) => Circuit, record = true) => {
       setCircuit((prev) => {
         const next = updater(prev);
-        if (record) pushHistory(next);
+
+        if (record) {
+          pushHistory(next);
+        }
+
         return next;
       });
     },
@@ -140,6 +154,7 @@ export function DigitalGateApp() {
       setCircuit(history[histIdx - 1]);
     }
   };
+
   const redo = () => {
     if (histIdx < history.length - 1) {
       setHistIdx(histIdx + 1);
@@ -149,21 +164,29 @@ export function DigitalGateApp() {
 
   // Simulation loop
   useEffect(() => {
-    if (!running) return;
-    const interval = 1000 / Math.max(1, clockSpeed);
-    let last = performance.now();
+    if (!running) {
+      return;
+    }
+
     let raf = 0;
+    let last = performance.now();
+    const interval = 1000 / Math.max(1, clockSpeed);
     const step = () => {
       const now = performance.now();
+
       if (now - last >= interval) {
         const dt = now - last;
         last = now;
+
         setCircuit((c) => simulate(c, dt));
         setTick((t) => t + 1);
       }
+
       raf = requestAnimationFrame(step);
     };
+
     raf = requestAnimationFrame(step);
+
     return () => cancelAnimationFrame(raf);
   }, [running, clockSpeed]);
 
@@ -171,11 +194,14 @@ export function DigitalGateApp() {
     setCircuit((c) => simulate(c, 1000 / Math.max(1, clockSpeed)));
     setTick((t) => t + 1);
   };
+
   const resetSim = () => {
-    setRunning(false);
     setTick(0);
+    setRunning(false);
+
     updateCircuit((c) => {
       const comps = { ...c.components };
+
       for (const id of Object.keys(comps)) {
         const def = GATES[comps[id].type];
         comps[id] = {
@@ -184,8 +210,10 @@ export function DigitalGateApp() {
           outputs: new Array(def.outputs).fill(false),
         };
       }
+
       return { ...c, components: comps };
     });
+
     setLogs((l) => [
       ...l,
       { t: Date.now(), kind: "log", msg: "Simulation reset." },
@@ -196,6 +224,7 @@ export function DigitalGateApp() {
   const toWorld = useCallback(
     (sx: number, sy: number) => {
       const rect = canvasRef.current!.getBoundingClientRect();
+
       return {
         x: (sx - rect.left - view.x) / view.k,
         y: (sy - rect.top - view.y) / view.k,
@@ -206,14 +235,20 @@ export function DigitalGateApp() {
 
   // Drop new component from toolbox
   const [dragType, setDragType] = useState<string | null>(null);
+
   const onCanvasDrop = (e: React.DragEvent) => {
     const type = e.dataTransfer.getData("text/gate") || dragType;
-    if (!type || !GATES[type]) return;
+
+    if (!type || !GATES[type]) {
+      return;
+    }
+
     const { x, y } = toWorld(e.clientX, e.clientY);
     const def = GATES[type];
     const nx = snapEnabled ? snap(x - def.width / 2) : x - def.width / 2;
     const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
     const id = uid();
+
     updateCircuit((c) => ({
       ...c,
       components: {
@@ -229,6 +264,7 @@ export function DigitalGateApp() {
         },
       },
     }));
+
     setLogs((l) => [
       ...l,
       { t: Date.now(), kind: "log", msg: `Added ${def.label}` },
@@ -244,15 +280,18 @@ export function DigitalGateApp() {
     vx: number;
     vy: number;
   } | null>(null);
+
   const onWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
+
       const rect = canvasRef.current!.getBoundingClientRect();
       const mx = e.clientX - rect.left,
         my = e.clientY - rect.top;
       const k = Math.min(3, Math.max(0.2, view.k * (e.deltaY < 0 ? 1.1 : 0.9)));
       const nx = mx - (mx - view.x) * (k / view.k);
       const ny = my - (my - view.y) * (k / view.k);
+
       setView({ x: nx, y: ny, k });
     } else {
       setView((v) => ({ ...v, x: v.x - e.deltaX, y: v.y - e.deltaY }));
@@ -283,7 +322,9 @@ export function DigitalGateApp() {
   const onCanvasMouseDown = (e: React.MouseEvent) => {
     if (e.button === 1 || tool === "pan" || (e.button === 0 && e.altKey)) {
       setPanning(true);
+
       panStart.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+
       return;
     }
     if (
@@ -292,13 +333,16 @@ export function DigitalGateApp() {
     ) {
       // Start lasso
       const p = toWorld(e.clientX, e.clientY);
+
       setLasso({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+
       if (!e.shiftKey) {
         setSelection(new Set());
         setSelWires(new Set());
       }
     }
   };
+
   const onCanvasMouseMove = (e: React.MouseEvent) => {
     if (panning && panStart.current) {
       setView((v) => ({
@@ -306,61 +350,90 @@ export function DigitalGateApp() {
         x: panStart.current!.vx + (e.clientX - panStart.current!.x),
         y: panStart.current!.vy + (e.clientY - panStart.current!.y),
       }));
+
       return;
     }
+
     if (dragCompRef.current) {
       const { id, ox, oy } = dragCompRef.current;
       const p = toWorld(e.clientX, e.clientY);
       const nx = snapEnabled ? snap(p.x - ox) : p.x - ox;
       const ny = snapEnabled ? snap(p.y - oy) : p.y - oy;
+
       dragCompRef.current.moved = true;
+
       setCircuit((c) => {
         const cur = c.components[id];
-        if (!cur) return c;
+
+        if (!cur) {
+          return c;
+        }
+
         const dx = nx - cur.x,
           dy = ny - cur.y;
         const comps = { ...c.components };
         // move all selected
         const ids = selection.has(id) ? Array.from(selection) : [id];
+
         for (const sid of ids) {
           const s = comps[sid];
-          if (!s) continue;
+
+          if (!s) {
+            continue;
+          }
+
           comps[sid] = { ...s, x: s.x + dx, y: s.y + dy };
         }
+
         return { ...c, components: comps };
       });
+
       return;
     }
     if (pendingWire) {
       const p = toWorld(e.clientX, e.clientY);
+
       setPendingWire({ ...pendingWire, mx: p.x, my: p.y });
     }
+
     if (lasso) {
       const p = toWorld(e.clientX, e.clientY);
+
       setLasso({ ...lasso, x1: p.x, y1: p.y });
     }
   };
+
   const onCanvasMouseUp = () => {
     setPanning(false);
+
     panStart.current = null;
-    if (dragCompRef.current?.moved) pushHistory(circuit);
+
+    if (dragCompRef.current?.moved) {
+      pushHistory(circuit);
+    }
+
     dragCompRef.current = null;
+
     if (lasso) {
       const x = Math.min(lasso.x0, lasso.x1),
         y = Math.min(lasso.y0, lasso.y1);
       const w = Math.abs(lasso.x1 - lasso.x0),
         h = Math.abs(lasso.y1 - lasso.y0);
       const sel = new Set<string>();
+
       for (const c of Object.values(circuit.components)) {
         const def = GATES[c.type];
+
         if (
           c.x + def.width >= x &&
           c.x <= x + w &&
           c.y + def.height >= y &&
           c.y <= y + h
-        )
+        ) {
           sel.add(c.id);
+        }
       }
+
       setSelection(sel);
       setLasso(null);
     }
@@ -372,9 +445,15 @@ export function DigitalGateApp() {
 
   const startCompDrag = (e: React.MouseEvent, c: CircuitComp) => {
     e.stopPropagation();
-    if (!e.shiftKey && !selection.has(c.id)) setSelection(new Set([c.id]));
-    else if (e.shiftKey) setSelection(new Set([...selection, c.id]));
+
+    if (!e.shiftKey && !selection.has(c.id)) {
+      setSelection(new Set([c.id]));
+    } else if (e.shiftKey) {
+      setSelection(new Set([...selection, c.id]));
+    }
+
     const p = toWorld(e.clientX, e.clientY);
+
     dragCompRef.current = {
       id: c.id,
       ox: p.x - c.x,
@@ -385,18 +464,28 @@ export function DigitalGateApp() {
 
   const startWire = (e: React.MouseEvent, comp: CircuitComp, pin: number) => {
     e.stopPropagation();
+
     const p = toWorld(e.clientX, e.clientY);
+
     setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y });
   };
+
   const finishWire = (e: React.MouseEvent, comp: CircuitComp, pin: number) => {
     e.stopPropagation();
-    if (!pendingWire) return;
-    if (pendingWire.from.comp === comp.id) {
-      setPendingWire(null);
+
+    if (!pendingWire) {
       return;
     }
+
+    if (pendingWire.from.comp === comp.id) {
+      setPendingWire(null);
+
+      return;
+    }
+
     const id = uid();
     const w: Wire = { id, from: pendingWire.from, to: { comp: comp.id, pin } };
+
     updateCircuit((c) => ({ ...c, wires: { ...c.wires, [id]: w } }));
     setPendingWire(null);
     setLogs((l) => [
@@ -408,15 +497,28 @@ export function DigitalGateApp() {
   const deleteSelected = useCallback(() => {
     updateCircuit((c) => {
       const comps = { ...c.components };
-      for (const id of selection) delete comps[id];
+
+      for (const id of selection) {
+        delete comps[id];
+      }
+
       const wires: Record<string, Wire> = {};
+
       for (const w of Object.values(c.wires)) {
-        if (selWires.has(w.id)) continue;
-        if (selection.has(w.from.comp) || selection.has(w.to.comp)) continue;
+        if (selWires.has(w.id)) {
+          continue;
+        }
+
+        if (selection.has(w.from.comp) || selection.has(w.to.comp)) {
+          continue;
+        }
+
         wires[w.id] = w;
       }
+
       return { components: comps, wires };
     });
+
     setSelection(new Set());
     setSelWires(new Set());
   }, [selection, selWires, updateCircuit]);
@@ -425,13 +527,18 @@ export function DigitalGateApp() {
     updateCircuit((c) => {
       const comps = { ...c.components };
       const newIds: Record<string, string> = {};
+
       for (const id of selection) {
         const s = c.components[id];
-        if (!s) continue;
+        if (!s) {
+          continue;
+        }
+
         const nid = uid();
         newIds[id] = nid;
         comps[nid] = { ...s, id: nid, x: s.x + GRID, y: s.y + GRID };
       }
+
       return { ...c, components: comps };
     });
   };
@@ -440,14 +547,17 @@ export function DigitalGateApp() {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
+
       if (meta && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setCmdOpen((v) => !v);
+
         return;
       }
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
         undo();
+
         return;
       }
       if (
@@ -457,55 +567,70 @@ export function DigitalGateApp() {
       ) {
         e.preventDefault();
         redo();
+
         return;
       }
       if (meta && e.key.toLowerCase() === "d") {
         e.preventDefault();
         duplicateSelected();
+
         return;
       }
       if (meta && e.key.toLowerCase() === "s") {
         e.preventDefault();
         saveProject();
+
         return;
       }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (
           (e.target as HTMLElement).tagName === "INPUT" ||
           (e.target as HTMLElement).tagName === "TEXTAREA"
-        )
+        ) {
           return;
+        }
+
         deleteSelected();
       }
       if (e.key === " ") {
         e.preventDefault();
+
         setRunning((r) => !r);
       }
     };
+
     window.addEventListener("keydown", h);
+
     return () => window.removeEventListener("keydown", h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteSelected, histIdx, history]);
 
   const saveProject = () => {
     const data = JSON.stringify(circuit);
+
     localStorage.setItem("digital-gate-project", data);
+
     setLogs((l) => [
       ...l,
       { t: Date.now(), kind: "log", msg: "Project saved to browser storage." },
     ]);
   };
+
   const loadProject = () => {
     const raw = localStorage.getItem("digital-gate-project");
+
     if (!raw) {
       setLogs((l) => [
         ...l,
         { t: Date.now(), kind: "warn", msg: "No saved project found." },
       ]);
+
       return;
     }
+
     try {
       const c = JSON.parse(raw);
+
       setCircuit(c);
       pushHistory(c);
     } catch {
@@ -520,6 +645,7 @@ export function DigitalGateApp() {
       type: "application/json",
     });
     const a = document.createElement("a");
+
     a.href = URL.createObjectURL(blob);
     a.download = "circuit.dgate.json";
     a.click();
@@ -531,6 +657,7 @@ export function DigitalGateApp() {
       updateCircuit((circ) => {
         const comps = { ...circ.components };
         comps[c.id] = { ...c, state: { ...(c.state ?? {}), on: !c.state?.on } };
+
         return { ...circ, components: comps };
       }, false);
     }
@@ -538,14 +665,18 @@ export function DigitalGateApp() {
 
   const fitToScreen = () => {
     const comps = Object.values(circuit.components);
+
     if (!comps.length) {
       setView({ x: 0, y: 0, k: 1 });
+
       return;
     }
+
     let minX = Infinity,
       minY = Infinity,
       maxX = -Infinity,
       maxY = -Infinity;
+
     for (const c of comps) {
       const d = GATES[c.type];
       minX = Math.min(minX, c.x);
@@ -553,15 +684,21 @@ export function DigitalGateApp() {
       maxX = Math.max(maxX, c.x + d.width);
       maxY = Math.max(maxY, c.y + d.height);
     }
+
     const w = maxX - minX + 100,
       h = maxY - minY + 100;
     const k = Math.min(size.w / w, size.h / h, 2);
+
     setView({ x: -minX * k + 50, y: -minY * k + 50, k });
   };
 
   const filteredCats = useMemo(() => {
-    if (!search) return CATEGORIES;
+    if (!search) {
+      return CATEGORIES;
+    }
+
     const q = search.toLowerCase();
+
     return CATEGORIES.map((c) => ({
       ...c,
       gates: c.gates.filter(
