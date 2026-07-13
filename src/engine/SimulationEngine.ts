@@ -1,0 +1,266 @@
+/**
+ * SimulationEngine — orchestrates the simulation clock and propagation loop.
+ *
+ * Responsibilities:
+ *   • Run a requestAnimationFrame loop (or a timer in non-browser contexts).
+ *   • On each simulation tick (controlled by clockHz):
+ *       1. Advance all CLOCK components by the elapsed dt.
+ *       2. If any CLOCK output flipped, seed the SignalPropagator.
+ *       3. Run event-driven propagation to steady state.
+ *       4. Notify listeners of the resulting snapshot.
+ *
+ * The engine itself is completely UI-agnostic. It calls back via the listener
+ * pattern defined in types.ts.
+ */
+
+import type {
+  ComponentInstance,
+  EngineEvent,
+  EngineListener,
+  SimulationStatus,
+  SimulationStats,
+} from "./types";
+import { SignalPropagator } from "./SignalPropagator";
+import { GraphManager } from "./GraphManager";
+import { ComponentLibrary } from "./ComponentLibrary";
+
+export interface SimulationEngineOptions {
+  clockHz?: number; // simulation ticks per second (default 8)
+}
+
+export class SimulationEngine {
+  private status: SimulationStatus = "idle";
+  private tick = 0;
+  private eventsProcessed = 0;
+  private oscillationsDetected = 0;
+  private clockHz: number;
+
+  private rafHandle: number | null = null;
+  private lastTime: number | null = null;
+  private accumulator = 0; // ms accumulated since last tick
+
+  private listeners: Set<EngineListener> = new Set();
+
+  constructor(
+    private readonly components: Record<string, ComponentInstance>,
+    private readonly graph: GraphManager,
+    private readonly library: ComponentLibrary,
+    private readonly propagator: SignalPropagator,
+    options: SimulationEngineOptions = {},
+  ) {
+    this.clockHz = options.clockHz ?? 8;
+  }
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+  start(): void {
+    if (this.status === "running") {
+      return;
+    }
+
+    this.status = "running";
+    this.lastTime = null;
+    this.accumulator = 0;
+    this.rafHandle = requestAnimationFrame(this.loop);
+    this.emit({ type: "started" });
+  }
+
+  pause(): void {
+    if (this.status !== "running") {
+      return;
+    }
+
+    this.status = "paused";
+
+    if (this.rafHandle !== null) {
+      cancelAnimationFrame(this.rafHandle);
+
+      this.rafHandle = null;
+    }
+
+    this.emit({ type: "paused" });
+  }
+
+  stop(): void {
+    this.pause();
+    this.status = "idle";
+  }
+
+  /**
+   * Advance exactly one simulation tick (used by the Step button).
+   * Advances all clocks by one tick period then propagates.
+   */
+  step(): void {
+    const dt = 1000 / Math.max(1, this.clockHz);
+
+    this.doTick(dt);
+    this.emit({ type: "snapshot-changed" });
+  }
+
+  reset(): void {
+    this.stop();
+    this.tick = 0;
+    this.eventsProcessed = 0;
+    this.oscillationsDetected = 0;
+    // Reset every component to its initial state
+    const defs = this.library;
+
+    for (const id of Object.keys(this.components)) {
+      const comp = this.components[id];
+      const def = defs.get(comp.type);
+      const initialState = def.initialState();
+      const initialOutputs = def.evaluate(
+        new Array(def.inputs).fill(false),
+        initialState,
+      ).outputs;
+
+      this.components[id] = {
+        ...comp,
+        state: initialState,
+        outputs: initialOutputs,
+        inputs: new Array(def.inputs).fill(false),
+      };
+    }
+
+    // Full recompute after reset to propagate input states
+    this.propagator.recomputeAll(this.components);
+    this.emit({ type: "reset" });
+    this.emit({ type: "snapshot-changed" });
+  }
+
+  // ── Clock control ──────────────────────────────────────────────────────────
+
+  setClockHz(hz: number): void {
+    this.clockHz = Math.max(1, hz);
+  }
+
+  getClockHz(): number {
+    return this.clockHz;
+  }
+
+  getStatus(): SimulationStatus {
+    return this.status;
+  }
+
+  getStats(): SimulationStats {
+    return {
+      tick: this.tick,
+      eventsProcessed: this.eventsProcessed,
+      oscillationsDetected: this.oscillationsDetected,
+      status: this.status,
+      clockHz: this.clockHz,
+    };
+  }
+
+  // ── RAF loop ───────────────────────────────────────────────────────────────
+
+  private loop = (now: number): void => {
+    if (this.status !== "running") {
+      return;
+    }
+
+    if (this.lastTime === null) {
+      this.lastTime = now;
+    }
+
+    const elapsed = now - this.lastTime;
+    this.lastTime = now;
+
+    const interval = 1000 / this.clockHz;
+    this.accumulator += elapsed;
+
+    let ticked = false;
+    // Allow at most 4 catch-up ticks per frame to avoid spiral-of-death
+    let catchUp = 0;
+
+    while (this.accumulator >= interval && catchUp < 4) {
+      this.doTick(interval);
+      this.accumulator -= interval;
+
+      ticked = true;
+      catchUp++;
+    }
+
+    if (ticked) {
+      this.emit({ type: "tick", payload: this.tick });
+      this.emit({ type: "snapshot-changed" });
+    }
+
+    this.rafHandle = requestAnimationFrame(this.loop);
+  };
+
+  // ── Core tick ──────────────────────────────────────────────────────────────
+
+  /**
+   * Advance all clock components by dt ms, then propagate any resulting
+   * signal changes through the full combinational network.
+   */
+  private doTick(dt: number): void {
+    this.tick++;
+
+    const seeds: string[] = [];
+
+    for (const id of Object.keys(this.components)) {
+      const comp = this.components[id];
+      const def = this.library.get(comp.type);
+
+      if (!def.isClock || !def.tick) {
+        continue;
+      }
+
+      const prevOutput = comp.outputs[0] ?? false;
+      const result = def.tick(comp.state, dt);
+      const newOutput = result.outputs[0] ?? false;
+
+      this.components[id] = {
+        ...comp,
+        outputs: result.outputs,
+        state: result.state ?? comp.state,
+      };
+
+      if (newOutput !== prevOutput) {
+        seeds.push(id);
+      }
+    }
+
+    if (seeds.length > 0) {
+      const result = this.propagator.propagate(seeds, this.components);
+      this.eventsProcessed += result.evaluations;
+
+      if (result.oscillationDetected) {
+        this.oscillationsDetected++;
+        this.emit({ type: "oscillation" });
+      }
+    }
+  }
+
+  // ── Triggered propagation (for user inputs) ────────────────────────────────
+
+  /**
+   * Call this after directly mutating a component's outputs/state (e.g. user
+   * toggled an input). Propagates signals downstream immediately.
+   */
+  triggerPropagation(changedIds: string[]): void {
+    const result = this.propagator.propagate(changedIds, this.components);
+    this.eventsProcessed += result.evaluations;
+
+    if (result.oscillationDetected) {
+      this.oscillationsDetected++;
+      this.emit({ type: "oscillation" });
+    }
+
+    this.emit({ type: "snapshot-changed" });
+  }
+
+  // ── Event bus ──────────────────────────────────────────────────────────────
+
+  on(listener: EngineListener): () => void {
+    this.listeners.add(listener);
+
+    return () => this.listeners.delete(listener);
+  }
+
+  private emit(event: EngineEvent): void {
+    for (const l of this.listeners) l(event);
+  }
+}

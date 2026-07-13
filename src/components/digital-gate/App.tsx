@@ -30,27 +30,28 @@ import {
   MousePointer2,
   Hand,
 } from "lucide-react";
-import {
-  GATES,
-  CATEGORIES,
-  simulate,
-  pinPos,
-  type Circuit,
-  type CircuitComp,
-  type Wire,
-} from "@/lib/circuit";
+import { library } from "@/engine";
+import { useDigitalEngine } from "@/hooks/useDigitalEngine";
+import type { ComponentInstance, Wire } from "@/engine";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+// UI utility only — pin position calculation stays in circuit.ts
+import { pinPos } from "@/lib/circuit";
 
 type Tool = "select" | "pan";
-type HistoryEntry = Circuit;
 
 const GRID = 20;
-const uid = () => Math.random().toString(36).slice(2, 10);
 
 function snap(v: number) {
   return Math.round(v / GRID) * GRID;
+}
+
+// Expose CATEGORIES and GATES for rendering (library is the engine's registry)
+const CATEGORIES = library.getCategories();
+const GATES: Record<string, ReturnType<typeof library.get>> = {};
+for (const cat of CATEGORIES) {
+  for (const g of cat.gates) GATES[g] = library.get(g);
 }
 
 export function DigitalGateApp() {
@@ -61,20 +62,16 @@ export function DigitalGateApp() {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  const [circuit, setCircuit] = useState<Circuit>({
-    components: {},
-    wires: {},
-  });
-  const [history, setHistory] = useState<HistoryEntry[]>([
-    { components: {}, wires: {} },
-  ]);
-  const [histIdx, setHistIdx] = useState(0);
+  const [clockSpeed, setClockSpeed] = useState(8);
+  const eng = useDigitalEngine(clockSpeed);
+
+  const { snapshot, status, stats, canUndo, canRedo } = eng;
+  const running = status === "running";
+  const tick = stats.tick;
+
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selWires, setSelWires] = useState<Set<string>>(new Set());
-  const [running, setRunning] = useState(false);
-  const [tick, setTick] = useState(0);
-  const [clockSpeed, setClockSpeed] = useState(8); // Hz
-  const [tool, setTool] = useState<Tool>("select");
+
   const [logs, setLogs] = useState<
     { t: number; kind: "log" | "warn" | "err"; msg: string }[]
   >([
@@ -89,14 +86,13 @@ export function DigitalGateApp() {
   >("log");
   const [wireStyle, setWireStyle] = useState<"bezier" | "ortho">("bezier");
   const [snapEnabled, setSnapEnabled] = useState(true);
-  const [showMinimap, setShowMinimap] = useState(true);
+  const [showMinimap] = useState(true);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [openCats, setOpenCats] = useState<Record<string, boolean>>(
     Object.fromEntries(CATEGORIES.map((c) => [c.name, true])),
   );
 
-  // Viewport (pan/zoom)
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -104,127 +100,22 @@ export function DigitalGateApp() {
 
   useEffect(() => {
     const el = canvasRef.current;
-
-    if (!el) {
-      return;
-    }
-
+    if (!el) return;
     const ro = new ResizeObserver(() =>
       setSize({ w: el.clientWidth, h: el.clientHeight }),
     );
-
     ro.observe(el);
-
     return () => ro.disconnect();
   }, []);
 
-  const pushHistory = useCallback(
-    (c: Circuit) => {
-      setHistory((h) => {
-        const next = h.slice(0, histIdx + 1);
+  const addLog = useCallback((kind: "log" | "warn" | "err", msg: string) => {
+    setLogs((l) => [...l, { t: Date.now(), kind, msg }]);
+  }, []);
 
-        next.push(c);
-
-        return next.slice(-50);
-      });
-
-      setHistIdx((i) => Math.min(i + 1, 49));
-    },
-    [histIdx],
-  );
-
-  const updateCircuit = useCallback(
-    (updater: (c: Circuit) => Circuit, record = true) => {
-      setCircuit((prev) => {
-        const next = updater(prev);
-
-        if (record) {
-          pushHistory(next);
-        }
-
-        return next;
-      });
-    },
-    [pushHistory],
-  );
-
-  const undo = () => {
-    if (histIdx > 0) {
-      setHistIdx(histIdx - 1);
-      setCircuit(history[histIdx - 1]);
-    }
-  };
-
-  const redo = () => {
-    if (histIdx < history.length - 1) {
-      setHistIdx(histIdx + 1);
-      setCircuit(history[histIdx + 1]);
-    }
-  };
-
-  // Simulation loop
-  useEffect(() => {
-    if (!running) {
-      return;
-    }
-
-    let raf = 0;
-    let last = performance.now();
-    const interval = 1000 / Math.max(1, clockSpeed);
-    const step = () => {
-      const now = performance.now();
-
-      if (now - last >= interval) {
-        const dt = now - last;
-        last = now;
-
-        setCircuit((c) => simulate(c, dt));
-        setTick((t) => t + 1);
-      }
-
-      raf = requestAnimationFrame(step);
-    };
-
-    raf = requestAnimationFrame(step);
-
-    return () => cancelAnimationFrame(raf);
-  }, [running, clockSpeed]);
-
-  const stepOnce = () => {
-    setCircuit((c) => simulate(c, 1000 / Math.max(1, clockSpeed)));
-    setTick((t) => t + 1);
-  };
-
-  const resetSim = () => {
-    setTick(0);
-    setRunning(false);
-
-    updateCircuit((c) => {
-      const comps = { ...c.components };
-
-      for (const id of Object.keys(comps)) {
-        const def = GATES[comps[id].type];
-        comps[id] = {
-          ...comps[id],
-          state: def.initialState ? def.initialState() : comps[id].state,
-          outputs: new Array(def.outputs).fill(false),
-        };
-      }
-
-      return { ...c, components: comps };
-    });
-
-    setLogs((l) => [
-      ...l,
-      { t: Date.now(), kind: "log", msg: "Simulation reset." },
-    ]);
-  };
-
-  // Screen -> world coords
+  // Screen → world coords
   const toWorld = useCallback(
     (sx: number, sy: number) => {
       const rect = canvasRef.current!.getBoundingClientRect();
-
       return {
         x: (sx - rect.left - view.x) / view.k,
         y: (sy - rect.top - view.y) / view.k,
@@ -233,7 +124,7 @@ export function DigitalGateApp() {
     [view],
   );
 
-  // Drop new component from toolbox
+  // ── Drag-from-toolbox ───────────────────────────────────────────────────────
   const [dragType, setDragType] = useState<string | null>(null);
 
   const onCanvasDrop = (e: React.DragEvent) => {
@@ -247,32 +138,14 @@ export function DigitalGateApp() {
     const def = GATES[type];
     const nx = snapEnabled ? snap(x - def.width / 2) : x - def.width / 2;
     const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
-    const id = uid();
+    const comp = eng.addComponent(type, nx, ny);
 
-    updateCircuit((c) => ({
-      ...c,
-      components: {
-        ...c.components,
-        [id]: {
-          id,
-          type,
-          x: nx,
-          y: ny,
-          state: def.initialState ? def.initialState() : null,
-          outputs: new Array(def.outputs).fill(false),
-          label: def.label,
-        },
-      },
-    }));
+    addLog("log", `Added ${def.label} (${comp.id})`);
 
-    setLogs((l) => [
-      ...l,
-      { t: Date.now(), kind: "log", msg: `Added ${def.label}` },
-    ]);
     setDragType(null);
   };
 
-  // Pan / zoom
+  // ── Pan / zoom ──────────────────────────────────────────────────────────────
   const [panning, setPanning] = useState(false);
   const panStart = useRef<{
     x: number;
@@ -284,7 +157,6 @@ export function DigitalGateApp() {
   const onWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
-
       const rect = canvasRef.current!.getBoundingClientRect();
       const mx = e.clientX - rect.left,
         my = e.clientY - rect.top;
@@ -298,20 +170,22 @@ export function DigitalGateApp() {
     }
   };
 
-  // Component dragging
+  // ── Component dragging ──────────────────────────────────────────────────────
   const dragCompRef = useRef<{
     id: string;
     ox: number;
     oy: number;
     moved: boolean;
   } | null>(null);
-  // Wire creation
+
+  // ── Wire creation ───────────────────────────────────────────────────────────
   const [pendingWire, setPendingWire] = useState<{
     from: { comp: string; pin: number };
     mx: number;
     my: number;
   } | null>(null);
-  // Lasso
+
+  // ── Lasso selection ─────────────────────────────────────────────────────────
   const [lasso, setLasso] = useState<{
     x0: number;
     y0: number;
@@ -331,7 +205,6 @@ export function DigitalGateApp() {
       e.target === svgRef.current ||
       (e.target as SVGElement).classList?.contains("bg-hit")
     ) {
-      // Start lasso
       const p = toWorld(e.clientX, e.clientY);
 
       setLasso({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
@@ -362,34 +235,20 @@ export function DigitalGateApp() {
 
       dragCompRef.current.moved = true;
 
-      setCircuit((c) => {
-        const cur = c.components[id];
+      const cur = snapshot.components[id];
 
-        if (!cur) {
-          return c;
-        }
+      if (!cur) {
+        return;
+      }
+      const dx = nx - cur.x,
+        dy = ny - cur.y;
+      const ids = selection.has(id) ? Array.from(selection) : [id];
 
-        const dx = nx - cur.x,
-          dy = ny - cur.y;
-        const comps = { ...c.components };
-        // move all selected
-        const ids = selection.has(id) ? Array.from(selection) : [id];
-
-        for (const sid of ids) {
-          const s = comps[sid];
-
-          if (!s) {
-            continue;
-          }
-
-          comps[sid] = { ...s, x: s.x + dx, y: s.y + dy };
-        }
-
-        return { ...c, components: comps };
-      });
+      eng.moveComponents(ids, dx, dy);
 
       return;
     }
+
     if (pendingWire) {
       const p = toWorld(e.clientX, e.clientY);
 
@@ -405,11 +264,10 @@ export function DigitalGateApp() {
 
   const onCanvasMouseUp = () => {
     setPanning(false);
-
     panStart.current = null;
 
     if (dragCompRef.current?.moved) {
-      pushHistory(circuit);
+      eng.commitMove();
     }
 
     dragCompRef.current = null;
@@ -421,31 +279,33 @@ export function DigitalGateApp() {
         h = Math.abs(lasso.y1 - lasso.y0);
       const sel = new Set<string>();
 
-      for (const c of Object.values(circuit.components)) {
+      for (const c of Object.values(snapshot.components)) {
         const def = GATES[c.type];
+
+        if (!def) {
+          continue;
+        }
 
         if (
           c.x + def.width >= x &&
           c.x <= x + w &&
           c.y + def.height >= y &&
           c.y <= y + h
-        ) {
+        )
           sel.add(c.id);
-        }
       }
 
       setSelection(sel);
       setLasso(null);
     }
+
     if (pendingWire) {
-      // Cancel if released on empty space
       setPendingWire(null);
     }
   };
 
-  const startCompDrag = (e: React.MouseEvent, c: CircuitComp) => {
+  const startCompDrag = (e: React.MouseEvent, c: ComponentInstance) => {
     e.stopPropagation();
-
     if (!e.shiftKey && !selection.has(c.id)) {
       setSelection(new Set([c.id]));
     } else if (e.shiftKey) {
@@ -462,7 +322,11 @@ export function DigitalGateApp() {
     };
   };
 
-  const startWire = (e: React.MouseEvent, comp: CircuitComp, pin: number) => {
+  const startWire = (
+    e: React.MouseEvent,
+    comp: ComponentInstance,
+    pin: number,
+  ) => {
     e.stopPropagation();
 
     const p = toWorld(e.clientX, e.clientY);
@@ -470,7 +334,11 @@ export function DigitalGateApp() {
     setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y });
   };
 
-  const finishWire = (e: React.MouseEvent, comp: CircuitComp, pin: number) => {
+  const finishWire = (
+    e: React.MouseEvent,
+    comp: ComponentInstance,
+    pin: number,
+  ) => {
     e.stopPropagation();
 
     if (!pendingWire) {
@@ -483,188 +351,58 @@ export function DigitalGateApp() {
       return;
     }
 
-    const id = uid();
-    const w: Wire = { id, from: pendingWire.from, to: { comp: comp.id, pin } };
+    const wire = eng.addWire(
+      pendingWire.from.comp,
+      pendingWire.from.pin,
+      comp.id,
+      pin,
+    );
 
-    updateCircuit((c) => ({ ...c, wires: { ...c.wires, [id]: w } }));
+    if (wire) {
+      addLog("log", "Wire connected");
+    }
+
     setPendingWire(null);
-    setLogs((l) => [
-      ...l,
-      { t: Date.now(), kind: "log", msg: `Wire connected` },
-    ]);
   };
 
+  const [tool, setTool] = useState<Tool>("select");
+
   const deleteSelected = useCallback(() => {
-    updateCircuit((c) => {
-      const comps = { ...c.components };
+    // Collect wires to delete: explicitly selected + wires attached to selected components
+    const wireIds = new Set<string>();
 
-      for (const id of selection) {
-        delete comps[id];
-      }
+    for (const w of Object.values(snapshot.wires)) {
+      if (
+        selWires.has(w.id) ||
+        selection.has(w.from.comp) ||
+        selection.has(w.to.comp)
+      )
+        wireIds.add(w.id);
+    }
 
-      const wires: Record<string, Wire> = {};
-
-      for (const w of Object.values(c.wires)) {
-        if (selWires.has(w.id)) {
-          continue;
-        }
-
-        if (selection.has(w.from.comp) || selection.has(w.to.comp)) {
-          continue;
-        }
-
-        wires[w.id] = w;
-      }
-
-      return { components: comps, wires };
-    });
+    eng.removeWires(Array.from(wireIds));
+    eng.removeComponents(Array.from(selection));
 
     setSelection(new Set());
     setSelWires(new Set());
-  }, [selection, selWires, updateCircuit]);
+  }, [selection, selWires, snapshot.wires, eng]);
 
   const duplicateSelected = () => {
-    updateCircuit((c) => {
-      const comps = { ...c.components };
-      const newIds: Record<string, string> = {};
+    const idMap = eng.duplicateComponents(Array.from(selection));
 
-      for (const id of selection) {
-        const s = c.components[id];
-        if (!s) {
-          continue;
-        }
-
-        const nid = uid();
-        newIds[id] = nid;
-        comps[nid] = { ...s, id: nid, x: s.x + GRID, y: s.y + GRID };
-      }
-
-      return { ...c, components: comps };
-    });
+    setSelection(new Set(idMap.values()));
   };
 
-  // Keyboard
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      const meta = e.ctrlKey || e.metaKey;
-
-      if (meta && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setCmdOpen((v) => !v);
-
-        return;
-      }
-      if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-
-        return;
-      }
-      if (
-        meta &&
-        (e.key.toLowerCase() === "y" ||
-          (e.key.toLowerCase() === "z" && e.shiftKey))
-      ) {
-        e.preventDefault();
-        redo();
-
-        return;
-      }
-      if (meta && e.key.toLowerCase() === "d") {
-        e.preventDefault();
-        duplicateSelected();
-
-        return;
-      }
-      if (meta && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        saveProject();
-
-        return;
-      }
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (
-          (e.target as HTMLElement).tagName === "INPUT" ||
-          (e.target as HTMLElement).tagName === "TEXTAREA"
-        ) {
-          return;
-        }
-
-        deleteSelected();
-      }
-      if (e.key === " ") {
-        e.preventDefault();
-
-        setRunning((r) => !r);
-      }
-    };
-
-    window.addEventListener("keydown", h);
-
-    return () => window.removeEventListener("keydown", h);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deleteSelected, histIdx, history]);
-
-  const saveProject = () => {
-    const data = JSON.stringify(circuit);
-
-    localStorage.setItem("digital-gate-project", data);
-
-    setLogs((l) => [
-      ...l,
-      { t: Date.now(), kind: "log", msg: "Project saved to browser storage." },
-    ]);
-  };
-
-  const loadProject = () => {
-    const raw = localStorage.getItem("digital-gate-project");
-
-    if (!raw) {
-      setLogs((l) => [
-        ...l,
-        { t: Date.now(), kind: "warn", msg: "No saved project found." },
-      ]);
-
-      return;
-    }
-
-    try {
-      const c = JSON.parse(raw);
-
-      setCircuit(c);
-      pushHistory(c);
-    } catch {
-      setLogs((l) => [
-        ...l,
-        { t: Date.now(), kind: "err", msg: "Failed to parse saved project." },
-      ]);
-    }
-  };
-  const exportProject = () => {
-    const blob = new Blob([JSON.stringify(circuit, null, 2)], {
-      type: "application/json",
-    });
-    const a = document.createElement("a");
-
-    a.href = URL.createObjectURL(blob);
-    a.download = "circuit.dgate.json";
-    a.click();
-  };
-
-  // Toggle input on click
-  const handleCompClick = (c: CircuitComp) => {
+  // ── Toggle input ────────────────────────────────────────────────────────────
+  const handleCompClick = (c: ComponentInstance) => {
     if (c.type === "TOGGLE" || c.type === "CONST") {
-      updateCircuit((circ) => {
-        const comps = { ...circ.components };
-        comps[c.id] = { ...c, state: { ...(c.state ?? {}), on: !c.state?.on } };
-
-        return { ...circ, components: comps };
-      }, false);
+      eng.setInput(c.id, { on: !c.state?.on });
     }
   };
 
+  // ── Fit to screen ───────────────────────────────────────────────────────────
   const fitToScreen = () => {
-    const comps = Object.values(circuit.components);
+    const comps = Object.values(snapshot.components);
 
     if (!comps.length) {
       setView({ x: 0, y: 0, k: 1 });
@@ -679,12 +417,16 @@ export function DigitalGateApp() {
 
     for (const c of comps) {
       const d = GATES[c.type];
+
+      if (!d) {
+        continue;
+      }
+
       minX = Math.min(minX, c.x);
       minY = Math.min(minY, c.y);
       maxX = Math.max(maxX, c.x + d.width);
       maxY = Math.max(maxY, c.y + d.height);
     }
-
     const w = maxX - minX + 100,
       h = maxY - minY + 100;
     const k = Math.min(size.w / w, size.h / h, 2);
@@ -692,6 +434,78 @@ export function DigitalGateApp() {
     setView({ x: -minX * k + 50, y: -minY * k + 50, k });
   };
 
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const meta = e.ctrlKey || e.metaKey;
+      if (meta && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdOpen((v) => !v);
+
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        eng.undo();
+
+        return;
+      }
+
+      if (
+        meta &&
+        (e.key.toLowerCase() === "y" ||
+          (e.key.toLowerCase() === "z" && e.shiftKey))
+      ) {
+        e.preventDefault();
+        eng.redo();
+
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        duplicateSelected();
+
+        return;
+      }
+
+      if (meta && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        eng.saveProject();
+
+        return;
+      }
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (
+          (e.target as HTMLElement).tagName === "INPUT" ||
+          (e.target as HTMLElement).tagName === "TEXTAREA"
+        ) {
+          return;
+        }
+
+        deleteSelected();
+      }
+
+      if (e.key === " ") {
+        e.preventDefault();
+
+        if (running) {
+          eng.pause();
+        } else {
+          eng.start();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", h);
+
+    return () => window.removeEventListener("keydown", h);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deleteSelected, running]);
+
+  // ── Filtered categories ─────────────────────────────────────────────────────
   const filteredCats = useMemo(() => {
     if (!search) {
       return CATEGORIES;
@@ -703,38 +517,35 @@ export function DigitalGateApp() {
       ...c,
       gates: c.gates.filter(
         (g) =>
-          GATES[g].label.toLowerCase().includes(q) ||
+          GATES[g]?.label.toLowerCase().includes(q) ||
           g.toLowerCase().includes(q),
       ),
     })).filter((c) => c.gates.length);
   }, [search]);
 
   const selectedComp =
-    selection.size === 1 ? circuit.components[Array.from(selection)[0]] : null;
+    selection.size === 1 ? snapshot.components[Array.from(selection)[0]] : null;
 
   return (
     <div className="h-full w-full flex flex-col text-foreground bg-background overflow-hidden font-display">
       <TopBar
         running={running}
-        setRunning={setRunning}
-        stepOnce={stepOnce}
-        resetSim={resetSim}
+        setRunning={(r: boolean) => (r ? eng.start() : eng.pause())}
+        stepOnce={eng.step}
+        resetSim={eng.reset}
         tick={tick}
         clockSpeed={clockSpeed}
         setClockSpeed={setClockSpeed}
-        undo={undo}
-        redo={redo}
-        canUndo={histIdx > 0}
-        canRedo={histIdx < history.length - 1}
+        undo={eng.undo}
+        redo={eng.redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
         theme={theme}
         setTheme={setTheme}
-        saveProject={saveProject}
-        loadProject={loadProject}
-        exportProject={exportProject}
-        newProject={() => {
-          setCircuit({ components: {}, wires: {} });
-          pushHistory({ components: {}, wires: {} });
-        }}
+        saveProject={eng.saveProject}
+        loadProject={eng.loadProject}
+        exportProject={eng.exportJSON}
+        newProject={eng.newProject}
         openCmd={() => setCmdOpen(true)}
       />
 
@@ -789,7 +600,6 @@ export function DigitalGateApp() {
 
         {/* Center canvas */}
         <main className="flex-1 relative min-w-0 bg-background">
-          {/* Floating tool switcher */}
           <div className="absolute z-20 top-3 left-3 flex items-center gap-1 glass-panel rounded-lg p-1 shadow-lg">
             <ToolBtn
               active={tool === "select"}
@@ -862,12 +672,12 @@ export function DigitalGateApp() {
             >
               <g transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}>
                 {/* Wires */}
-                {Object.values(circuit.wires).map((w) => {
-                  const a = circuit.components[w.from.comp];
-                  const b = circuit.components[w.to.comp];
+                {Object.values(snapshot.wires).map((w) => {
+                  const a = snapshot.components[w.from.comp];
+                  const b = snapshot.components[w.to.comp];
                   if (!a || !b) return null;
-                  const p1 = pinPos(a, "out", w.from.pin);
-                  const p2 = pinPos(b, "in", w.to.pin);
+                  const p1 = pinPos(a as any, "out", w.from.pin);
+                  const p2 = pinPos(b as any, "in", w.to.pin);
                   const live = !!a.outputs[w.from.pin];
                   return (
                     <WirePath
@@ -898,9 +708,9 @@ export function DigitalGateApp() {
                 {/* Pending wire */}
                 {pendingWire &&
                   (() => {
-                    const src = circuit.components[pendingWire.from.comp];
+                    const src = snapshot.components[pendingWire.from.comp];
                     if (!src) return null;
-                    const p1 = pinPos(src, "out", pendingWire.from.pin);
+                    const p1 = pinPos(src as any, "out", pendingWire.from.pin);
                     return (
                       <WirePath
                         p1={p1}
@@ -913,7 +723,7 @@ export function DigitalGateApp() {
                     );
                   })()}
                 {/* Components */}
-                {Object.values(circuit.components).map((c) => (
+                {Object.values(snapshot.components).map((c) => (
                   <GateNode
                     key={c.id}
                     comp={c}
@@ -946,11 +756,10 @@ export function DigitalGateApp() {
             </svg>
 
             {showMinimap && (
-              <Minimap circuit={circuit} view={view} size={size} />
+              <Minimap snapshot={snapshot} view={view} size={size} />
             )}
 
-            {/* Empty state */}
-            {Object.keys(circuit.components).length === 0 && (
+            {Object.keys(snapshot.components).length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
                   <div className="mx-auto mb-4 h-16 w-16 rounded-2xl glass-panel flex items-center justify-center">
@@ -977,38 +786,30 @@ export function DigitalGateApp() {
         <aside className="w-72 shrink-0 border-l border-border bg-panel/60 flex flex-col">
           <PropertiesPanel
             comp={selectedComp}
-            circuit={circuit}
             onUpdate={(id: string, patch: any) =>
-              updateCircuit((c) => ({
-                ...c,
-                components: {
-                  ...c.components,
-                  [id]: { ...c.components[id], ...patch },
-                },
-              }))
+              eng.updateComponent(id, patch)
             }
             onDelete={deleteSelected}
             onDuplicate={duplicateSelected}
           />
           <ExplorerPanel
-            circuit={circuit}
+            snapshot={snapshot}
             selection={selection}
             setSelection={setSelection}
           />
         </aside>
       </div>
 
-      {/* Bottom console */}
       <ConsolePanel
         tab={consoleTab}
         setTab={setConsoleTab}
         logs={logs}
         tick={tick}
         running={running}
-        circuit={circuit}
+        snapshot={snapshot}
+        stats={stats}
       />
 
-      {/* Status bar */}
       <div className="h-6 shrink-0 border-t border-border bg-panel/80 flex items-center gap-4 px-3 text-[11px] text-muted-foreground font-mono">
         <span className="flex items-center gap-1">
           <span
@@ -1020,52 +821,35 @@ export function DigitalGateApp() {
           {running ? "Running" : "Idle"}
         </span>
         <span>Tick {tick}</span>
-        <span>{Object.keys(circuit.components).length} components</span>
-        <span>{Object.keys(circuit.wires).length} wires</span>
-        <span className="ml-auto">Digital Gate v1.0</span>
+        <span>{Object.keys(snapshot.components).length} components</span>
+        <span>{Object.keys(snapshot.wires).length} wires</span>
+        <span className="ml-auto">Digital Gate v2.0 · Event-Driven</span>
       </div>
 
       {cmdOpen && (
         <CommandPalette
           onClose={() => setCmdOpen(false)}
           actions={[
-            { label: "Run simulation", action: () => setRunning(true) },
-            { label: "Pause simulation", action: () => setRunning(false) },
-            { label: "Reset simulation", action: resetSim },
+            { label: "Run simulation", action: eng.start },
+            { label: "Pause simulation", action: eng.pause },
+            { label: "Reset simulation", action: eng.reset },
             {
               label: "Toggle theme",
               action: () => setTheme(theme === "dark" ? "light" : "dark"),
             },
             { label: "Fit to screen", action: fitToScreen },
-            { label: "Save project", action: saveProject },
-            { label: "Export JSON", action: exportProject },
-            {
-              label: "New project",
-              action: () => setCircuit({ components: {}, wires: {} }),
-            },
+            { label: "Save project", action: eng.saveProject },
+            { label: "Export JSON", action: eng.exportJSON },
+            { label: "New project", action: eng.newProject },
             ...CATEGORIES.flatMap((cat) =>
               cat.gates.map((g) => ({
-                label: `Add ${GATES[g].label}`,
+                label: `Add ${GATES[g]?.label ?? g}`,
                 action: () => {
                   const def = GATES[g];
-                  const id = uid();
-                  const cx = (size.w / 2 - view.x) / view.k,
-                    cy = (size.h / 2 - view.y) / view.k;
-                  updateCircuit((c) => ({
-                    ...c,
-                    components: {
-                      ...c.components,
-                      [id]: {
-                        id,
-                        type: g,
-                        x: snap(cx),
-                        y: snap(cy),
-                        state: def.initialState ? def.initialState() : null,
-                        outputs: new Array(def.outputs).fill(false),
-                        label: def.label,
-                      },
-                    },
-                  }));
+                  if (!def) return;
+                  const cx = (size.w / 2 - view.x) / view.k;
+                  const cy = (size.h / 2 - view.y) / view.k;
+                  eng.addComponent(g, snap(cx), snap(cy));
                 },
               })),
             ),
@@ -1076,7 +860,7 @@ export function DigitalGateApp() {
   );
 }
 
-/* --- Sub-components --- */
+/* ── Sub-components (rendering only — no engine coupling) ─────────────────── */
 
 function TopBar(props: any) {
   const {
@@ -1187,7 +971,6 @@ function TopBar(props: any) {
       <div className="text-xs text-muted-foreground font-mono ml-3">
         Tick <span className="text-foreground tabular-nums">{tick}</span>
       </div>
-
       <div className="ml-auto flex items-center gap-1">
         <button
           onClick={openCmd}
@@ -1252,6 +1035,7 @@ function GateChip({
   onDragStart: () => void;
 }) {
   const def = GATES[type];
+  if (!def) return null;
   return (
     <div
       draggable
@@ -1279,8 +1063,8 @@ function GridBackground({
   size: { w: number; h: number };
 }) {
   const step = GRID * view.k;
-  const offX = view.x % step;
-  const offY = view.y % step;
+  const offX = view.x % step,
+    offY = view.y % step;
   return (
     <svg
       width={size.w}
@@ -1370,12 +1154,12 @@ function GateNode({
   onPinUp,
 }: any) {
   const def = GATES[comp.type];
+  if (!def) return null;
   const active = comp.outputs.some(Boolean) || comp.state?.on;
   const isIO = ["TOGGLE", "BUTTON", "CONST", "LED", "LAMP"].includes(comp.type);
 
   return (
     <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
-      {/* selection glow */}
       {selected && (
         <rect
           x={-4}
@@ -1389,7 +1173,6 @@ function GateNode({
           strokeDasharray="4 3"
         />
       )}
-      {/* body */}
       <rect
         x={0}
         y={0}
@@ -1403,7 +1186,6 @@ function GateNode({
         style={{ cursor: isIO ? "pointer" : "grab" }}
         className={cn(active && "signal-glow")}
       />
-      {/* label */}
       <text
         x={def.width / 2}
         y={def.height / 2 + 5}
@@ -1426,7 +1208,6 @@ function GateNode({
       >
         {comp.label ?? def.label}
       </text>
-      {/* LED/Lamp visual */}
       {(comp.type === "LED" || comp.type === "LAMP") && (
         <circle
           cx={def.width / 2}
@@ -1440,7 +1221,6 @@ function GateNode({
           className={cn(comp.state?.on && "signal-glow")}
         />
       )}
-      {/* pins */}
       {Array.from({ length: def.inputs }).map((_, i) => {
         const y = (def.height / (def.inputs + 1)) * (i + 1);
         return (
@@ -1517,7 +1297,7 @@ function PropertiesPanel({ comp, onUpdate, onDelete, onDuplicate }: any) {
               Type
             </div>
             <div className="text-sm font-mono text-primary">
-              {GATES[comp.type].label}
+              {GATES[comp.type]?.label ?? comp.type}
             </div>
           </div>
           <div>
@@ -1628,10 +1408,10 @@ function PropertiesPanel({ comp, onUpdate, onDelete, onDuplicate }: any) {
   );
 }
 
-function ExplorerPanel({ circuit, selection, setSelection }: any) {
-  const groups: Record<string, CircuitComp[]> = {};
-  for (const c of Object.values(circuit.components) as CircuitComp[]) {
-    const cat = GATES[c.type].category;
+function ExplorerPanel({ snapshot, selection, setSelection }: any) {
+  const groups: Record<string, ComponentInstance[]> = {};
+  for (const c of Object.values(snapshot.components) as ComponentInstance[]) {
+    const cat = GATES[c.type]?.category ?? "Other";
     (groups[cat] ||= []).push(c);
   }
   return (
@@ -1660,10 +1440,10 @@ function ExplorerPanel({ circuit, selection, setSelection }: any) {
                 )}
               >
                 <span className="font-mono text-[10px] text-muted-foreground">
-                  {GATES[c.type].symbol}
+                  {GATES[c.type]?.symbol}
                 </span>
                 <span className="truncate">
-                  {c.label ?? GATES[c.type].label}
+                  {c.label ?? GATES[c.type]?.label}
                 </span>
               </button>
             ))}
@@ -1674,7 +1454,15 @@ function ExplorerPanel({ circuit, selection, setSelection }: any) {
   );
 }
 
-function ConsolePanel({ tab, setTab, logs, tick, running, circuit }: any) {
+function ConsolePanel({
+  tab,
+  setTab,
+  logs,
+  tick,
+  running,
+  snapshot,
+  stats,
+}: any) {
   const [open, setOpen] = useState(true);
   const tabs = [
     { id: "log", label: "Simulation Log", icon: Terminal },
@@ -1727,14 +1515,14 @@ function ConsolePanel({ tab, setTab, logs, tick, running, circuit }: any) {
             <div className="grid grid-cols-4 gap-2 text-xs">
               <PerfCard
                 label="Components"
-                value={Object.keys(circuit.components).length}
+                value={Object.keys(snapshot.components).length}
               />
               <PerfCard
                 label="Wires"
-                value={Object.keys(circuit.wires).length}
+                value={Object.keys(snapshot.wires).length}
               />
               <PerfCard label="Tick" value={tick} />
-              <PerfCard label="Status" value={running ? "Running" : "Idle"} />
+              <PerfCard label="Events" value={stats.eventsProcessed} />
             </div>
           ) : tab === "timeline" ? (
             <div className="space-y-1">
@@ -1774,6 +1562,7 @@ function ConsolePanel({ tab, setTab, logs, tick, running, circuit }: any) {
     </div>
   );
 }
+
 function PerfCard({ label, value }: any) {
   return (
     <div className="rounded-md border border-border bg-card/60 p-2">
@@ -1784,17 +1573,17 @@ function PerfCard({ label, value }: any) {
 }
 
 function Minimap({
-  circuit,
+  snapshot,
   view,
   size,
 }: {
-  circuit: Circuit;
+  snapshot: CircuitSnapshot;
   view: any;
   size: any;
 }) {
   const w = 180,
     h = 120;
-  const comps = Object.values(circuit.components);
+  const comps = Object.values(snapshot.components);
   if (!comps.length) return null;
   let minX = 0,
     minY = 0,
@@ -1802,6 +1591,7 @@ function Minimap({
     maxY = 300;
   for (const c of comps) {
     const d = GATES[c.type];
+    if (!d) continue;
     minX = Math.min(minX, c.x);
     minY = Math.min(minY, c.y);
     maxX = Math.max(maxX, c.x + d.width);
@@ -1824,6 +1614,7 @@ function Minimap({
       <svg width={w} height={h}>
         {comps.map((c) => {
           const d = GATES[c.type];
+          if (!d) return null;
           return (
             <rect
               key={c.id}
@@ -1849,6 +1640,12 @@ function Minimap({
     </div>
   );
 }
+
+// Imported types used in JSX
+type CircuitSnapshot = {
+  components: Record<string, ComponentInstance>;
+  wires: Record<string, Wire>;
+};
 
 function CommandPalette({
   actions,
