@@ -13,7 +13,7 @@
  *   • Cloud sync (stub interface provided)
  */
 
-import { FORMAT_VERSION, MAX_HISTORY, STORAGE_KEY } from "@/lib/constants";
+import { MAX_HISTORY, STORAGE_KEY, VERSION } from "@/lib/constants";
 
 import type { CircuitManager } from "./CircuitManager";
 import type { CircuitSnapshot } from "./types";
@@ -33,10 +33,10 @@ function deepClone<T>(obj: T): T {
 
 /** Migrate older project formats to the current schema */
 const migrate = (project: SerializedProject): SerializedProject => {
-  if (project.version === FORMAT_VERSION) return project;
+  if (project.version === VERSION) return project;
 
   // Future migration logic goes here
-  return { ...project, version: FORMAT_VERSION };
+  return { ...project, version: VERSION };
 };
 
 // ── Class ────────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ export class ProjectManager {
 
   saveToLocalStorage(name?: string): void {
     const project: SerializedProject = {
-      version: FORMAT_VERSION,
+      version: VERSION,
       name: name ?? this.projectName,
       savedAt: Date.now(),
       circuit: this.manager.getSnapshot(),
@@ -134,7 +134,7 @@ export class ProjectManager {
 
   exportJSON(): string {
     const project: SerializedProject = {
-      version: FORMAT_VERSION,
+      version: VERSION,
       name: this.projectName,
       savedAt: Date.now(),
       circuit: this.manager.getSnapshot(),

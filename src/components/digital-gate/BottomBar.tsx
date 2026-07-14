@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
-import { FORMAT_VERSION } from "@/lib/constants";
+import { VERSION } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface BottomBarProps {
@@ -52,7 +52,7 @@ function BottomBar({ running, tick, compCount, wireCount }: BottomBarProps) {
         <FormattedMessage
           id="73Dt+K"
           defaultMessage="BitLab v{version} · Event-Driven"
-          values={{ version: FORMAT_VERSION }}
+          values={{ version: VERSION }}
         />
       </span>
     </div>

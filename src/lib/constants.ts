@@ -116,7 +116,7 @@ export const PIN_KIND = {
 };
 
 // Project
-export const FORMAT_VERSION = 1.0;
+export const VERSION = 1;
 export const MAX_HISTORY = 100;
 export const STORAGE_KEY = "digital-gate-project";
 export const DEFAULT_CLOCK = 8;
