@@ -6,20 +6,56 @@
  * The tick() function (clock-only) is a pure function of (state, dt) → (outputs, state).
  */
 
+import {
+  GATE_CATEGORY_ARITHMETIC,
+  GATE_CATEGORY_INPUT,
+  GATE_CATEGORY_LOGIC,
+  GATE_CATEGORY_OUTPUT,
+  GATE_CATEGORY_SEQUENTIAL,
+  GATE_TYPE_AND,
+  GATE_TYPE_AND3,
+  GATE_TYPE_BUFFER,
+  GATE_TYPE_BUTTON,
+  GATE_TYPE_CLOCK,
+  GATE_TYPE_COMPARATOR,
+  GATE_TYPE_CONST,
+  GATE_TYPE_DECODER2,
+  GATE_TYPE_DEMUX2,
+  GATE_TYPE_DFF,
+  GATE_TYPE_DISPLAY7,
+  GATE_TYPE_ENCODER4,
+  GATE_TYPE_FULL_ADDER,
+  GATE_TYPE_HALF_ADDER,
+  GATE_TYPE_JKFF,
+  GATE_TYPE_LED,
+  GATE_TYPE_MUX2,
+  GATE_TYPE_MUX4,
+  GATE_TYPE_NAND,
+  GATE_TYPE_NOR,
+  GATE_TYPE_NOT,
+  GATE_TYPE_OR,
+  GATE_TYPE_OR3,
+  GATE_TYPE_SR_LATCH,
+  GATE_TYPE_TIFF,
+  GATE_TYPE_TOGGLE,
+  GATE_TYPE_XNOR,
+  GATE_TYPE_XOR,
+} from "@/constants";
 import type { ComponentDefinition, SignalValue, EvaluateResult } from "./types";
+import { fm } from "@/utils";
 
 const b = (v: unknown): boolean => !!v;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function combinational(
-  fields: Omit<
-    ComponentDefinition,
-    "isSequential" | "isClock" | "isInput" | "isOutput" | "initialState"
-  > & {
-    evaluate: (inputs: SignalValue[], state: null) => EvaluateResult;
-  },
-): ComponentDefinition {
+type CbFields = Omit<
+  ComponentDefinition,
+  "isSequential" | "isClock" | "isInput" | "isOutput" | "initialState"
+> & {
+  evaluate: (inputs: SignalValue[], state: null) => EvaluateResult;
+};
+
+function cb(fields: CbFields): ComponentDefinition {
   return {
     ...fields,
     isSequential: false,
@@ -34,10 +70,10 @@ function combinational(
 
 const DEFINITIONS: ComponentDefinition[] = [
   // ── Logic Gates ─────────────────────────────────────────────────────────────
-  combinational({
-    type: "AND",
-    label: "AND",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_AND,
+    label: fm("lb_and"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -45,10 +81,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&",
     evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
   }),
-  combinational({
-    type: "OR",
-    label: "OR",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_OR,
+    label: fm("lb_or"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -56,10 +92,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥1",
     evaluate: (i) => ({ outputs: [i.some(b)], state: null }),
   }),
-  combinational({
-    type: "XOR",
-    label: "XOR",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_XOR,
+    label: fm("lb_xor"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -70,10 +106,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       state: null,
     }),
   }),
-  combinational({
-    type: "XNOR",
-    label: "XNOR",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_XNOR,
+    label: fm("lb_xnor"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -84,10 +120,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       state: null,
     }),
   }),
-  combinational({
-    type: "NAND",
-    label: "NAND",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_NAND,
+    label: fm("lb_nand"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -95,10 +131,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&̄",
     evaluate: (i) => ({ outputs: [!i.every(b)], state: null }),
   }),
-  combinational({
-    type: "NOR",
-    label: "NOR",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_NOR,
+    label: fm("lb_nor"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 2,
     outputs: 1,
     width: 70,
@@ -106,10 +142,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥1̄",
     evaluate: (i) => ({ outputs: [!i.some(b)], state: null }),
   }),
-  combinational({
-    type: "NOT",
-    label: "NOT",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_NOT,
+    label: fm("lb_not"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 1,
     outputs: 1,
     width: 60,
@@ -117,10 +153,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "!",
     evaluate: (i) => ({ outputs: [!b(i[0])], state: null }),
   }),
-  combinational({
-    type: "BUFFER",
-    label: "Buffer",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_BUFFER,
+    label: fm("lb_buffer"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 1,
     outputs: 1,
     width: 60,
@@ -128,11 +164,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "1",
     evaluate: (i) => ({ outputs: [b(i[0])], state: null }),
   }),
-  // 3-input AND/OR/XOR
-  combinational({
-    type: "AND3",
-    label: "AND-3",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_AND3,
+    label: fm("lb_and_3"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 3,
     outputs: 1,
     width: 70,
@@ -140,10 +175,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&3",
     evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
   }),
-  combinational({
-    type: "OR3",
-    label: "OR-3",
-    category: "Logic Gates",
+  cb({
+    type: GATE_TYPE_OR3,
+    label: fm("lb_or_3"),
+    category: GATE_CATEGORY_LOGIC,
     inputs: 3,
     outputs: 1,
     width: 70,
@@ -154,9 +189,9 @@ const DEFINITIONS: ComponentDefinition[] = [
 
   // ── Inputs ───────────────────────────────────────────────────────────────────
   {
-    type: "TOGGLE",
-    label: "Toggle",
-    category: "Inputs",
+    type: GATE_TYPE_TOGGLE,
+    label: fm("lb_toggle"),
+    category: GATE_CATEGORY_INPUT,
     inputs: 0,
     outputs: 1,
     width: 60,
@@ -170,9 +205,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
   },
   {
-    type: "BUTTON",
-    label: "Button",
-    category: "Inputs",
+    type: GATE_TYPE_BUTTON,
+    label: fm("lb_button"),
+    category: GATE_CATEGORY_INPUT,
     inputs: 0,
     outputs: 1,
     width: 60,
@@ -186,9 +221,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
   },
   {
-    type: "CONST",
-    label: "Constant",
-    category: "Inputs",
+    type: GATE_TYPE_CONST,
+    label: fm("lb_const"),
+    category: GATE_CATEGORY_INPUT,
     inputs: 0,
     outputs: 1,
     width: 60,
@@ -202,9 +237,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
   },
   {
-    type: "CLOCK",
-    label: "Clock",
-    category: "Inputs",
+    type: GATE_TYPE_CLOCK,
+    label: fm("lb_clock"),
+    category: GATE_CATEGORY_INPUT,
     inputs: 0,
     outputs: 1,
     width: 60,
@@ -235,9 +270,9 @@ const DEFINITIONS: ComponentDefinition[] = [
 
   // ── Outputs ──────────────────────────────────────────────────────────────────
   {
-    type: "LED",
-    label: "LED",
-    category: "Outputs",
+    type: GATE_TYPE_LED,
+    label: fm("lb_led"),
+    category: GATE_CATEGORY_OUTPUT,
     inputs: 1,
     outputs: 0,
     width: 50,
@@ -251,25 +286,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i) => ({ outputs: [], state: { on: b(i[0]) } }),
   },
   {
-    type: "LAMP",
-    label: "Lamp",
-    category: "Outputs",
-    inputs: 1,
-    outputs: 0,
-    width: 60,
-    height: 60,
-    symbol: "☀",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    initialState: () => ({ on: false }),
-    evaluate: (i) => ({ outputs: [], state: { on: b(i[0]) } }),
-  },
-  {
-    type: "DISPLAY7",
-    label: "7-Seg",
-    category: "Outputs",
+    type: GATE_TYPE_DISPLAY7,
+    label: fm("lb_7_seg"),
+    category: GATE_CATEGORY_OUTPUT,
     inputs: 4,
     outputs: 0,
     width: 70,
@@ -293,9 +312,9 @@ const DEFINITIONS: ComponentDefinition[] = [
 
   // ── Sequential ────────────────────────────────────────────────────────────────
   {
-    type: "SR_LATCH",
-    label: "SR Latch",
-    category: "Sequential",
+    type: GATE_TYPE_SR_LATCH,
+    label: fm("lb_sr_latch"),
+    category: GATE_CATEGORY_SEQUENTIAL,
     inputs: 2,
     outputs: 2,
     width: 80,
@@ -322,9 +341,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     },
   },
   {
-    type: "DFF",
-    label: "D Flip-Flop",
-    category: "Sequential",
+    type: GATE_TYPE_DFF,
+    label: fm("lb_d_flip_flop"),
+    category: GATE_CATEGORY_SEQUENTIAL,
     inputs: 2,
     outputs: 2,
     width: 80,
@@ -336,8 +355,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
-      const clk = b(i[1]);
       let q = !!s?.q;
+      const clk = b(i[1]);
 
       // Sample D on rising clock edge
       if (clk && !s?.prevClk) {
@@ -348,9 +367,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     },
   },
   {
-    type: "JKFF",
-    label: "JK Flip-Flop",
-    category: "Sequential",
+    type: GATE_TYPE_JKFF,
+    label: fm("lb_jk_flip_flop"),
+    category: GATE_CATEGORY_SEQUENTIAL,
     inputs: 3,
     outputs: 2,
     width: 80,
@@ -381,9 +400,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     },
   },
   {
-    type: "TIFF",
-    label: "T Flip-Flop",
-    category: "Sequential",
+    type: GATE_TYPE_TIFF,
+    label: fm("lb_t_flip_flop"),
+    category: GATE_CATEGORY_SEQUENTIAL,
     inputs: 2,
     outputs: 2,
     width: 80,
@@ -395,8 +414,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
-      const clk = b(i[1]);
       let q = !!s?.q;
+      const clk = b(i[1]);
 
       if (clk && !s?.prevClk && b(i[0])) {
         q = !q;
@@ -405,37 +424,12 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
   },
-  {
-    type: "REG8",
-    label: "Register-8",
-    category: "Sequential",
-    inputs: 9,
-    outputs: 8,
-    width: 90,
-    height: 120,
-    symbol: "REG",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ bits: new Array(8).fill(false), prevClk: false }),
-    evaluate: (i, s) => {
-      const clk = b(i[8]);
-      let bits: boolean[] = (s?.bits as boolean[]) ?? new Array(8).fill(false);
-
-      if (clk && !s?.prevClk) {
-        bits = i.slice(0, 8).map(b);
-      }
-
-      return { outputs: [...bits], state: { bits, prevClk: clk } };
-    },
-  },
 
   // ── Arithmetic ────────────────────────────────────────────────────────────────
-  combinational({
-    type: "HALF_ADDER",
-    label: "Half Adder",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_HALF_ADDER,
+    label: fm("lb_halfadder"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 2,
     outputs: 2,
     width: 80,
@@ -446,10 +440,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       state: null,
     }),
   }),
-  combinational({
-    type: "FULL_ADDER",
-    label: "Full Adder",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_FULL_ADDER,
+    label: fm("lb_adder"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 3,
     outputs: 2,
     width: 80,
@@ -461,10 +455,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [s % 2 === 1, s >= 2], state: null };
     },
   }),
-  combinational({
-    type: "MUX2",
-    label: "MUX 2:1",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_MUX2,
+    label: fm("lb_mux_2_1"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 3,
     outputs: 1,
     width: 80,
@@ -472,10 +466,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "M",
     evaluate: (i) => ({ outputs: [b(i[2]) ? b(i[1]) : b(i[0])], state: null }),
   }),
-  combinational({
-    type: "MUX4",
-    label: "MUX 4:1",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_MUX4,
+    label: fm("lb_mux_4_1"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 6,
     outputs: 1,
     width: 80,
@@ -486,10 +480,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [b(i[sel])], state: null };
     },
   }),
-  combinational({
-    type: "DEMUX2",
-    label: "DEMUX 1:2",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_DEMUX2,
+    label: fm("lb_dmux_1_2"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 2,
     outputs: 2,
     width: 80,
@@ -500,10 +494,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [!sel && b(i[0]), sel && b(i[0])], state: null };
     },
   }),
-  combinational({
-    type: "DECODER2",
-    label: "Decoder 2:4",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_DECODER2,
+    label: fm("lb_dcode_2_4"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 2,
     outputs: 4,
     width: 80,
@@ -517,10 +511,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       };
     },
   }),
-  combinational({
-    type: "ENCODER4",
-    label: "Encoder 4:2",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_ENCODER4,
+    label: fm("lb_ecode_4_2"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 4,
     outputs: 2,
     width: 80,
@@ -540,10 +534,10 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [!!(idx & 1), !!(idx & 2)], state: null };
     },
   }),
-  combinational({
-    type: "COMPARATOR",
-    label: "Comparator",
-    category: "Arithmetic",
+  cb({
+    type: GATE_TYPE_COMPARATOR,
+    label: fm("lb_comparator"),
+    category: GATE_CATEGORY_ARITHMETIC,
     inputs: 2,
     outputs: 3,
     width: 80,
@@ -561,69 +555,61 @@ const DEFINITIONS: ComponentDefinition[] = [
 // ── Registry class ────────────────────────────────────────────────────────────
 
 export class ComponentLibrary {
-  private byType: Map<string, ComponentDefinition> = new Map();
+  private typeMap: Map<string, ComponentDefinition> = new Map();
 
   constructor(defs: ComponentDefinition[] = DEFINITIONS) {
     for (const d of defs) {
-      this.byType.set(d.type, d);
+      this.typeMap.set(d.type, d);
     }
   }
 
   get(type: string): ComponentDefinition {
-    const def = this.byType.get(type);
+    const def = this.typeMap.get(type);
 
-    if (!def) {
-      throw new Error(`Unknown component type: "${type}"`);
-    }
+    if (!def) throw new Error(`Unknown component type: "${type}"`);
 
     return def;
   }
 
   has(type: string): boolean {
-    return this.byType.has(type);
+    return this.typeMap.has(type);
   }
 
   getAll(): ComponentDefinition[] {
-    return Array.from(this.byType.values());
+    return Array.from(this.typeMap.values());
   }
 
   /** Register a custom component definition (for future custom components) */
   register(def: ComponentDefinition): void {
-    this.byType.set(def.type, def);
+    this.typeMap.set(def.type, def);
   }
 
   /** Category → sorted list of types */
   getCategories(): Array<{ name: string; gates: string[] }> {
+    const ORDER = [
+      GATE_CATEGORY_LOGIC,
+      GATE_CATEGORY_INPUT,
+      GATE_CATEGORY_OUTPUT,
+      GATE_CATEGORY_SEQUENTIAL,
+      GATE_CATEGORY_ARITHMETIC,
+    ];
     const groups = new Map<string, string[]>();
+    const result: Array<{ name: string; gates: string[] }> = [];
 
-    for (const def of this.byType.values()) {
-      if (!groups.has(def.category)) {
-        groups.set(def.category, []);
-      }
+    for (const def of this.typeMap.values()) {
+      if (!groups.has(def.category)) groups.set(def.category, []);
 
       groups.get(def.category)!.push(def.type);
     }
 
-    const ORDER = [
-      "Logic Gates",
-      "Inputs",
-      "Outputs",
-      "Sequential",
-      "Arithmetic",
-    ];
-    const result: Array<{ name: string; gates: string[] }> = [];
-
     for (const cat of ORDER) {
-      if (groups.has(cat)) {
-        result.push({ name: cat, gates: groups.get(cat)! });
-      }
+      if (groups.has(cat))
+        result.push({ name: cat, gates: groups.get(cat) ?? [] });
     }
 
     // Append any categories not in ORDER
     for (const [cat, gates] of groups) {
-      if (!ORDER.includes(cat)) {
-        result.push({ name: cat, gates });
-      }
+      if (!ORDER.includes(cat)) result.push({ name: cat, gates });
     }
 
     return result;

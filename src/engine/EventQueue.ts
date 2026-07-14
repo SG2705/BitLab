@@ -24,7 +24,7 @@ export class EventQueue {
 
     this.inQueue.add(componentId);
     this.heap.push({ componentId, priority });
-    this.siftUp(this.heap.length - 1);
+    this.shiftUp(this.heap.length - 1);
   }
 
   dequeue(): string | undefined {
@@ -33,11 +33,11 @@ export class EventQueue {
     }
 
     const top = this.heap[0];
-    const last = this.heap.pop()!;
+    const last = this.heap.pop() ?? this.heap[0];
 
     if (this.heap.length > 0) {
       this.heap[0] = last;
-      this.siftDown(0);
+      this.shiftDown(0);
     }
 
     this.inQueue.delete(top.componentId);
@@ -62,7 +62,7 @@ export class EventQueue {
     return this.heap.length;
   }
 
-  private siftUp(i: number): void {
+  private shiftUp(i: number): void {
     while (i > 0) {
       const parent = (i - 1) >> 1;
 
@@ -75,7 +75,7 @@ export class EventQueue {
     }
   }
 
-  private siftDown(i: number): void {
+  private shiftDown(i: number): void {
     const n = this.heap.length;
 
     while (true) {

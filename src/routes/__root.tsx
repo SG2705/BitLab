@@ -8,6 +8,9 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
+import { IntlProvider } from "react-intl";
+import { defaultLocale } from "@/i18n";
+import enMessages from "@/i18n/locales/en.json";
 
 import appCss from "../styles.css?url";
 
@@ -101,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           rel: "stylesheet",
           href: appCss,
         },
-        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        // { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       ],
     }),
     shellComponent: RootShell,
@@ -129,9 +132,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-    </QueryClientProvider>
+    <IntlProvider locale={defaultLocale} messages={enMessages}>
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    </IntlProvider>
   );
 }

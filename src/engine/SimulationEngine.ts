@@ -23,17 +23,18 @@ import type {
 import { SignalPropagator } from "./SignalPropagator";
 import { GraphManager } from "./GraphManager";
 import { ComponentLibrary } from "./ComponentLibrary";
+import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/constants";
 
 export interface SimulationEngineOptions {
   clockHz?: number; // simulation ticks per second (default 8)
 }
 
 export class SimulationEngine {
-  private status: SimulationStatus = "idle";
   private tick = 0;
+  private clockHz: number;
+  private status: SimulationStatus = SIMULATION_STATUS.IDLE;
   private eventsProcessed = 0;
   private oscillationsDetected = 0;
-  private clockHz: number;
 
   private rafHandle: number | null = null;
   private lastTime: number | null = null;
@@ -54,23 +55,19 @@ export class SimulationEngine {
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   start(): void {
-    if (this.status === "running") {
-      return;
-    }
+    if (this.status === SIMULATION_STATUS.RUNNING) return;
 
-    this.status = "running";
+    this.status = SIMULATION_STATUS.RUNNING;
     this.lastTime = null;
     this.accumulator = 0;
     this.rafHandle = requestAnimationFrame(this.loop);
-    this.emit({ type: "started" });
+    this.emit({ type: ENGINE_EVENT_TYPE.STARTED });
   }
 
   pause(): void {
-    if (this.status !== "running") {
-      return;
-    }
+    if (this.status !== SIMULATION_STATUS.RUNNING) return;
 
-    this.status = "paused";
+    this.status = SIMULATION_STATUS.PAUSED;
 
     if (this.rafHandle !== null) {
       cancelAnimationFrame(this.rafHandle);
@@ -78,12 +75,12 @@ export class SimulationEngine {
       this.rafHandle = null;
     }
 
-    this.emit({ type: "paused" });
+    this.emit({ type: ENGINE_EVENT_TYPE.PAUSED });
   }
 
   stop(): void {
     this.pause();
-    this.status = "idle";
+    this.status = SIMULATION_STATUS.IDLE;
   }
 
   /**
@@ -94,7 +91,7 @@ export class SimulationEngine {
     const dt = 1000 / Math.max(1, this.clockHz);
 
     this.doTick(dt);
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   reset(): void {
@@ -124,8 +121,8 @@ export class SimulationEngine {
 
     // Full recompute after reset to propagate input states
     this.propagator.recomputeAll(this.components);
-    this.emit({ type: "reset" });
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.RESET });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   // ── Clock control ──────────────────────────────────────────────────────────
@@ -155,13 +152,8 @@ export class SimulationEngine {
   // ── RAF loop ───────────────────────────────────────────────────────────────
 
   private loop = (now: number): void => {
-    if (this.status !== "running") {
-      return;
-    }
-
-    if (this.lastTime === null) {
-      this.lastTime = now;
-    }
+    if (this.status !== SIMULATION_STATUS.RUNNING) return;
+    if (this.lastTime === null) this.lastTime = now;
 
     const elapsed = now - this.lastTime;
     this.lastTime = now;
@@ -182,8 +174,8 @@ export class SimulationEngine {
     }
 
     if (ticked) {
-      this.emit({ type: "tick", payload: this.tick });
-      this.emit({ type: "snapshot-changed" });
+      this.emit({ type: ENGINE_EVENT_TYPE.TICK, payload: this.tick });
+      this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
     }
 
     this.rafHandle = requestAnimationFrame(this.loop);
@@ -204,9 +196,7 @@ export class SimulationEngine {
       const comp = this.components[id];
       const def = this.library.get(comp.type);
 
-      if (!def.isClock || !def.tick) {
-        continue;
-      }
+      if (!def.isClock || !def.tick) continue;
 
       const prevOutput = comp.outputs[0] ?? false;
       const result = def.tick(comp.state, dt);
@@ -218,9 +208,7 @@ export class SimulationEngine {
         state: result.state ?? comp.state,
       };
 
-      if (newOutput !== prevOutput) {
-        seeds.push(id);
-      }
+      if (newOutput !== prevOutput) seeds.push(id);
     }
 
     if (seeds.length > 0) {
@@ -229,7 +217,7 @@ export class SimulationEngine {
 
       if (result.oscillationDetected) {
         this.oscillationsDetected++;
-        this.emit({ type: "oscillation" });
+        this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
       }
     }
   }
@@ -246,10 +234,10 @@ export class SimulationEngine {
 
     if (result.oscillationDetected) {
       this.oscillationsDetected++;
-      this.emit({ type: "oscillation" });
+      this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
     }
 
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   // ── Event bus ──────────────────────────────────────────────────────────────

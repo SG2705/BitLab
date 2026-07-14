@@ -6,11 +6,15 @@ import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [
-    tailwindcss(),
-    tsConfigPaths(),
-    react(),
     tanstackStart({
       server: { entry: "server" },
+    }),
+    tailwindcss(),
+    tsConfigPaths(),
+    react({
+      babel: {
+        plugins: ["babel-plugin-formatjs"],
+      },
     }),
   ],
 });

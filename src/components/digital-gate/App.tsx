@@ -1,43 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Play,
-  Pause,
-  Square,
-  StepForward,
-  RotateCcw,
-  Undo2,
-  Redo2,
-  Save,
-  FolderOpen,
-  Plus,
   Search,
   Zap,
   Cpu,
   Grid3x3,
-  Sun,
-  Moon,
-  Trash2,
-  Copy,
-  Settings2,
-  Terminal,
-  AlertTriangle,
   Activity,
-  Clock,
   ChevronRight,
   ChevronDown,
-  Command,
   MousePointer2,
   Hand,
 } from "lucide-react";
 import { library } from "@/engine";
 import { useDigitalEngine } from "@/hooks/useDigitalEngine";
-import type { ComponentInstance, Wire } from "@/engine";
-import { Button } from "@/components/ui/button";
+import type { ComponentInstance } from "@/engine";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-// UI utility only — pin position calculation stays in circuit.ts
 import { pinPos } from "@/lib/circuit";
+
+import { TopBar } from "./TopBar";
+import { ToolBtn } from "./ToolBtn";
+import { GateChip } from "./GateChip";
+import { GridBackground } from "./GridBackground";
+import { WirePath } from "./WirePath";
+import { GateNode } from "./GateNode";
+import { PropertiesPanel } from "./PropertiesPanel";
+import { ExplorerPanel } from "./ExplorerPanel";
+import { ConsolePanel } from "./ConsolePanel";
+import type { LogEntry } from "./ConsolePanel";
+import { Minimap } from "./Minimap";
+import { CommandPalette } from "./CommandPalette";
 
 type Tool = "select" | "pan";
 
@@ -47,11 +39,13 @@ function snap(v: number) {
   return Math.round(v / GRID) * GRID;
 }
 
-// Expose CATEGORIES and GATES for rendering (library is the engine's registry)
 const CATEGORIES = library.getCategories();
 const GATES: Record<string, ReturnType<typeof library.get>> = {};
+
 for (const cat of CATEGORIES) {
-  for (const g of cat.gates) GATES[g] = library.get(g);
+  for (const g of cat.gates) {
+    GATES[g] = library.get(g);
+  }
 }
 
 export function DigitalGateApp() {
@@ -72,9 +66,7 @@ export function DigitalGateApp() {
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selWires, setSelWires] = useState<Set<string>>(new Set());
 
-  const [logs, setLogs] = useState<
-    { t: number; kind: "log" | "warn" | "err"; msg: string }[]
-  >([
+  const [logs, setLogs] = useState<LogEntry[]>([
     {
       t: 0,
       kind: "log",
@@ -100,11 +92,17 @@ export function DigitalGateApp() {
 
   useEffect(() => {
     const el = canvasRef.current;
-    if (!el) return;
+
+    if (!el) {
+      return;
+    }
+
     const ro = new ResizeObserver(() =>
       setSize({ w: el.clientWidth, h: el.clientHeight }),
     );
+
     ro.observe(el);
+
     return () => ro.disconnect();
   }, []);
 
@@ -116,6 +114,7 @@ export function DigitalGateApp() {
   const toWorld = useCallback(
     (sx: number, sy: number) => {
       const rect = canvasRef.current!.getBoundingClientRect();
+
       return {
         x: (sx - rect.left - view.x) / view.k,
         y: (sy - rect.top - view.y) / view.k,
@@ -157,9 +156,10 @@ export function DigitalGateApp() {
   const onWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
+
       const rect = canvasRef.current!.getBoundingClientRect();
-      const mx = e.clientX - rect.left,
-        my = e.clientY - rect.top;
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
       const k = Math.min(3, Math.max(0.2, view.k * (e.deltaY < 0 ? 1.1 : 0.9)));
       const nx = mx - (mx - view.x) * (k / view.k);
       const ny = my - (my - view.y) * (k / view.k);
@@ -240,8 +240,8 @@ export function DigitalGateApp() {
       if (!cur) {
         return;
       }
-      const dx = nx - cur.x,
-        dy = ny - cur.y;
+      const dx = nx - cur.x;
+      const dy = ny - cur.y;
       const ids = selection.has(id) ? Array.from(selection) : [id];
 
       eng.moveComponents(ids, dx, dy);
@@ -264,6 +264,7 @@ export function DigitalGateApp() {
 
   const onCanvasMouseUp = () => {
     setPanning(false);
+
     panStart.current = null;
 
     if (dragCompRef.current?.moved) {
@@ -273,10 +274,10 @@ export function DigitalGateApp() {
     dragCompRef.current = null;
 
     if (lasso) {
-      const x = Math.min(lasso.x0, lasso.x1),
-        y = Math.min(lasso.y0, lasso.y1);
-      const w = Math.abs(lasso.x1 - lasso.x0),
-        h = Math.abs(lasso.y1 - lasso.y0);
+      const x = Math.min(lasso.x0, lasso.x1);
+      const y = Math.min(lasso.y0, lasso.y1);
+      const w = Math.abs(lasso.x1 - lasso.x0);
+      const h = Math.abs(lasso.y1 - lasso.y0);
       const sel = new Set<string>();
 
       for (const c of Object.values(snapshot.components)) {
@@ -306,6 +307,7 @@ export function DigitalGateApp() {
 
   const startCompDrag = (e: React.MouseEvent, c: ComponentInstance) => {
     e.stopPropagation();
+
     if (!e.shiftKey && !selection.has(c.id)) {
       setSelection(new Set([c.id]));
     } else if (e.shiftKey) {
@@ -368,7 +370,6 @@ export function DigitalGateApp() {
   const [tool, setTool] = useState<Tool>("select");
 
   const deleteSelected = useCallback(() => {
-    // Collect wires to delete: explicitly selected + wires attached to selected components
     const wireIds = new Set<string>();
 
     for (const w of Object.values(snapshot.wires)) {
@@ -393,14 +394,12 @@ export function DigitalGateApp() {
     setSelection(new Set(idMap.values()));
   };
 
-  // ── Toggle input ────────────────────────────────────────────────────────────
   const handleCompClick = (c: ComponentInstance) => {
     if (c.type === "TOGGLE" || c.type === "CONST") {
       eng.setInput(c.id, { on: !c.state?.on });
     }
   };
 
-  // ── Fit to screen ───────────────────────────────────────────────────────────
   const fitToScreen = () => {
     const comps = Object.values(snapshot.components);
 
@@ -410,10 +409,10 @@ export function DigitalGateApp() {
       return;
     }
 
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
 
     for (const c of comps) {
       const d = GATES[c.type];
@@ -427,8 +426,9 @@ export function DigitalGateApp() {
       maxX = Math.max(maxX, c.x + d.width);
       maxY = Math.max(maxY, c.y + d.height);
     }
-    const w = maxX - minX + 100,
-      h = maxY - minY + 100;
+
+    const w = maxX - minX + 100;
+    const h = maxY - minY + 100;
     const k = Math.min(size.w / w, size.h / h, 2);
 
     setView({ x: -minX * k + 50, y: -minY * k + 50, k });
@@ -438,8 +438,10 @@ export function DigitalGateApp() {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
+
       if (meta && e.key.toLowerCase() === "k") {
         e.preventDefault();
+
         setCmdOpen((v) => !v);
 
         return;
@@ -447,6 +449,7 @@ export function DigitalGateApp() {
 
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
+
         eng.undo();
 
         return;
@@ -458,6 +461,7 @@ export function DigitalGateApp() {
           (e.key.toLowerCase() === "z" && e.shiftKey))
       ) {
         e.preventDefault();
+
         eng.redo();
 
         return;
@@ -465,6 +469,7 @@ export function DigitalGateApp() {
 
       if (meta && e.key.toLowerCase() === "d") {
         e.preventDefault();
+
         duplicateSelected();
 
         return;
@@ -472,6 +477,7 @@ export function DigitalGateApp() {
 
       if (meta && e.key.toLowerCase() === "s") {
         e.preventDefault();
+
         eng.saveProject();
 
         return;
@@ -505,7 +511,6 @@ export function DigitalGateApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteSelected, running]);
 
-  // ── Filtered categories ─────────────────────────────────────────────────────
   const filteredCats = useMemo(() => {
     if (!search) {
       return CATEGORIES;
@@ -675,10 +680,15 @@ export function DigitalGateApp() {
                 {Object.values(snapshot.wires).map((w) => {
                   const a = snapshot.components[w.from.comp];
                   const b = snapshot.components[w.to.comp];
-                  if (!a || !b) return null;
+
+                  if (!a || !b) {
+                    return null;
+                  }
+
                   const p1 = pinPos(a as any, "out", w.from.pin);
                   const p2 = pinPos(b as any, "in", w.to.pin);
                   const live = !!a.outputs[w.from.pin];
+
                   return (
                     <WirePath
                       key={w.id}
@@ -709,8 +719,13 @@ export function DigitalGateApp() {
                 {pendingWire &&
                   (() => {
                     const src = snapshot.components[pendingWire.from.comp];
-                    if (!src) return null;
+
+                    if (!src) {
+                      return null;
+                    }
+
                     const p1 = pinPos(src as any, "out", pendingWire.from.pin);
+
                     return (
                       <WirePath
                         p1={p1}
@@ -856,867 +871,6 @@ export function DigitalGateApp() {
           ]}
         />
       )}
-    </div>
-  );
-}
-
-/* ── Sub-components (rendering only — no engine coupling) ─────────────────── */
-
-function TopBar(props: any) {
-  const {
-    running,
-    setRunning,
-    stepOnce,
-    resetSim,
-    tick,
-    clockSpeed,
-    setClockSpeed,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    theme,
-    setTheme,
-    saveProject,
-    loadProject,
-    exportProject,
-    newProject,
-    openCmd,
-  } = props;
-  return (
-    <header className="h-12 shrink-0 border-b border-border bg-panel/80 backdrop-blur flex items-center gap-2 px-3">
-      <div className="flex items-center gap-2 mr-2">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
-          <Zap className="h-4 w-4 text-primary-foreground" />
-        </div>
-        <div className="font-bold tracking-tight">Digital Gate</div>
-      </div>
-      <div className="w-px h-6 bg-border" />
-      <TBBtn
-        onClick={newProject}
-        icon={<Plus className="h-4 w-4" />}
-        label="New"
-      />
-      <TBBtn
-        onClick={loadProject}
-        icon={<FolderOpen className="h-4 w-4" />}
-        label="Open"
-      />
-      <TBBtn
-        onClick={saveProject}
-        icon={<Save className="h-4 w-4" />}
-        label="Save"
-      />
-      <TBBtn
-        onClick={exportProject}
-        icon={<Save className="h-4 w-4 rotate-180" />}
-        label="Export"
-      />
-      <div className="w-px h-6 bg-border mx-1" />
-      <TBBtn
-        onClick={undo}
-        disabled={!canUndo}
-        icon={<Undo2 className="h-4 w-4" />}
-        label="Undo"
-      />
-      <TBBtn
-        onClick={redo}
-        disabled={!canRedo}
-        icon={<Redo2 className="h-4 w-4" />}
-        label="Redo"
-      />
-      <div className="w-px h-6 bg-border mx-1" />
-      <Button
-        size="sm"
-        variant={running ? "secondary" : "default"}
-        onClick={() => setRunning(!running)}
-        className="h-8 gap-1.5"
-      >
-        {running ? (
-          <Pause className="h-3.5 w-3.5" />
-        ) : (
-          <Play className="h-3.5 w-3.5" />
-        )}
-        {running ? "Pause" : "Run"}
-      </Button>
-      <TBBtn
-        onClick={() => setRunning(false)}
-        icon={<Square className="h-4 w-4" />}
-        label="Stop"
-      />
-      <TBBtn
-        onClick={stepOnce}
-        icon={<StepForward className="h-4 w-4" />}
-        label="Step"
-      />
-      <TBBtn
-        onClick={resetSim}
-        icon={<RotateCcw className="h-4 w-4" />}
-        label="Reset"
-      />
-      <div className="flex items-center gap-2 ml-3 pl-3 border-l border-border">
-        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <input
-          type="range"
-          min={1}
-          max={30}
-          value={clockSpeed}
-          onChange={(e) => setClockSpeed(Number(e.target.value))}
-          className="w-24 accent-primary"
-        />
-        <span className="text-xs text-muted-foreground font-mono tabular-nums w-12">
-          {clockSpeed} Hz
-        </span>
-      </div>
-      <div className="text-xs text-muted-foreground font-mono ml-3">
-        Tick <span className="text-foreground tabular-nums">{tick}</span>
-      </div>
-      <div className="ml-auto flex items-center gap-1">
-        <button
-          onClick={openCmd}
-          className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md border border-border bg-background/40 hover:bg-secondary transition-colors text-muted-foreground"
-        >
-          <Command className="h-3 w-3" /> Palette
-          <kbd className="ml-1 px-1 py-0.5 text-[10px] rounded bg-secondary border border-border">
-            ⌘K
-          </kbd>
-        </button>
-        <TBBtn
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          icon={
-            theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )
-          }
-          label="Theme"
-        />
-      </div>
-    </header>
-  );
-}
-
-function TBBtn({ onClick, icon, label, disabled }: any) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={label}
-      className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-    >
-      {icon}
-    </button>
-  );
-}
-
-function ToolBtn({ active, onClick, icon, label }: any) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      className={cn(
-        "h-8 w-8 flex items-center justify-center rounded-md transition-colors",
-        active
-          ? "bg-primary text-primary-foreground"
-          : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-      )}
-    >
-      {icon}
-    </button>
-  );
-}
-
-function GateChip({
-  type,
-  onDragStart,
-}: {
-  type: string;
-  onDragStart: () => void;
-}) {
-  const def = GATES[type];
-  if (!def) return null;
-  return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData("text/gate", type);
-        onDragStart();
-      }}
-      className="group cursor-grab active:cursor-grabbing rounded-md border border-border bg-card/60 hover:border-primary/60 hover:bg-card px-2 py-2 text-xs transition-all hover:-translate-y-0.5 hover:shadow-md flex flex-col items-center gap-1"
-    >
-      <div className="h-8 w-full flex items-center justify-center rounded bg-background/60 border border-border/60 font-mono text-[13px] text-primary group-hover:signal-glow">
-        {def.symbol ?? def.label.slice(0, 3)}
-      </div>
-      <div className="text-[10px] text-muted-foreground group-hover:text-foreground truncate w-full text-center">
-        {def.label}
-      </div>
-    </div>
-  );
-}
-
-function GridBackground({
-  view,
-  size,
-}: {
-  view: { x: number; y: number; k: number };
-  size: { w: number; h: number };
-}) {
-  const step = GRID * view.k;
-  const offX = view.x % step,
-    offY = view.y % step;
-  return (
-    <svg
-      width={size.w}
-      height={size.h}
-      className="absolute inset-0 pointer-events-none"
-    >
-      <defs>
-        <pattern
-          id="grid-sm"
-          width={step}
-          height={step}
-          patternUnits="userSpaceOnUse"
-          x={offX}
-          y={offY}
-        >
-          <circle cx={0} cy={0} r={1} fill="var(--color-grid)" />
-        </pattern>
-        <pattern
-          id="grid-lg"
-          width={step * 5}
-          height={step * 5}
-          patternUnits="userSpaceOnUse"
-          x={offX}
-          y={offY}
-        >
-          <path
-            d={`M ${step * 5} 0 L 0 0 0 ${step * 5}`}
-            stroke="var(--color-grid)"
-            strokeWidth={0.6}
-            fill="none"
-            opacity={0.6}
-          />
-        </pattern>
-      </defs>
-      <rect width={size.w} height={size.h} fill="url(#grid-sm)" />
-      <rect width={size.w} height={size.h} fill="url(#grid-lg)" />
-    </svg>
-  );
-}
-
-function WirePath({
-  p1,
-  p2,
-  live,
-  running,
-  style,
-  selected,
-  preview,
-  onClick,
-}: any) {
-  const d = style === "ortho" ? orthoPath(p1, p2) : bezierPath(p1, p2);
-  const color = live ? "var(--color-signal-on)" : "var(--color-wire)";
-  return (
-    <g onClick={onClick} style={{ cursor: "pointer" }}>
-      <path d={d} stroke="transparent" strokeWidth={12} fill="none" />
-      <path
-        d={d}
-        stroke={color}
-        strokeWidth={selected ? 3 : 2}
-        fill="none"
-        strokeDasharray={preview ? "5 5" : undefined}
-        className={cn(live && running && "wire-flow", live && "signal-glow")}
-        style={{ opacity: preview ? 0.7 : 1 }}
-      />
-    </g>
-  );
-}
-
-function bezierPath(
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-) {
-  const dx = Math.max(40, Math.abs(p2.x - p1.x) / 2);
-  return `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
-}
-function orthoPath(p1: { x: number; y: number }, p2: { x: number; y: number }) {
-  const mx = (p1.x + p2.x) / 2;
-  return `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
-}
-
-function GateNode({
-  comp,
-  selected,
-  onMouseDown,
-  onClickBody,
-  onPinDown,
-  onPinUp,
-}: any) {
-  const def = GATES[comp.type];
-  if (!def) return null;
-  const active = comp.outputs.some(Boolean) || comp.state?.on;
-  const isIO = ["TOGGLE", "BUTTON", "CONST", "LED", "LAMP"].includes(comp.type);
-
-  return (
-    <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
-      {selected && (
-        <rect
-          x={-4}
-          y={-4}
-          width={def.width + 8}
-          height={def.height + 8}
-          rx={8}
-          fill="none"
-          stroke="var(--color-primary)"
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-        />
-      )}
-      <rect
-        x={0}
-        y={0}
-        width={def.width}
-        height={def.height}
-        rx={6}
-        fill="var(--color-card)"
-        stroke={active ? "var(--color-signal-on)" : "var(--color-border)"}
-        strokeWidth={1.5}
-        onClick={onClickBody}
-        style={{ cursor: isIO ? "pointer" : "grab" }}
-        className={cn(active && "signal-glow")}
-      />
-      <text
-        x={def.width / 2}
-        y={def.height / 2 + 5}
-        textAnchor="middle"
-        fill={active ? "var(--color-signal-on)" : "var(--color-foreground)"}
-        fontSize={14}
-        fontWeight={600}
-        fontFamily="var(--font-mono)"
-        pointerEvents="none"
-      >
-        {def.symbol ?? def.label}
-      </text>
-      <text
-        x={def.width / 2}
-        y={def.height + 14}
-        textAnchor="middle"
-        fill="var(--color-muted-foreground)"
-        fontSize={9}
-        pointerEvents="none"
-      >
-        {comp.label ?? def.label}
-      </text>
-      {(comp.type === "LED" || comp.type === "LAMP") && (
-        <circle
-          cx={def.width / 2}
-          cy={def.height / 2 - 4}
-          r={8}
-          fill={
-            comp.state?.on
-              ? "var(--color-signal-on)"
-              : "var(--color-signal-off)"
-          }
-          className={cn(comp.state?.on && "signal-glow")}
-        />
-      )}
-      {Array.from({ length: def.inputs }).map((_, i) => {
-        const y = (def.height / (def.inputs + 1)) * (i + 1);
-        return (
-          <g key={`in-${i}`}>
-            <line
-              x1={-8}
-              y1={y}
-              x2={0}
-              y2={y}
-              stroke="var(--color-wire)"
-              strokeWidth={1.5}
-            />
-            <circle
-              cx={-8}
-              cy={y}
-              r={5}
-              fill="var(--color-background)"
-              stroke="var(--color-wire)"
-              strokeWidth={1.5}
-              onMouseDown={(e: any) => onPinDown(i, "in", e)}
-              onMouseUp={(e: any) => onPinUp(i, "in", e)}
-              style={{ cursor: "crosshair" }}
-              className="hover:stroke-primary"
-            />
-          </g>
-        );
-      })}
-      {Array.from({ length: def.outputs }).map((_, i) => {
-        const y = (def.height / (def.outputs + 1)) * (i + 1);
-        const on = !!comp.outputs[i];
-        return (
-          <g key={`out-${i}`}>
-            <line
-              x1={def.width}
-              y1={y}
-              x2={def.width + 8}
-              y2={y}
-              stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
-              strokeWidth={1.5}
-            />
-            <circle
-              cx={def.width + 8}
-              cy={y}
-              r={5}
-              fill={on ? "var(--color-signal-on)" : "var(--color-background)"}
-              stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
-              strokeWidth={1.5}
-              onMouseDown={(e: any) => onPinDown(i, "out", e)}
-              onMouseUp={(e: any) => onPinUp(i, "out", e)}
-              style={{ cursor: "crosshair" }}
-              className={cn("hover:stroke-primary", on && "signal-glow")}
-            />
-          </g>
-        );
-      })}
-    </g>
-  );
-}
-
-function PropertiesPanel({ comp, onUpdate, onDelete, onDuplicate }: any) {
-  return (
-    <div className="p-3 border-b border-border">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
-        <Settings2 className="h-3.5 w-3.5" /> Properties
-      </div>
-      {!comp ? (
-        <div className="text-xs text-muted-foreground py-6 text-center border border-dashed border-border rounded-md">
-          Select a component to edit its properties.
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div>
-            <div className="text-[10px] uppercase text-muted-foreground mb-1">
-              Type
-            </div>
-            <div className="text-sm font-mono text-primary">
-              {GATES[comp.type]?.label ?? comp.type}
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] uppercase text-muted-foreground">
-              Label
-            </label>
-            <Input
-              value={comp.label ?? ""}
-              onChange={(e) => onUpdate(comp.id, { label: e.target.value })}
-              className="h-8 mt-1 bg-background/60"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">
-                X
-              </label>
-              <Input
-                type="number"
-                value={comp.x}
-                onChange={(e) =>
-                  onUpdate(comp.id, { x: Number(e.target.value) })
-                }
-                className="h-8 mt-1 bg-background/60"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">
-                Y
-              </label>
-              <Input
-                type="number"
-                value={comp.y}
-                onChange={(e) =>
-                  onUpdate(comp.id, { y: Number(e.target.value) })
-                }
-                className="h-8 mt-1 bg-background/60"
-              />
-            </div>
-          </div>
-          {(comp.type === "TOGGLE" || comp.type === "CONST") && (
-            <div>
-              <label className="text-[10px] uppercase text-muted-foreground">
-                State
-              </label>
-              <button
-                onClick={() =>
-                  onUpdate(comp.id, {
-                    state: { ...(comp.state ?? {}), on: !comp.state?.on },
-                  })
-                }
-                className={cn(
-                  "mt-1 w-full h-8 rounded-md border text-xs font-mono transition-colors",
-                  comp.state?.on
-                    ? "bg-signal-on/20 border-signal-on text-signal-on signal-glow"
-                    : "bg-background/60 border-border text-muted-foreground",
-                )}
-              >
-                {comp.state?.on ? "HIGH (1)" : "LOW (0)"}
-              </button>
-            </div>
-          )}
-          <div>
-            <div className="text-[10px] uppercase text-muted-foreground mb-1">
-              Live Outputs
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {comp.outputs.length === 0 ? (
-                <span className="text-xs text-muted-foreground">—</span>
-              ) : (
-                comp.outputs.map((o: boolean, i: number) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-mono border",
-                      o
-                        ? "bg-signal-on/20 border-signal-on text-signal-on"
-                        : "bg-secondary border-border text-muted-foreground",
-                    )}
-                  >
-                    {i}: {o ? "1" : "0"}
-                  </span>
-                ))
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2 pt-2 border-t border-border">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onDuplicate}
-              className="flex-1 h-8 gap-1"
-            >
-              <Copy className="h-3 w-3" /> Duplicate
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onDelete}
-              className="flex-1 h-8 gap-1 hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <Trash2 className="h-3 w-3" /> Delete
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ExplorerPanel({ snapshot, selection, setSelection }: any) {
-  const groups: Record<string, ComponentInstance[]> = {};
-  for (const c of Object.values(snapshot.components) as ComponentInstance[]) {
-    const cat = GATES[c.type]?.category ?? "Other";
-    (groups[cat] ||= []).push(c);
-  }
-  return (
-    <div className="flex-1 overflow-y-auto p-3">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-        <Cpu className="h-3.5 w-3.5" /> Circuit Explorer
-      </div>
-      {Object.keys(groups).length === 0 && (
-        <div className="text-xs text-muted-foreground py-4 text-center">
-          Empty circuit.
-        </div>
-      )}
-      {Object.entries(groups).map(([cat, list]) => (
-        <div key={cat} className="mb-2">
-          <div className="text-[10px] uppercase text-muted-foreground py-1">
-            {cat} · {list.length}
-          </div>
-          <div className="space-y-0.5">
-            {list.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setSelection(new Set([c.id]))}
-                className={cn(
-                  "w-full text-left px-2 py-1 rounded text-xs flex items-center gap-2 hover:bg-secondary transition-colors",
-                  selection.has(c.id) && "bg-primary/20 text-primary",
-                )}
-              >
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {GATES[c.type]?.symbol}
-                </span>
-                <span className="truncate">
-                  {c.label ?? GATES[c.type]?.label}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ConsolePanel({
-  tab,
-  setTab,
-  logs,
-  tick,
-  running,
-  snapshot,
-  stats,
-}: any) {
-  const [open, setOpen] = useState(true);
-  const tabs = [
-    { id: "log", label: "Simulation Log", icon: Terminal },
-    { id: "err", label: "Errors", icon: AlertTriangle },
-    { id: "warn", label: "Warnings", icon: AlertTriangle },
-    { id: "timeline", label: "Event Timeline", icon: Activity },
-    { id: "perf", label: "Performance", icon: Cpu },
-  ];
-  const filtered =
-    tab === "err"
-      ? logs.filter((l: any) => l.kind === "err")
-      : tab === "warn"
-        ? logs.filter((l: any) => l.kind === "warn")
-        : logs;
-  return (
-    <div
-      className={cn(
-        "shrink-0 border-t border-border bg-panel/80 transition-all",
-        open ? "h-48" : "h-8",
-      )}
-    >
-      <div className="h-8 flex items-center gap-1 px-2 border-b border-border">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => {
-              setTab(t.id);
-              setOpen(true);
-            }}
-            className={cn(
-              "h-7 px-2.5 text-xs rounded flex items-center gap-1.5 transition-colors",
-              tab === t.id && open
-                ? "bg-secondary text-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <t.icon className="h-3 w-3" /> {t.label}
-          </button>
-        ))}
-        <button
-          onClick={() => setOpen(!open)}
-          className="ml-auto text-xs text-muted-foreground hover:text-foreground px-2"
-        >
-          {open ? "▼" : "▲"}
-        </button>
-      </div>
-      {open && (
-        <div className="h-40 overflow-y-auto p-2 font-mono text-[11px]">
-          {tab === "perf" ? (
-            <div className="grid grid-cols-4 gap-2 text-xs">
-              <PerfCard
-                label="Components"
-                value={Object.keys(snapshot.components).length}
-              />
-              <PerfCard
-                label="Wires"
-                value={Object.keys(snapshot.wires).length}
-              />
-              <PerfCard label="Tick" value={tick} />
-              <PerfCard label="Events" value={stats.eventsProcessed} />
-            </div>
-          ) : tab === "timeline" ? (
-            <div className="space-y-1">
-              {logs.slice(-20).map((l: any, i: number) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-muted-foreground">
-                    {new Date(l.t).toLocaleTimeString()}
-                  </span>
-                  <span className="h-1 w-1 rounded-full bg-primary" />
-                  <span>{l.msg}</span>
-                </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-muted-foreground text-center py-6">
-              No entries.
-            </div>
-          ) : (
-            filtered.map((l: any, i: number) => (
-              <div
-                key={i}
-                className={cn(
-                  "py-0.5",
-                  l.kind === "err" && "text-destructive",
-                  l.kind === "warn" && "text-accent",
-                )}
-              >
-                <span className="text-muted-foreground">
-                  [{new Date(l.t).toLocaleTimeString()}]
-                </span>{" "}
-                {l.msg}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PerfCard({ label, value }: any) {
-  return (
-    <div className="rounded-md border border-border bg-card/60 p-2">
-      <div className="text-[10px] uppercase text-muted-foreground">{label}</div>
-      <div className="text-lg font-bold tabular-nums">{value}</div>
-    </div>
-  );
-}
-
-function Minimap({
-  snapshot,
-  view,
-  size,
-}: {
-  snapshot: CircuitSnapshot;
-  view: any;
-  size: any;
-}) {
-  const w = 180,
-    h = 120;
-  const comps = Object.values(snapshot.components);
-  if (!comps.length) return null;
-  let minX = 0,
-    minY = 0,
-    maxX = 400,
-    maxY = 300;
-  for (const c of comps) {
-    const d = GATES[c.type];
-    if (!d) continue;
-    minX = Math.min(minX, c.x);
-    minY = Math.min(minY, c.y);
-    maxX = Math.max(maxX, c.x + d.width);
-    maxY = Math.max(maxY, c.y + d.height);
-  }
-  const pad = 40;
-  minX -= pad;
-  minY -= pad;
-  maxX += pad;
-  maxY += pad;
-  const sx = w / (maxX - minX),
-    sy = h / (maxY - minY);
-  const s = Math.min(sx, sy);
-  const vx = (-view.x / view.k - minX) * s,
-    vy = (-view.y / view.k - minY) * s;
-  const vw = (size.w / view.k) * s,
-    vh = (size.h / view.k) * s;
-  return (
-    <div className="absolute bottom-3 right-3 glass-panel rounded-md p-1 shadow-lg pointer-events-none">
-      <svg width={w} height={h}>
-        {comps.map((c) => {
-          const d = GATES[c.type];
-          if (!d) return null;
-          return (
-            <rect
-              key={c.id}
-              x={(c.x - minX) * s}
-              y={(c.y - minY) * s}
-              width={d.width * s}
-              height={d.height * s}
-              fill="var(--color-primary)"
-              opacity={0.6}
-            />
-          );
-        })}
-        <rect
-          x={vx}
-          y={vy}
-          width={vw}
-          height={vh}
-          fill="none"
-          stroke="var(--color-primary)"
-          strokeWidth={1}
-        />
-      </svg>
-    </div>
-  );
-}
-
-// Imported types used in JSX
-type CircuitSnapshot = {
-  components: Record<string, ComponentInstance>;
-  wires: Record<string, Wire>;
-};
-
-function CommandPalette({
-  actions,
-  onClose,
-}: {
-  actions: { label: string; action: () => void }[];
-  onClose: () => void;
-}) {
-  const [q, setQ] = useState("");
-  const [i, setI] = useState(0);
-  const filtered = actions
-    .filter((a) => a.label.toLowerCase().includes(q.toLowerCase()))
-    .slice(0, 20);
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-start justify-center pt-24"
-      onClick={onClose}
-    >
-      <div
-        className="w-[520px] glass-panel rounded-xl shadow-2xl overflow-hidden animate-scale-in"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 px-3 border-b border-border">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            autoFocus
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setI(0);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown")
-                setI((v) => Math.min(v + 1, filtered.length - 1));
-              if (e.key === "ArrowUp") setI((v) => Math.max(v - 1, 0));
-              if (e.key === "Enter" && filtered[i]) {
-                filtered[i].action();
-                onClose();
-              }
-              if (e.key === "Escape") onClose();
-            }}
-            placeholder="Type a command…"
-            className="flex-1 bg-transparent h-12 text-sm outline-none"
-          />
-        </div>
-        <div className="max-h-80 overflow-y-auto p-1">
-          {filtered.map((a, idx) => (
-            <button
-              key={a.label}
-              onClick={() => {
-                a.action();
-                onClose();
-              }}
-              onMouseEnter={() => setI(idx)}
-              className={cn(
-                "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
-                idx === i
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-secondary",
-              )}
-            >
-              {a.label}
-            </button>
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-sm text-muted-foreground text-center py-8">
-              No commands found.
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

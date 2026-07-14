@@ -15,10 +15,7 @@
 
 import type { CircuitSnapshot } from "./types";
 import type { CircuitManager } from "./CircuitManager";
-
-const FORMAT_VERSION = 1;
-const MAX_HISTORY = 100;
-const STORAGE_KEY = "digital-gate-project";
+import { FORMAT_VERSION, MAX_HISTORY, STORAGE_KEY } from "@/constants";
 
 export interface SerializedProject {
   version: number;
@@ -27,10 +24,26 @@ export interface SerializedProject {
   circuit: CircuitSnapshot;
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj)) as T;
+}
+
+/** Migrate older project formats to the current schema */
+const migrate = (project: SerializedProject): SerializedProject => {
+  if (project.version === FORMAT_VERSION) return project;
+
+  // Future migration logic goes here
+  return { ...project, version: FORMAT_VERSION };
+};
+
+// ── Class ────────────────────────────────────────────────────────────────────
+
 export class ProjectManager {
   private history: CircuitSnapshot[] = [];
   private historyIndex = -1;
-  private projectName = "Untitled Circuit";
+  private projectName = "Untitled";
 
   constructor(private readonly manager: CircuitManager) {
     // Capture initial empty state
@@ -50,17 +63,13 @@ export class ProjectManager {
     this.history = this.history.slice(0, this.historyIndex + 1);
     this.history.push(deepClone(snap));
 
-    if (this.history.length > MAX_HISTORY) {
-      this.history.shift();
-    }
+    if (this.history.length > MAX_HISTORY) this.history.shift();
 
     this.historyIndex = this.history.length - 1;
   }
 
   undo(): boolean {
-    if (!this.canUndo()) {
-      return false;
-    }
+    if (!this.canUndo()) return false;
 
     this.historyIndex--;
     this.manager.loadSnapshot(deepClone(this.history[this.historyIndex]));
@@ -99,17 +108,13 @@ export class ProjectManager {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
 
-    if (name) {
-      this.projectName = name;
-    }
+    if (name) this.projectName = name;
   }
 
   loadFromLocalStorage(): boolean {
     const raw = localStorage.getItem(STORAGE_KEY);
 
-    if (!raw) {
-      return false;
-    }
+    if (!raw) return false;
 
     try {
       const project = JSON.parse(raw) as SerializedProject;
@@ -192,7 +197,7 @@ export class ProjectManager {
     });
   }
 
-  newProject(name = "Untitled Circuit"): void {
+  newProject(name = "Untitled"): void {
     this.projectName = name;
     this.history = [];
     this.historyIndex = -1;
@@ -207,39 +212,4 @@ export class ProjectManager {
   setProjectName(name: string): void {
     this.projectName = name;
   }
-
-  // ── Stubs for future persistence backends ─────────────────────────────────
-
-  /** Future: save to IndexedDB */
-  async saveToIndexedDB(): Promise<void> {
-    // TODO: implement IndexedDB persistence
-    this.saveToLocalStorage();
-  }
-
-  /** Future: load from IndexedDB */
-  async loadFromIndexedDB(): Promise<boolean> {
-    // TODO: implement IndexedDB persistence
-    return this.loadFromLocalStorage();
-  }
-
-  /** Future: sync to cloud */
-  async syncToCloud(): Promise<void> {
-    // TODO: implement cloud sync
-  }
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T;
-}
-
-/** Migrate older project formats to the current schema */
-function migrate(project: SerializedProject): SerializedProject {
-  if (project.version === FORMAT_VERSION) {
-    return project;
-  }
-
-  // Future migration logic goes here
-  return { ...project, version: FORMAT_VERSION };
 }

@@ -13,6 +13,7 @@
  *   3. Listeners receive a snapshot after every mutation.
  */
 
+import { v4 as uuidv4 } from "uuid";
 import type {
   ComponentInstance,
   Wire,
@@ -25,15 +26,14 @@ import type {
 import { GraphManager } from "./GraphManager";
 import {
   ComponentLibrary,
-  library as defaultLibrary,
+  library as defaultComponentLibrary,
 } from "./ComponentLibrary";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";
-
-let _idCounter = 0;
+import { ENGINE_EVENT_TYPE } from "@/constants";
 
 function uid(): string {
-  return `c${(++_idCounter).toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  return uuidv4();
 }
 
 export interface AddComponentOptions {
@@ -55,7 +55,7 @@ export class CircuitManager {
 
   private listeners: Set<EngineListener> = new Set();
 
-  constructor(lib: ComponentLibrary = defaultLibrary) {
+  constructor(lib: ComponentLibrary = defaultComponentLibrary) {
     this.library = lib;
     this.graph = new GraphManager();
     this.propagator = new SignalPropagator(this.graph, this.library);
@@ -76,16 +76,15 @@ export class CircuitManager {
     type: string,
     opts: AddComponentOptions = {},
   ): ComponentInstance {
+    const cid = uid();
     const def = this.library.get(type);
-    const id = uid();
     const initialState = def.initialState();
     const { outputs } = def.evaluate(
       new Array(def.inputs).fill(false),
       initialState,
     );
-
     const comp: ComponentInstance = {
-      id,
+      id: cid,
       type,
       x: opts.x ?? 0,
       y: opts.y ?? 0,
@@ -97,39 +96,36 @@ export class CircuitManager {
       properties: opts.properties,
     };
 
-    this.components[id] = comp;
-    this.graph.addNode(id);
+    this.components[cid] = comp;
+    this.graph.addNode(cid);
 
     // If it's an input source, immediately propagate its initial output
     if (def.isInput || def.isClock) {
-      this.engine.triggerPropagation([id]);
+      this.engine.triggerPropagation([cid]);
     }
 
-    this.emit({ type: "component-added", payload: comp });
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.COMPONENT_ADDED, payload: comp });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
 
     return comp;
   }
 
   removeComponent(id: string): void {
-    if (!this.components[id]) {
-      return;
-    }
+    if (!this.components[id]) return;
 
     // Remove all wires connected to this component
     const connected = Object.values(this.wires).filter(
       (w) => w.from.comp === id || w.to.comp === id,
     );
 
-    for (const w of connected) {
-      this.removeWire(w.id);
-    }
+    for (const w of connected) this.removeWire(w.id);
 
     this.graph.removeNode(id);
+
     delete this.components[id];
 
-    this.emit({ type: "component-removed", payload: { id } });
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.COMPONENT_REMOVED, payload: { id } });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   removeComponents(ids: string[]): void {
@@ -139,38 +135,32 @@ export class CircuitManager {
   moveComponent(id: string, x: number, y: number): void {
     const comp = this.components[id];
 
-    if (!comp) {
-      return;
-    }
+    if (!comp) return;
 
     this.components[id] = { ...comp, x, y };
     // Position change doesn't affect signals; just update snapshot
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   moveComponents(ids: string[], dx: number, dy: number): void {
     for (const id of ids) {
       const comp = this.components[id];
 
-      if (!comp) {
-        continue;
-      }
+      if (!comp) continue;
 
       this.components[id] = { ...comp, x: comp.x + dx, y: comp.y + dy };
     }
 
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   updateComponent(id: string, patch: Partial<ComponentInstance>): void {
     const comp = this.components[id];
 
-    if (!comp) {
-      return;
-    }
+    if (!comp) return;
 
     this.components[id] = { ...comp, ...patch };
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   /**
@@ -180,9 +170,7 @@ export class CircuitManager {
   setInput(id: string, stateUpdate: Record<string, unknown>): void {
     const comp = this.components[id];
 
-    if (!comp) {
-      return;
-    }
+    if (!comp) return;
 
     const def = this.library.get(comp.type);
     const newState = { ...(comp.state ?? {}), ...stateUpdate };
@@ -200,16 +188,12 @@ export class CircuitManager {
     toComp: string,
     toPin: number,
   ): Wire | null {
-    if (!this.components[fromComp] || !this.components[toComp]) {
-      return null;
-    }
+    if (!this.components[fromComp] || !this.components[toComp]) return null;
 
     // Prevent double-wiring the same input pin
     const existing = this.graph.getInputWire(toComp, toPin);
 
-    if (existing) {
-      return null;
-    }
+    if (existing) return null;
 
     const id = uid();
     const wire: Wire = {
@@ -220,9 +204,9 @@ export class CircuitManager {
 
     this.wires[id] = wire;
     this.graph.addWire(wire);
-
     // Immediately propagate through the newly connected path
     const srcComp = this.components[fromComp];
+
     if (srcComp) {
       // Update the target's input signal right away
       this.components[toComp] = {
@@ -233,8 +217,8 @@ export class CircuitManager {
       this.engine.triggerPropagation([fromComp]);
     }
 
-    this.emit({ type: "wire-added", payload: wire });
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.WIRE_ADDED, payload: wire });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
 
     return wire;
   }
@@ -242,11 +226,10 @@ export class CircuitManager {
   removeWire(wireId: string): void {
     const wire = this.wires[wireId];
 
-    if (!wire) {
-      return;
-    }
+    if (!wire) return;
 
     this.graph.removeWire(wireId);
+
     delete this.wires[wireId];
 
     // Clear the now-disconnected input pin
@@ -260,8 +243,8 @@ export class CircuitManager {
       this.engine.triggerPropagation([wire.to.comp]);
     }
 
-    this.emit({ type: "wire-removed", payload: { wireId } });
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.WIRE_REMOVED, payload: { wireId } });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   removeWires(wireIds: string[]): void {
@@ -302,7 +285,7 @@ export class CircuitManager {
 
   stepSimulation(): void {
     this.engine.step();
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   resetSimulation(): void {
@@ -360,7 +343,7 @@ export class CircuitManager {
 
     // Full propagation pass to restore signal state
     this.propagator.recomputeAll(this.components);
-    this.emit({ type: "snapshot-changed" });
+    this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
   // ── Event bus ─────────────────────────────────────────────────────────────
@@ -387,9 +370,7 @@ export class CircuitManager {
       if (wire) {
         const src = this.components[wire.from.comp];
 
-        if (src) {
-          inputs[pin] = src.outputs[wire.from.pin] ?? false;
-        }
+        if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
       }
     }
 

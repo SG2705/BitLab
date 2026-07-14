@@ -1,6 +1,8 @@
 // Core types for the Digital Gate simulation engine.
 // No UI or framework dependencies.
 
+import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/constants";
+
 export type SignalValue = boolean;
 export type ComponentId = string;
 export type WireId = string;
@@ -88,7 +90,8 @@ export interface ComponentDefinition {
 
 // ── Simulation state ──────────────────────────────────────────────────────────
 
-export type SimulationStatus = "idle" | "running" | "paused";
+export type SimulationStatus =
+  (typeof SIMULATION_STATUS)[keyof typeof SIMULATION_STATUS];
 
 export interface SimulationStats {
   tick: number;
@@ -101,18 +104,7 @@ export interface SimulationStats {
 // ── Engine event bus ──────────────────────────────────────────────────────────
 
 export type EngineEventType =
-  | "snapshot-changed" // circuit structure or signals changed
-  | "signal-changed" // a component's output signals changed
-  | "component-added"
-  | "component-removed"
-  | "wire-added"
-  | "wire-removed"
-  | "tick" // simulation clock ticked
-  | "started"
-  | "paused"
-  | "reset"
-  | "oscillation" // feedback loop detected
-  | "error";
+  (typeof ENGINE_EVENT_TYPE)[keyof typeof ENGINE_EVENT_TYPE];
 
 export interface EngineEvent {
   type: EngineEventType;

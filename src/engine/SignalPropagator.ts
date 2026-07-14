@@ -59,9 +59,8 @@ export class SignalPropagator {
 
     // Seed: queue direct downstream of each seed component
     for (const seedId of seeds) {
-      for (const downId of this.graph.getDownstream(seedId)) {
+      for (const downId of this.graph.getDownstream(seedId))
         queue.enqueue(downId, ranks.get(downId) ?? Number.MAX_SAFE_INTEGER);
-      }
     }
 
     let totalEvals = 0;
@@ -70,14 +69,12 @@ export class SignalPropagator {
       const compId = queue.dequeue()!;
       const comp = components[compId];
 
-      if (!comp) {
-        continue;
-      }
+      if (!comp) continue;
 
       const def = this.library.get(comp.type);
-
       // Oscillation guard
       const evals = (evalCount.get(compId) ?? 0) + 1;
+
       evalCount.set(compId, evals);
 
       if (evals > MAX_EVALS_PER_COMPONENT) {
@@ -95,9 +92,7 @@ export class SignalPropagator {
         if (wire) {
           const src = components[wire.from.comp];
 
-          if (src) {
-            inputs[pin] = src.outputs[wire.from.pin] ?? false;
-          }
+          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
         }
       }
 
@@ -133,15 +128,13 @@ export class SignalPropagator {
 
         if (outputChanged) {
           // Propagate further downstream
-          for (const downId of this.graph.getDownstream(compId)) {
+          for (const downId of this.graph.getDownstream(compId))
             queue.enqueue(downId, ranks.get(downId) ?? Number.MAX_SAFE_INTEGER);
-          }
         }
       } else {
         // Inputs are always updated even if outputs didn't change
-        if (inputs.some((v, i) => v !== comp.inputs[i])) {
+        if (inputs.some((v, i) => v !== comp.inputs[i]))
           components[compId] = { ...comp, inputs };
-        }
       }
     }
 
@@ -167,15 +160,11 @@ export class SignalPropagator {
     for (const compId of order) {
       const comp = components[compId];
 
-      if (!comp) {
-        continue;
-      }
+      if (!comp) continue;
 
       const def = this.library.get(comp.type);
 
-      if (def.isClock || def.isInput) {
-        continue; // these drive signals; don't re-evaluate
-      }
+      if (def.isClock || def.isInput) continue; // these drive signals; don't re-evaluate
 
       const inputs: SignalValue[] = new Array(def.inputs).fill(false);
 
@@ -185,16 +174,14 @@ export class SignalPropagator {
         if (wire) {
           const src = components[wire.from.comp];
 
-          if (src) {
-            inputs[pin] = src.outputs[wire.from.pin] ?? false;
-          }
+          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
         }
       }
 
-      const result = def.evaluate(inputs, comp.state);
-      totalEvals++;
-
       let outputChanged = false;
+      const result = def.evaluate(inputs, comp.state);
+
+      totalEvals++;
 
       for (let i = 0; i < result.outputs.length; i++) {
         if (result.outputs[i] !== comp.outputs[i]) {
@@ -203,6 +190,7 @@ export class SignalPropagator {
           break;
         }
       }
+
       const stateChanged =
         JSON.stringify(result.state) !== JSON.stringify(comp.state);
 

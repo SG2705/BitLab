@@ -15,6 +15,8 @@
 
 import type { Wire, WireId, ComponentId } from "./types";
 
+const KEY_SEPARATOR = ":";
+
 export class GraphManager {
   private downstream: Map<ComponentId, Set<ComponentId>> = new Map();
   private upstream: Map<ComponentId, Set<ComponentId>> = new Map();
@@ -33,13 +35,8 @@ export class GraphManager {
   // ── Nodes ──────────────────────────────────────────────────────────────────
 
   addNode(id: ComponentId): void {
-    if (!this.downstream.has(id)) {
-      this.downstream.set(id, new Set());
-    }
-
-    if (!this.upstream.has(id)) {
-      this.upstream.set(id, new Set());
-    }
+    if (!this.downstream.has(id)) this.downstream.set(id, new Set());
+    if (!this.upstream.has(id)) this.upstream.set(id, new Set());
 
     this.invalidate();
   }
@@ -63,46 +60,36 @@ export class GraphManager {
     this.wires.set(wire.id, wire);
 
     const { from, to } = wire;
+    const outKey = `${from.comp}${KEY_SEPARATOR}${from.pin}`;
 
     this.downstream.get(from.comp)?.add(to.comp);
     this.upstream.get(to.comp)?.add(from.comp);
 
-    const outKey = `${from.comp}:${from.pin}`;
+    if (!this.outputWires.has(outKey)) this.outputWires.set(outKey, []);
 
-    if (!this.outputWires.has(outKey)) {
-      this.outputWires.set(outKey, []);
-    }
+    this.outputWires.get(outKey)?.push(wire);
+    this.inputWires.set(`${to.comp}${KEY_SEPARATOR}${to.pin}`, wire);
 
-    this.outputWires.get(outKey)!.push(wire);
-
-    this.inputWires.set(`${to.comp}:${to.pin}`, wire);
     this.invalidate();
   }
 
   removeWire(wireId: WireId): void {
     const wire = this.wires.get(wireId);
-    if (!wire) {
-      return;
-    }
+
+    if (!wire) return;
 
     const { from, to } = wire;
-
-    const outKey = `${from.comp}:${from.pin}`;
+    const outKey = `${from.comp}${KEY_SEPARATOR}${from.pin}`;
     const outList = this.outputWires.get(outKey);
 
     if (outList) {
       const idx = outList.findIndex((w) => w.id === wireId);
 
-      if (idx >= 0) {
-        outList.splice(idx, 1);
-      }
-
-      if (outList.length === 0) {
-        this.outputWires.delete(outKey);
-      }
+      if (idx >= 0) outList.splice(idx, 1);
+      if (outList.length === 0) this.outputWires.delete(outKey);
     }
 
-    this.inputWires.delete(`${to.comp}:${to.pin}`);
+    this.inputWires.delete(`${to.comp}${KEY_SEPARATOR}${to.pin}`);
     this.wires.delete(wireId);
 
     // Rebuild adjacency only if no other wire still links the same pair
@@ -132,12 +119,12 @@ export class GraphManager {
 
   /** Wire feeding input pin[pinIndex] of compId, or null if unconnected */
   getInputWire(compId: ComponentId, pinIndex: number): Wire | null {
-    return this.inputWires.get(`${compId}:${pinIndex}`) ?? null;
+    return this.inputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? null;
   }
 
   /** All wires leaving output pin[pinIndex] of compId */
   getOutputWires(compId: ComponentId, pinIndex: number): Wire[] {
-    return this.outputWires.get(`${compId}:${pinIndex}`) ?? [];
+    return this.outputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? [];
   }
 
   getAllNodes(): ComponentId[] {
@@ -152,30 +139,23 @@ export class GraphManager {
    * participants are omitted (detected via hasCycle()).
    */
   topologicalSort(): ComponentId[] {
-    if (this.cachedOrder) {
-      return this.cachedOrder;
-    }
+    if (this.cachedOrder) return this.cachedOrder;
 
     const nodes = Array.from(this.downstream.keys());
     const inDeg = new Map<ComponentId, number>();
 
-    for (const id of nodes) {
-      inDeg.set(id, 0);
-    }
+    for (const id of nodes) inDeg.set(id, 0);
 
     for (const [id, ds] of this.downstream) {
       void id;
 
-      for (const d of ds) {
-        inDeg.set(d, (inDeg.get(d) ?? 0) + 1);
-      }
+      for (const d of ds) inDeg.set(d, (inDeg.get(d) ?? 0) + 1);
     }
 
     const queue: ComponentId[] = [];
+
     for (const [id, deg] of inDeg) {
-      if (deg === 0) {
-        queue.push(id);
-      }
+      if (deg === 0) queue.push(id);
     }
 
     const result: ComponentId[] = [];
@@ -188,9 +168,7 @@ export class GraphManager {
         const newDeg = (inDeg.get(next) ?? 0) - 1;
         inDeg.set(next, newDeg);
 
-        if (newDeg === 0) {
-          queue.push(next);
-        }
+        if (newDeg === 0) queue.push(next);
       }
     }
 
@@ -204,9 +182,7 @@ export class GraphManager {
    * Components not in the sort (cycle participants) get rank Number.MAX_SAFE_INTEGER.
    */
   getTopologicalRanks(): Map<ComponentId, number> {
-    if (this.cachedRanks) {
-      return this.cachedRanks;
-    }
+    if (this.cachedRanks) return this.cachedRanks;
 
     const order = this.topologicalSort();
     const ranks = new Map<ComponentId, number>();
@@ -214,11 +190,10 @@ export class GraphManager {
     for (let i = 0; i < order.length; i++) {
       ranks.set(order[i], i);
     }
+
     // Assign high rank to cycle participants so they still get processed
     for (const id of this.downstream.keys()) {
-      if (!ranks.has(id)) {
-        ranks.set(id, Number.MAX_SAFE_INTEGER);
-      }
+      if (!ranks.has(id)) ranks.set(id, Number.MAX_SAFE_INTEGER);
     }
 
     this.cachedRanks = ranks;
