@@ -4,15 +4,11 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
 import { IntlProvider } from "react-intl";
 import { defaultLocale } from "@/i18n";
 import enMessages from "@/i18n/locales/en.json";
-
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 function NotFoundComponent() {
   return (
@@ -76,64 +72,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
-    head: () => ({
-      meta: [
-        { charSet: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { title: "BitLab — Digital Logic Circuit Designer" },
-        {
-          name: "description",
-          content:
-            "A modern, professional digital logic circuit designer. Build, simulate, and share circuits with an EDA-grade infinite canvas.",
-        },
-        { name: "author", content: "Sagar Gupta" },
-        {
-          property: "og:title",
-          content: "BitLab — Digital Logic Circuit Designer",
-        },
-        {
-          property: "og:description",
-          content:
-            "Design, simulate, and share digital logic circuits in a beautiful infinite canvas.",
-        },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
-      ],
-      links: [
-        {
-          rel: "stylesheet",
-          href: appCss,
-        },
-        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-        {
-          rel: "icon",
-          href: "/favicon-32x32.png",
-          type: "image/png",
-          sizes: "32x32",
-        },
-        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-      ],
-    }),
-    shellComponent: RootShell,
     component: RootComponent,
     notFoundComponent: NotFoundComponent,
     errorComponent: ErrorComponent,
   },
 );
-
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
