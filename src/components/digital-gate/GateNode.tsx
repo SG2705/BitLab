@@ -69,7 +69,7 @@ function SevenSegDisplay({ value }: { value: number }) {
 
 interface GateNodeProps {
   comp: ComponentInstance;
-  selected: boolean;
+  isSelected: boolean;
   onMouseDown: (e: React.MouseEvent) => void;
   onClickBody: () => void;
   onPinDown: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
@@ -78,7 +78,7 @@ interface GateNodeProps {
 
 function GateNode({
   comp,
-  selected,
+  isSelected,
   onMouseDown,
   onClickBody,
   onPinDown,
@@ -98,7 +98,7 @@ function GateNode({
 
   return (
     <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
-      {selected && (
+      {isSelected && (
         <rect
           x={-4}
           y={-4}

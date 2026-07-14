@@ -11,9 +11,6 @@
   "/VTiBR": {
     "defaultMessage": "Encoder 4:2"
   },
-  "0TVISU": {
-    "defaultMessage": "for the command palette"
-  },
   "0s79PB": {
     "defaultMessage": "JK Flip-Flop"
   },
@@ -23,6 +20,9 @@
   "1iDGfg": {
     "defaultMessage": "{count} components"
   },
+  "1sqhhP": {
+    "defaultMessage": "for the command palette"
+  },
   "224+9R": {
     "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
   },
@@ -31,6 +31,9 @@
   },
   "4fHiNl": {
     "defaultMessage": "Duplicate"
+  },
+  "5M6TNP": {
+    "defaultMessage": "Press"
   },
   "73Dt+K": {
     "defaultMessage": "BitLab v{version} · Event-Driven"
@@ -146,9 +149,6 @@
   "e+L5nJ": {
     "defaultMessage": "LOW (0)"
   },
-  "eA7dRH": {
-    "defaultMessage": "Palette"
-  },
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
@@ -224,19 +224,22 @@
   "tFFMkF": {
     "defaultMessage": "Pause"
   },
+  "tSOV46": {
+    "defaultMessage": "Digital Logic Simulator Canvas"
+  },
   "uEqOPm": {
     "defaultMessage": "Mux 2:1"
   },
   "uPTSs/": {
     "defaultMessage": "AND-3"
   },
-  "uizmax": {
-    "defaultMessage": "Press"
-  },
   "vCWikx": {
     "defaultMessage": "Tick"
   },
   "wS/QCK": {
     "defaultMessage": "Inputs"
+  },
+  "wgnt2g": {
+    "defaultMessage": "Palette"
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 import {
   Activity,
   ChevronDown,
@@ -66,6 +66,8 @@ for (const cat of GATE_CATEGORIES) {
  * DigitalGateApp
  */
 function DigitalGateApp() {
+  const intl = useIntl();
+
   // States
   const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
   const [clockSpeed, setClockSpeed] = useState(8);
@@ -245,10 +247,12 @@ function DigitalGateApp() {
 
   const onCanvasMouseMove = (e: React.MouseEvent) => {
     if (panning && panStartRef.current) {
+      const pan = panStartRef.current;
+
       setView((v) => ({
         ...v,
-        x: panStartRef.current!.vx + (e.clientX - panStartRef.current!.x),
-        y: panStartRef.current!.vy + (e.clientY - panStartRef.current!.y),
+        x: pan.vx + (e.clientX - pan.x),
+        y: pan.vy + (e.clientY - pan.y),
       }));
 
       return;
@@ -643,8 +647,14 @@ function DigitalGateApp() {
             </span>
           </div>
 
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             ref={canvasRef}
+            role="application"
+            aria-label={intl.formatMessage({
+              id: "tSOV46",
+              defaultMessage: "Digital Logic Simulator Canvas",
+            })}
             className={cn(
               "absolute inset-0 overflow-hidden select-none",
               panning || tool === TOOL.PAN
@@ -785,13 +795,13 @@ function DigitalGateApp() {
                     />
                   </div>
                   <div className="text-xs text-muted-foreground mt-3">
-                    <FormattedMessage id="uizmax" defaultMessage="Press" />
+                    <FormattedMessage id="5M6TNP" defaultMessage="Press " />
                     <kbd className="px-1.5 py-0.5 rounded bg-secondary border border-border">
                       <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
                     </kbd>
                     <FormattedMessage
-                      id="0TVISU"
-                      defaultMessage="for the command palette"
+                      id="1sqhhP"
+                      defaultMessage=" for the command palette"
                     />
                   </div>
                 </div>
