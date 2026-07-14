@@ -10,14 +10,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createEngine } from "@/engine";
+
 import type {
   CircuitSnapshot,
   ComponentInstance,
-  Wire,
-  SimulationStatus,
   SimulationStats,
+  SimulationStatus,
+  Wire,
 } from "@/engine";
+import { createEngine } from "@/engine";
 import {
   DEFAULT_CLOCK,
   EMPTY_SNAPSHOT,
@@ -76,6 +77,9 @@ export interface DigitalEngineControls {
   loadProjectFromLocal: () => void;
 }
 
+/**
+ * useDigitalEngine
+ */
 export function useDigitalEngine(
   clockHz = DEFAULT_CLOCK,
 ): DigitalEngineControls {

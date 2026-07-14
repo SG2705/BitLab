@@ -5,10 +5,10 @@
  * This file keeps the UI helper functions that depend on component geometry.
  */
 
-import { PIN_KIND } from "@/lib/constants";
-import { library } from "@/engine";
 import type { ComponentInstance } from "@/engine";
-import { PinKind } from "@/lib/types";
+import { library } from "@/engine";
+import { PIN_KIND } from "@/lib/constants";
+import { type PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";
 export type { ComponentInstance as CircuitComp };

@@ -1,41 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormattedMessage } from "react-intl";
 import {
-  Search,
-  Zap,
+  Activity,
+  ChevronDown,
+  ChevronRight,
   Cpu,
   Grid3x3,
-  Activity,
-  ChevronRight,
-  ChevronDown,
-  MousePointer2,
   Hand,
+  MousePointer2,
+  Search,
+  Zap,
 } from "lucide-react";
+
+import { Input } from "@/components/ui/input";
+import type { ComponentInstance } from "@/engine";
 import { library } from "@/engine";
 import { useDigitalEngine } from "@/hooks/use-digitalengine";
-import type { ComponentInstance } from "@/engine";
-import { Input } from "@/components/ui/input";
-import { cn, addLog, fm, snap } from "@/lib/utils";
 import { pinPos } from "@/lib/circuit";
-
-import TopBar from "./TopBar";
-import ToolBtn from "./ToolBtn";
-import GateChip from "./GateChip";
-import GridBackground from "./GridBackground";
-import WirePath from "./WirePath";
-import GateNode from "./GateNode";
-import PropertiesPanel from "./PropertiesPanel";
-import ExplorerPanel from "./ExplorerPanel";
-import ConsolePanel from "./ConsolePanel";
-import Minimap from "./Minimap";
-import CommandPalette from "./CommandPalette";
-import {
-  ConsoleTab,
-  LogEntry,
-  PinKind,
-  Theme,
-  Tool,
-  WireType,
-} from "@/lib/types";
 import {
   BASE_LOG,
   CONSOLE_TAB,
@@ -48,7 +29,28 @@ import {
   TOOL,
   WIRE_TYPE,
 } from "@/lib/constants";
+import {
+  type ConsoleTab,
+  type LogEntry,
+  type PinKind,
+  type Theme,
+  type Tool,
+  type WireType,
+} from "@/lib/types";
+import { addLog, cn, fm, snap } from "@/lib/utils";
+
 import BottomBar from "./BottomBar";
+import CommandPalette from "./CommandPalette";
+import ConsolePanel from "./ConsolePanel";
+import ExplorerPanel from "./ExplorerPanel";
+import GateChip from "./GateChip";
+import GateNode from "./GateNode";
+import GridBackground from "./GridBackground";
+import Minimap from "./Minimap";
+import PropertiesPanel from "./PropertiesPanel";
+import ToolBtn from "./ToolBtn";
+import TopBar from "./TopBar";
+import WirePath from "./WirePath";
 
 const GATE_CATEGORIES = library.getCategories();
 const DEFAULT_OPEN_GATE = Object.fromEntries(
@@ -60,7 +62,10 @@ for (const cat of GATE_CATEGORIES) {
   for (const g of cat.gates) GATES[g] = library.get(g);
 }
 
-export function DigitalGateApp() {
+/**
+ * DigitalGateApp
+ */
+function DigitalGateApp() {
   // States
   const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
   const [clockSpeed, setClockSpeed] = useState(8);
@@ -93,7 +98,7 @@ export function DigitalGateApp() {
   } = useDigitalEngine(clockSpeed);
 
   const running = status === SIMULATION_STATUS.RUNNING;
-  const tick = stats.tick;
+  const { tick } = stats;
 
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selWires, setSelWires] = useState<Set<string>>(new Set());
@@ -150,6 +155,7 @@ export function DigitalGateApp() {
 
     ro.observe(el);
 
+    // eslint-disable-next-line consistent-return
     return () => ro.disconnect();
   }, []);
 
@@ -160,7 +166,9 @@ export function DigitalGateApp() {
 
   const toWorld = useCallback(
     (sx: number, sy: number) => {
-      const rect = canvasRef.current!.getBoundingClientRect();
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect) return { x: 0, y: 0 };
 
       return {
         x: (sx - rect.left - view.x) / view.k,
@@ -190,7 +198,10 @@ export function DigitalGateApp() {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
 
-      const rect = canvasRef.current!.getBoundingClientRect();
+      const rect = canvasRef.current?.getBoundingClientRect();
+
+      if (!rect) return;
+
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       const k = Math.min(3, Math.max(0.2, view.k * (e.deltaY < 0 ? 1.1 : 0.9)));
@@ -521,7 +532,8 @@ export function DigitalGateApp() {
         <aside className="w-64 shrink-0 border-r border-border bg-panel/60 flex flex-col">
           <div className="p-3 border-b border-border">
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-              <Cpu className="h-3.5 w-3.5" /> Components
+              <Cpu className="h-3.5 w-3.5" />
+              <FormattedMessage id="AcAA5x" defaultMessage="Components" />
             </div>
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -537,6 +549,7 @@ export function DigitalGateApp() {
             {filteredCats.map((cat) => (
               <div key={cat.name}>
                 <button
+                  type="button"
                   onClick={() =>
                     setOpenCats((o) => ({ ...o, [cat.name]: !o[cat.name] }))
                   }
@@ -604,19 +617,29 @@ export function DigitalGateApp() {
           {/* Canvas fit */}
           <div className="absolute z-20 top-3 right-3 flex items-center gap-1 glass-panel rounded-lg p-1 text-xs shadow-lg">
             <button
+              type="button"
+              tabIndex={0}
               onClick={fitToScreen}
               className="px-2 py-1 rounded hover:bg-secondary transition-colors"
             >
-              Fit
+              <FormattedMessage id="N2HbmZ" defaultMessage="Fit" />
             </button>
             <button
+              type="button"
+              tabIndex={0}
               onClick={() => setView({ x: 0, y: 0, k: 1 })}
               className="px-2 py-1 rounded hover:bg-secondary transition-colors"
             >
-              100%
+              <FormattedMessage id="8ZVfG8" defaultMessage="100%" />
             </button>
             <span className="px-2 text-muted-foreground tabular-nums">
-              {Math.round(view.k * 100)}%
+              <FormattedMessage
+                id="qnonu0"
+                defaultMessage="{percentage}%"
+                values={{
+                  percentage: Math.round(view.k * 100),
+                }}
+              />
             </span>
           </div>
 
@@ -664,7 +687,7 @@ export function DigitalGateApp() {
                       live={live}
                       running={running}
                       style={wireStyle}
-                      selected={selWires.has(w.id)}
+                      isSelected={selWires.has(w.id)}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 
@@ -695,7 +718,7 @@ export function DigitalGateApp() {
                         live={false}
                         running={false}
                         style={wireStyle}
-                        preview
+                        isPreview
                       />
                     );
                   })()}
@@ -703,7 +726,7 @@ export function DigitalGateApp() {
                   <GateNode
                     key={c.id}
                     comp={c}
-                    selected={selection.has(c.id)}
+                    isSelected={selection.has(c.id)}
                     onClickBody={() => handleCompClick(c)}
                     onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
                     onPinDown={(
@@ -749,16 +772,27 @@ export function DigitalGateApp() {
                   <div className="mx-auto mb-4 h-16 w-16 rounded-2xl glass-panel flex items-center justify-center">
                     <Zap className="h-7 w-7 text-primary" />
                   </div>
-                  <div className="text-lg font-semibold">Start designing</div>
+                  <div className="text-lg font-semibold">
+                    <FormattedMessage
+                      id="GkBxYy"
+                      defaultMessage="Start designing"
+                    />
+                  </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Drag a component from the toolbox onto the canvas.
+                    <FormattedMessage
+                      id="G/iTZ2"
+                      defaultMessage="Drag a component from the toolbox onto the canvas."
+                    />
                   </div>
                   <div className="text-xs text-muted-foreground mt-3">
-                    Press{" "}
+                    <FormattedMessage id="uizmax" defaultMessage="Press" />
                     <kbd className="px-1.5 py-0.5 rounded bg-secondary border border-border">
-                      ⌘K
-                    </kbd>{" "}
-                    for the command palette
+                      <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
+                    </kbd>
+                    <FormattedMessage
+                      id="0TVISU"
+                      defaultMessage="for the command palette"
+                    />
                   </div>
                 </div>
               </div>
@@ -791,7 +825,7 @@ export function DigitalGateApp() {
         setTab={setConsoleTab}
         logs={logs}
         tick={tick}
-        running={running}
+
         snapshot={snapshot}
         stats={stats}
       />
@@ -840,3 +874,5 @@ export function DigitalGateApp() {
     </div>
   );
 }
+
+export default DigitalGateApp;

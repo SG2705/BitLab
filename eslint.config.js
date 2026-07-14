@@ -16,19 +16,30 @@ const __dirname = path.dirname(__filename);
 
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
+// Rules removed or renamed in @typescript-eslint v8 that airbnb-typescript still references
+const REMOVED_TS_RULES = new Set([
+  "@typescript-eslint/lines-between-class-members",
+  "@typescript-eslint/no-throw-literal",
+  "@typescript-eslint/no-loss-of-precision",
+  "@typescript-eslint/no-extra-semi",
+]);
+
+function stripRemovedRules(configs) {
+  return configs.map((config) => {
+    if (!config.rules) return config;
+    const rules = Object.fromEntries(
+      Object.entries(config.rules).filter(
+        ([key]) => !REMOVED_TS_RULES.has(key),
+      ),
+    );
+    return { ...config, rules };
+  });
+}
+
 export default tseslint.config(
   // Ignore patterns
   {
-    ignores: [
-      "dist",
-      "coverage",
-      "node_modules",
-      "__mocks__/**/*",
-      "eslint.config.js",
-      "svgo.config.js",
-      "jest.config.js",
-      "setupTests.ts",
-    ],
+    ignores: ["dist", "node_modules", "eslint.config.js"],
   },
 
   js.configs.recommended,
@@ -39,7 +50,10 @@ export default tseslint.config(
   ...tseslint.configs.strict,
 
   // Airbnb style guide (legacy config via compat bridge)
-  ...compat.extends("airbnb", "airbnb-typescript", "airbnb/hooks"),
+  // stripRemovedRules filters out @typescript-eslint rules removed in v8
+  ...stripRemovedRules(
+    compat.extends("airbnb", "airbnb-typescript", "airbnb/hooks"),
+  ),
 
   // Main rules for all source files
   {
@@ -66,6 +80,8 @@ export default tseslint.config(
       // =====================
       // React-Specific Rules
       // =====================
+      "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
       "react/jsx-no-useless-fragment": ["warn", { allowExpressions: true }],
       "react/prop-types": "off",
       "react/jsx-filename-extension": "off",
@@ -119,6 +135,7 @@ export default tseslint.config(
       // =====================
       // Import Rules
       // =====================
+
       "import/extensions": [
         "error",
         "ignorePackages",
@@ -145,6 +162,7 @@ export default tseslint.config(
       // =====================
       // Import Sorting Rules
       // =====================
+      "import/extensions": ["error", "never"],
       "simple-import-sort/imports": [
         "error",
         {
@@ -170,6 +188,8 @@ export default tseslint.config(
       "comma-spacing": ["error", { before: false, after: true }],
       "space-in-parens": ["error", "never"],
       "padded-blocks": ["error", "never"],
+      "no-restricted-syntax": "off",
+      "no-continue": "off",
 
       // =====================
       // Whitespace & Formatting Rules
@@ -217,20 +237,14 @@ export default tseslint.config(
     .extends(
       "plugin:jest/recommended",
       "plugin:jest-dom/recommended",
-      "plugin:testing-library/react"
+      "plugin:testing-library/react",
     )
     .map((config) => ({
       ...config,
-      files: [
-        "**/__tests__/**/*.[jt]s?(x)",
-        "**/?(*.)+(spec|test).[jt]s?(x)",
-      ],
+      files: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
     })),
   {
-    files: [
-      "**/__tests__/**/*.[jt]s?(x)",
-      "**/?(*.)+(spec|test).[jt]s?(x)",
-    ],
+    files: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
     languageOptions: {
       globals: {
         ...pluginJest.environments.globals.globals,
@@ -263,5 +277,5 @@ export default tseslint.config(
   },
 
   // Prettier must be last to override any conflicting formatting rules
-  eslintPluginPrettier
+  eslintPluginPrettier,
 );

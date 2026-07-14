@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import { GATES } from "@/lib/circuit";
-import type { ComponentInstance } from "@/engine";
 import { memo } from "react";
+
+import type { ComponentInstance } from "@/engine";
+import { GATES } from "@/lib/circuit";
 import {
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
@@ -10,7 +10,8 @@ import {
   GATE_TYPE_TOGGLE,
   PIN_KIND,
 } from "@/lib/constants";
-import { PinKind } from "@/lib/types";
+import { type PinKind } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 // [a, b, c, d, e, f, g] segment patterns for hex digits 0-F
 const SEG7: boolean[][] = [
@@ -44,12 +45,14 @@ const SEG_RECTS = [
 ];
 
 function SevenSegDisplay({ value }: { value: number }) {
+  // eslint-disable-next-line no-bitwise
   const pattern = SEG7[value & 0xf] ?? SEG7[0];
 
   return (
     <g transform="translate(16, 8)">
       {SEG_RECTS.map(([x, y, w, h], i) => (
         <rect
+          // eslint-disable-next-line react/no-array-index-key
           key={i}
           x={x}
           y={y}
@@ -165,6 +168,7 @@ function GateNode({
         const y = (def.height / (def.inputs + 1)) * (i + 1);
 
         return (
+          // eslint-disable-next-line react/no-array-index-key
           <g key={`gate-node-in-${i}`}>
             <line
               x1={-8}
@@ -194,6 +198,7 @@ function GateNode({
         const on = Boolean(comp.outputs[i]);
 
         return (
+          // eslint-disable-next-line react/no-array-index-key
           <g key={`gate-node-out-${i}`}>
             <line
               x1={def.width}

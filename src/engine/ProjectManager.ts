@@ -13,9 +13,10 @@
  *   • Cloud sync (stub interface provided)
  */
 
-import type { CircuitSnapshot } from "./types";
-import type { CircuitManager } from "./CircuitManager";
 import { FORMAT_VERSION, MAX_HISTORY, STORAGE_KEY } from "@/lib/constants";
+
+import type { CircuitManager } from "./CircuitManager";
+import type { CircuitSnapshot } from "./types";
 
 export interface SerializedProject {
   version: number;
@@ -60,6 +61,7 @@ export class ProjectManager {
   push(snapshot?: CircuitSnapshot): void {
     const snap = snapshot ?? this.manager.getSnapshot();
     // Truncate redo branch
+
     this.history = this.history.slice(0, this.historyIndex + 1);
     this.history.push(deepClone(snap));
 
@@ -71,7 +73,7 @@ export class ProjectManager {
   undo(): boolean {
     if (!this.canUndo()) return false;
 
-    this.historyIndex--;
+    this.historyIndex -= 1;
     this.manager.loadSnapshot(deepClone(this.history[this.historyIndex]));
 
     return true;
@@ -82,7 +84,7 @@ export class ProjectManager {
       return false;
     }
 
-    this.historyIndex++;
+    this.historyIndex += 1;
     this.manager.loadSnapshot(deepClone(this.history[this.historyIndex]));
 
     return true;
@@ -119,6 +121,7 @@ export class ProjectManager {
     try {
       const project = JSON.parse(raw) as SerializedProject;
       const migrated = migrate(project);
+
       this.projectName = migrated.name;
       this.manager.loadSnapshot(migrated.circuit);
       this.push();
@@ -143,6 +146,7 @@ export class ProjectManager {
   importJSON(json: string): void {
     const project = JSON.parse(json) as SerializedProject;
     const migrated = migrate(project);
+
     this.projectName = migrated.name;
     this.manager.loadSnapshot(migrated.circuit);
     this.push();
@@ -169,6 +173,7 @@ export class ProjectManager {
 
       input.type = "file";
       input.accept = ".json,.dgate.json";
+
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
 

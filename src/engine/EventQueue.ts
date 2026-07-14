@@ -64,6 +64,7 @@ export class EventQueue {
 
   private shiftUp(i: number): void {
     while (i > 0) {
+      // eslint-disable-next-line no-bitwise
       const parent = (i - 1) >> 1;
 
       if (this.heap[parent].priority <= this.heap[i].priority) {
@@ -103,3 +104,5 @@ export class EventQueue {
     }
   }
 }
+
+export default EventQueue;

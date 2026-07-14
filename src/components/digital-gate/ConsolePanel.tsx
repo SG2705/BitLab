@@ -1,9 +1,11 @@
 import { memo, useState } from "react";
-import { Terminal, AlertTriangle, Activity, Cpu } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { FormattedMessage } from "react-intl";
+import { Activity, AlertTriangle, Cpu, Terminal } from "lucide-react";
+
 import type { CircuitSnapshot, SimulationStats } from "@/engine";
-import { ConsoleTab, LogEntry } from "@/lib/types";
 import { CONSOLE_TAB } from "@/lib/constants";
+import { type ConsoleTab, type LogEntry } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface PerfCardProps {
   label: string;
@@ -24,7 +26,6 @@ interface ConsolePanelProps {
   setTab: (t: ConsoleTab) => void;
   logs: LogEntry[];
   tick: number;
-  running: boolean;
   snapshot: CircuitSnapshot;
   stats: SimulationStats;
 }
@@ -34,7 +35,6 @@ function ConsolePanel({
   setTab,
   logs,
   tick,
-  running: _running,
   snapshot,
   stats,
 }: ConsolePanelProps) {
@@ -60,12 +60,79 @@ function ConsolePanel({
     { id: CONSOLE_TAB.PERF, label: "Performance", icon: Cpu },
   ];
 
-  const filtered =
-    tab === CONSOLE_TAB.ERROR
-      ? logs.filter((l) => l.kind === CONSOLE_TAB.ERROR)
-      : tab === CONSOLE_TAB.WARN
-        ? logs.filter((l) => l.kind === CONSOLE_TAB.WARN)
-        : logs;
+  const getFiltered = () => {
+    if (tab === CONSOLE_TAB.ERROR) {
+      return logs.filter((l) => l.kind === CONSOLE_TAB.ERROR);
+    }
+
+    if (tab === CONSOLE_TAB.WARN) {
+      return logs.filter((l) => l.kind === CONSOLE_TAB.WARN);
+    }
+
+    return logs;
+  };
+
+  const renderTabs = (tabId: ConsoleTab) => {
+    const filtered = getFiltered();
+
+    if (tabId === CONSOLE_TAB.PERF) {
+      return (
+        <div className="grid grid-cols-4 gap-2 text-xs">
+          <PerfCard
+            label="Components"
+            value={Object.keys(snapshot.components).length}
+          />
+          <PerfCard label="Wires" value={Object.keys(snapshot.wires).length} />
+          <PerfCard label="Tick" value={tick} />
+          <PerfCard label="Events" value={stats.eventsProcessed} />
+        </div>
+      );
+    }
+
+    if (tabId === CONSOLE_TAB.TIMELINE) {
+      return (
+        <div className="space-y-1">
+          {logs.slice(-20).map((l, i) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-muted-foreground">
+                {new Date(l.t).toLocaleTimeString()}
+              </span>
+              <span className="h-1 w-1 rounded-full bg-primary" />
+              <span>{l.msg}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (filtered.length === 0) {
+      return (
+        <div className="text-muted-foreground text-center py-6">
+          <FormattedMessage id="pYCJ3X" defaultMessage=" No entries." />
+        </div>
+      );
+    }
+
+    return filtered.map((l, i) => (
+      <div
+        // eslint-disable-next-line react/no-array-index-key
+        key={i}
+        className={cn(
+          "py-0.5",
+          l.kind === CONSOLE_TAB.ERROR && "text-destructive",
+          l.kind === CONSOLE_TAB.WARN && "text-accent",
+        )}
+      >
+        <span className="text-muted-foreground">
+          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}[
+          {new Date(l.t).toLocaleTimeString()}]
+        </span>
+        {l.msg}
+      </div>
+    ));
+  };
 
   return (
     <div
@@ -78,6 +145,7 @@ function ConsolePanel({
         {tabs.map((t) => (
           <button
             key={t.id}
+            type="button"
             onClick={() => {
               setTab(t.id);
               setOpen(true);
@@ -93,60 +161,17 @@ function ConsolePanel({
           </button>
         ))}
         <button
+          type="button"
           onClick={() => setOpen(!open)}
           className="ml-auto text-xs text-muted-foreground hover:text-foreground px-2"
         >
+          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
           {open ? "▼" : "▲"}
         </button>
       </div>
       {open && (
         <div className="h-40 overflow-y-auto p-2 font-mono text-[11px]">
-          {tab === CONSOLE_TAB.PERF ? (
-            <div className="grid grid-cols-4 gap-2 text-xs">
-              <PerfCard
-                label="Components"
-                value={Object.keys(snapshot.components).length}
-              />
-              <PerfCard
-                label="Wires"
-                value={Object.keys(snapshot.wires).length}
-              />
-              <PerfCard label="Tick" value={tick} />
-              <PerfCard label="Events" value={stats.eventsProcessed} />
-            </div>
-          ) : tab === CONSOLE_TAB.TIMELINE ? (
-            <div className="space-y-1">
-              {logs.slice(-20).map((l, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="text-muted-foreground">
-                    {new Date(l.t).toLocaleTimeString()}
-                  </span>
-                  <span className="h-1 w-1 rounded-full bg-primary" />
-                  <span>{l.msg}</span>
-                </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-muted-foreground text-center py-6">
-              No entries.
-            </div>
-          ) : (
-            filtered.map((l, i) => (
-              <div
-                key={i}
-                className={cn(
-                  "py-0.5",
-                  l.kind === "err" && "text-destructive",
-                  l.kind === "warn" && "text-accent",
-                )}
-              >
-                <span className="text-muted-foreground">
-                  [{new Date(l.t).toLocaleTimeString()}]
-                </span>{" "}
-                {l.msg}
-              </div>
-            ))
-          )}
+          {renderTabs(tab)}
         </div>
       )}
     </div>

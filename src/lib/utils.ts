@@ -1,21 +1,21 @@
-import { clsx, type ClassValue } from "clsx";
+import { type SetStateAction } from "react";
+import { createIntl, createIntlCache, type IntlShape } from "react-intl";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { createIntl, createIntlCache, IntlShape } from "react-intl";
-import { GRID, MESSAGES, Messages } from "@/lib/constants";
-import { ConsoleTab, LogEntry } from "../types";
-import { SetStateAction } from "react";
+import { GRID, MESSAGES, type Messages } from "@/lib/constants";
+import { type ConsoleTab, type LogEntry } from "@/lib/types";
 
-export function cn(...inputs: ClassValue[]) {
+export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
-}
+};
 
-const _cache = createIntlCache();
-const _defaultIntl = createIntl({ locale: "en", messages: {} }, _cache);
+const intlCache = createIntlCache();
+const defaultIntl = createIntl({ locale: "en", messages: {} }, intlCache);
 
 export const fm = (
   key: Messages,
-  intl: IntlShape = _defaultIntl,
+  intl: IntlShape = defaultIntl,
   values?: Record<string, string | number | undefined>,
 ) => intl.formatMessage(MESSAGES[key], values);
 

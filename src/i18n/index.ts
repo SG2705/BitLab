@@ -9,9 +9,15 @@ const messageModules: Record<
   () => Promise<Record<string, string>>
 > = {
   en: () =>
-    import("./locales/en.json").then((m) => m.default as Record<string, string>),
+    // eslint-disable-next-line import/extensions
+    import("./locales/en.json").then(
+      (m) => m.default as Record<string, string>,
+    ),
 };
 
+/**
+ * loadMessages
+ */
 export async function loadMessages(
   locale: SupportedLocale,
 ): Promise<Record<string, string>> {

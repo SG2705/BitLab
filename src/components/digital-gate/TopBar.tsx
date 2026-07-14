@@ -1,23 +1,25 @@
+import { memo } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
 import {
-  Play,
-  Pause,
-  Square,
-  StepForward,
-  RotateCcw,
-  Undo2,
-  Redo2,
-  Save,
-  FolderOpen,
-  Plus,
   Clock,
   Command,
-  Sun,
+  FolderOpen,
   Moon,
+  Pause,
+  Play,
+  Plus,
+  Redo2,
+  RotateCcw,
+  Save,
+  Square,
+  StepForward,
+  Sun,
+  Undo2,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Theme } from "@/lib/types";
-import { memo } from "react";
 import { THEME } from "@/lib/constants";
+import { type Theme } from "@/lib/types";
 
 interface TopBarProps {
   running: boolean;
@@ -44,14 +46,19 @@ interface TBBtnProps {
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-  disabled?: boolean;
+  isDisabled?: boolean;
 }
 
-function TBBtn({ onClick, icon, label, disabled }: TBBtnProps) {
+TBBtn.defaultProps = {
+  isDisabled: false,
+};
+
+function TBBtn({ onClick, icon, label, isDisabled }: TBBtnProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       title={label}
       className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
     >
@@ -80,15 +87,19 @@ function TopBar({
   newProject,
   openCmd,
 }: TopBarProps) {
+  const intl = useIntl();
+
   return (
     <header className="h-12 shrink-0 border-b border-border bg-panel/80 backdrop-blur flex items-center gap-2 px-3">
       <div className="flex items-center gap-2 mr-2">
         <img
           src="/logo.png"
-          alt="BitLab"
+          alt={intl.formatMessage({ id: "SbT8HW", defaultMessage: "BitLab" })}
           className="h-7 w-7 rounded-lg object-contain"
         />
-        <div className="font-bold tracking-tight">BitLab</div>
+        <div className="font-bold tracking-tight">
+          <FormattedMessage id="SbT8HW" defaultMessage="BitLab" />
+        </div>
       </div>
       <div className="w-px h-6 bg-border" />
       <TBBtn
@@ -114,13 +125,13 @@ function TopBar({
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
         onClick={undo}
-        disabled={!canUndo}
+        isDisabled={!canUndo}
         icon={<Undo2 className="h-4 w-4" />}
         label="Undo"
       />
       <TBBtn
         onClick={redo}
-        disabled={!canRedo}
+        isDisabled={!canRedo}
         icon={<Redo2 className="h-4 w-4" />}
         label="Redo"
       />
@@ -136,7 +147,9 @@ function TopBar({
         ) : (
           <Play className="h-3.5 w-3.5" />
         )}
-        {running ? "Pause" : "Run"}
+        {running
+          ? intl.formatMessage({ id: "tFFMkF", defaultMessage: "Pause" })
+          : intl.formatMessage({ id: "KiXNvz", defaultMessage: "Run" })}
       </Button>
       <TBBtn
         onClick={() => setRunning(false)}
@@ -164,20 +177,28 @@ function TopBar({
           className="w-24 accent-primary"
         />
         <span className="text-xs text-muted-foreground font-mono tabular-nums w-12">
-          {clockSpeed} Hz
+          <FormattedMessage
+            id="4TCm1M"
+            defaultMessage="{clockSpeed} Hz"
+            values={{ clockSpeed }}
+          />
         </span>
       </div>
       <div className="text-xs text-muted-foreground font-mono ml-3">
-        Tick <span className="text-foreground tabular-nums">{tick}</span>
+        <FormattedMessage id="vCWikx" defaultMessage="Tick " />
+        <span className="text-foreground tabular-nums">{tick}</span>
       </div>
       <div className="ml-auto flex items-center gap-1">
         <button
+          type="button"
           onClick={openCmd}
           className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md border border-border bg-background/40 hover:bg-secondary transition-colors text-muted-foreground"
         >
-          <Command className="h-3 w-3" /> Palette
+          <Command className="h-3 w-3" />
+          <FormattedMessage id="eA7dRH" defaultMessage="Palette" />
+
           <kbd className="ml-1 px-1 py-0.5 text-[10px] rounded bg-secondary border border-border">
-            ⌘K
+            <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
           </kbd>
         </button>
         <TBBtn

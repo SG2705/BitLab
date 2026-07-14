@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 /**
  * CircuitManager — single source of truth for circuit structure and state.
  *
@@ -14,23 +15,25 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+
+import { ENGINE_EVENT_TYPE } from "@/lib/constants";
+
+import {
+  type ComponentLibrary,
+  library as defaultComponentLibrary,
+} from "./ComponentLibrary";
+import { GraphManager } from "./GraphManager";
+import { SignalPropagator } from "./SignalPropagator";
+import { SimulationEngine } from "./SimulationEngine";
 import type {
-  ComponentInstance,
-  Wire,
   CircuitSnapshot,
+  ComponentInstance,
   EngineEvent,
   EngineListener,
   SimulationStats,
   SimulationStatus,
+  Wire,
 } from "./types";
-import { GraphManager } from "./GraphManager";
-import {
-  ComponentLibrary,
-  library as defaultComponentLibrary,
-} from "./ComponentLibrary";
-import { SignalPropagator } from "./SignalPropagator";
-import { SimulationEngine } from "./SimulationEngine";
-import { ENGINE_EVENT_TYPE } from "@/lib/constants";
 
 function uid(): string {
   return uuidv4();
@@ -80,7 +83,7 @@ export class CircuitManager {
     const def = this.library.get(type);
     const initialState = def.initialState();
     const { outputs } = def.evaluate(
-      new Array(def.inputs).fill(false),
+      new Array<boolean>(def.inputs).fill(false),
       initialState,
     );
     const comp: ComponentInstance = {
@@ -91,7 +94,7 @@ export class CircuitManager {
       label: opts.label ?? def.label,
       state: initialState,
       outputs,
-      inputs: new Array(def.inputs).fill(false),
+      inputs: new Array<boolean>(def.inputs).fill(false),
       color: opts.color,
       properties: opts.properties,
     };
@@ -237,6 +240,7 @@ export class CircuitManager {
 
     if (target) {
       const inputs = [...target.inputs];
+
       inputs[wire.to.pin] = false;
 
       this.components[wire.to.comp] = { ...target, inputs };
@@ -362,9 +366,9 @@ export class CircuitManager {
 
   private buildInputs(compId: string): boolean[] {
     const def = this.library.get(this.components[compId].type);
-    const inputs: boolean[] = new Array(def.inputs).fill(false);
+    const inputs: boolean[] = new Array<boolean>(def.inputs).fill(false);
 
-    for (let pin = 0; pin < def.inputs; pin++) {
+    for (let pin = 0; pin < def.inputs; pin += 1) {
       const wire = this.graph.getInputWire(compId, pin);
 
       if (wire) {

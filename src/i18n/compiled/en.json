@@ -1,0 +1,526 @@
+{
+  "+U6ozc": [
+    {
+      "type": 0,
+      "value": "Type"
+    }
+  ],
+  "+VMoL/": [
+    {
+      "type": 0,
+      "value": "Outputs"
+    }
+  ],
+  "+qEqKV": [
+    {
+      "type": 1,
+      "value": "i"
+    },
+    {
+      "type": 0,
+      "value": ": "
+    },
+    {
+      "type": 1,
+      "value": "o"
+    }
+  ],
+  "/VTiBR": [
+    {
+      "type": 0,
+      "value": "Encoder 4:2"
+    }
+  ],
+  "0TVISU": [
+    {
+      "type": 0,
+      "value": "for the command palette"
+    }
+  ],
+  "0s79PB": [
+    {
+      "type": 0,
+      "value": "JK Flip-Flop"
+    }
+  ],
+  "0t4zU/": [
+    {
+      "type": 0,
+      "value": "XOR"
+    }
+  ],
+  "1iDGfg": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " components"
+    }
+  ],
+  "224+9R": [
+    {
+      "type": 0,
+      "value": "Something went wrong on our end. You can try refreshing or head back home."
+    }
+  ],
+  "4TCm1M": [
+    {
+      "type": 1,
+      "value": "clockSpeed"
+    },
+    {
+      "type": 0,
+      "value": " Hz"
+    }
+  ],
+  "4fHiNl": [
+    {
+      "type": 0,
+      "value": "Duplicate"
+    }
+  ],
+  "73Dt+K": [
+    {
+      "type": 0,
+      "value": "BitLab v"
+    },
+    {
+      "type": 1,
+      "value": "version"
+    },
+    {
+      "type": 0,
+      "value": " · Event-Driven"
+    }
+  ],
+  "753yX5": [
+    {
+      "type": 0,
+      "value": "Label"
+    }
+  ],
+  "8ZVfG8": [
+    {
+      "type": 0,
+      "value": "100%"
+    }
+  ],
+  "97i0f9": [
+    {
+      "type": 0,
+      "value": "HIGH (1)"
+    }
+  ],
+  "9nolIL": [
+    {
+      "type": 0,
+      "value": "This page didn't load"
+    }
+  ],
+  "AcAA5x": [
+    {
+      "type": 0,
+      "value": "Components"
+    }
+  ],
+  "DRXWXB": [
+    {
+      "type": 0,
+      "value": "404"
+    }
+  ],
+  "DYWVqY": [
+    {
+      "type": 0,
+      "value": "Mux 4:1"
+    }
+  ],
+  "FazwRl": [
+    {
+      "type": 0,
+      "value": "Try again"
+    }
+  ],
+  "G/iTZ2": [
+    {
+      "type": 0,
+      "value": "Drag a component from the toolbox onto the canvas."
+    }
+  ],
+  "G3+QfR": [
+    {
+      "type": 0,
+      "value": "Constant"
+    }
+  ],
+  "GkBxYy": [
+    {
+      "type": 0,
+      "value": "Start designing"
+    }
+  ],
+  "HCR858": [
+    {
+      "type": 0,
+      "value": "Empty circuit."
+    }
+  ],
+  "INlWvJ": [
+    {
+      "type": 0,
+      "value": "OR"
+    }
+  ],
+  "K3r6DQ": [
+    {
+      "type": 0,
+      "value": "Delete"
+    }
+  ],
+  "KP63fg": [
+    {
+      "type": 0,
+      "value": "Button"
+    }
+  ],
+  "KWFusF": [
+    {
+      "type": 0,
+      "value": "Sequential"
+    }
+  ],
+  "KiXNvz": [
+    {
+      "type": 0,
+      "value": "Run"
+    }
+  ],
+  "LaoRGw": [
+    {
+      "type": 0,
+      "value": "Toggle"
+    }
+  ],
+  "M+am2n": [
+    {
+      "type": 0,
+      "value": "Logic Gates"
+    }
+  ],
+  "MXPwVk": [
+    {
+      "type": 0,
+      "value": "X"
+    }
+  ],
+  "N2HbmZ": [
+    {
+      "type": 0,
+      "value": "Fit"
+    }
+  ],
+  "PJTLiq": [
+    {
+      "type": 0,
+      "value": "D Flip-Flop"
+    }
+  ],
+  "QRccCM": [
+    {
+      "type": 0,
+      "value": "Page not found"
+    }
+  ],
+  "Qu+roW": [
+    {
+      "type": 0,
+      "value": "7 Seg"
+    }
+  ],
+  "SL+c5a": [
+    {
+      "type": 0,
+      "value": "—"
+    }
+  ],
+  "SSHeHt": [
+    {
+      "type": 0,
+      "value": "Y"
+    }
+  ],
+  "SWMHO+": [
+    {
+      "type": 0,
+      "value": "Go home"
+    }
+  ],
+  "SbT8HW": [
+    {
+      "type": 0,
+      "value": "BitLab"
+    }
+  ],
+  "UGU8kA": [
+    {
+      "type": 0,
+      "value": "AND"
+    }
+  ],
+  "UVS4sK": [
+    {
+      "type": 0,
+      "value": "Decoder 2:4"
+    }
+  ],
+  "VAZneg": [
+    {
+      "type": 0,
+      "value": "Comparator"
+    }
+  ],
+  "a3I/Dc": [
+    {
+      "type": 0,
+      "value": "SR Latch"
+    }
+  ],
+  "aI80kg": [
+    {
+      "type": 0,
+      "value": "Properties"
+    }
+  ],
+  "aUbg5p": [
+    {
+      "type": 0,
+      "value": "Full Adder"
+    }
+  ],
+  "cpOWpz": [
+    {
+      "type": 0,
+      "value": "⌘K"
+    }
+  ],
+  "cwHYMN": [
+    {
+      "type": 0,
+      "value": "NOR"
+    }
+  ],
+  "e+L5nJ": [
+    {
+      "type": 0,
+      "value": "LOW (0)"
+    }
+  ],
+  "eA7dRH": [
+    {
+      "type": 0,
+      "value": "Palette"
+    }
+  ],
+  "eVwJCE": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " wires"
+    }
+  ],
+  "hW1dfn": [
+    {
+      "type": 0,
+      "value": "No commands found."
+    }
+  ],
+  "hxKJOS": [
+    {
+      "type": 0,
+      "value": "T Flip-Flop"
+    }
+  ],
+  "iiWNbN": [
+    {
+      "type": 0,
+      "value": "Live Outputs"
+    }
+  ],
+  "jOgiMP": [
+    {
+      "type": 0,
+      "value": "NOT"
+    }
+  ],
+  "k5fiSA": [
+    {
+      "type": 0,
+      "value": "Buffer"
+    }
+  ],
+  "kRdz1D": [
+    {
+      "type": 0,
+      "value": "Type a command..."
+    }
+  ],
+  "kjUTRa": [
+    {
+      "type": 0,
+      "value": "OR-3"
+    }
+  ],
+  "ku+mDU": [
+    {
+      "type": 0,
+      "value": "State"
+    }
+  ],
+  "lS7pBq": [
+    {
+      "type": 0,
+      "value": "Circuit Explorer"
+    }
+  ],
+  "m0Naku": [
+    {
+      "type": 0,
+      "value": "Half Adder"
+    }
+  ],
+  "nDyaq/": [
+    {
+      "type": 0,
+      "value": "Running"
+    }
+  ],
+  "oX0iuy": [
+    {
+      "type": 0,
+      "value": "Demux 1:2"
+    }
+  ],
+  "ocyr/d": [
+    {
+      "type": 0,
+      "value": "NAND"
+    }
+  ],
+  "p+mBVZ": [
+    {
+      "type": 0,
+      "value": "Tick "
+    },
+    {
+      "type": 1,
+      "value": "count"
+    }
+  ],
+  "pYCJ3X": [
+    {
+      "type": 0,
+      "value": "No entries."
+    }
+  ],
+  "qCyPKf": [
+    {
+      "type": 0,
+      "value": "Clock"
+    }
+  ],
+  "qEOrHH": [
+    {
+      "type": 0,
+      "value": "Arithmetic"
+    }
+  ],
+  "qnonu0": [
+    {
+      "type": 1,
+      "value": "percentage"
+    },
+    {
+      "type": 0,
+      "value": "%"
+    }
+  ],
+  "rS8jJE": [
+    {
+      "type": 0,
+      "value": "XNOR"
+    }
+  ],
+  "s9nYnY": [
+    {
+      "type": 0,
+      "value": "The page you're looking for doesn't exist or has been moved."
+    }
+  ],
+  "sNY4nx": [
+    {
+      "type": 0,
+      "value": "Idle"
+    }
+  ],
+  "sPjOJQ": [
+    {
+      "type": 0,
+      "value": "LED"
+    }
+  ],
+  "sqjS0A": [
+    {
+      "type": 1,
+      "value": "cat"
+    },
+    {
+      "type": 0,
+      "value": " · "
+    },
+    {
+      "type": 1,
+      "value": "length"
+    }
+  ],
+  "tFFMkF": [
+    {
+      "type": 0,
+      "value": "Pause"
+    }
+  ],
+  "uEqOPm": [
+    {
+      "type": 0,
+      "value": "Mux 2:1"
+    }
+  ],
+  "uPTSs/": [
+    {
+      "type": 0,
+      "value": "AND-3"
+    }
+  ],
+  "uizmax": [
+    {
+      "type": 0,
+      "value": "Press"
+    }
+  ],
+  "vCWikx": [
+    {
+      "type": 0,
+      "value": "Tick"
+    }
+  ],
+  "wS/QCK": [
+    {
+      "type": 0,
+      "value": "Inputs"
+    }
+  ]
+}

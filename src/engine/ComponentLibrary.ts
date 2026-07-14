@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 /**
  * ComponentLibrary — authoritative registry of all component definitions.
  *
@@ -41,8 +42,9 @@ import {
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/lib/constants";
-import type { ComponentDefinition, SignalValue, EvaluateResult } from "./types";
 import { fm } from "@/lib/utils";
+
+import type { ComponentDefinition, EvaluateResult, SignalValue } from "./types";
 
 const b = (v: unknown): boolean => !!v;
 
@@ -63,7 +65,7 @@ function cb(fields: CbFields): ComponentDefinition {
     isInput: false,
     isOutput: false,
     initialState: () => null,
-  } as ComponentDefinition;
+  };
 }
 
 // ── Definition table ──────────────────────────────────────────────────────────
@@ -327,8 +329,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     initialState: () => ({ q: false }),
     evaluate: (i, s) => {
       let q = !!s?.q;
-      const S = b(i[0]),
-        R = b(i[1]);
+      const S = b(i[0]);
+      const R = b(i[1]);
 
       if (S && !R) {
         q = true;
@@ -385,8 +387,9 @@ const DEFINITIONS: ComponentDefinition[] = [
       let q = !!s?.q;
 
       if (clk && !s?.prevClk) {
-        const J = b(i[0]),
-          K = b(i[1]);
+        const J = b(i[0]);
+        const K = b(i[1]);
+
         if (J && !K) {
           q = true;
         } else if (!J && K) {
@@ -477,6 +480,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "M4",
     evaluate: (i) => {
       const sel = (b(i[5]) ? 2 : 0) | (b(i[4]) ? 1 : 0);
+
       return { outputs: [b(i[sel])], state: null };
     },
   }),
@@ -491,6 +495,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "DM",
     evaluate: (i) => {
       const sel = b(i[1]);
+
       return { outputs: [!sel && b(i[0]), sel && b(i[0])], state: null };
     },
   }),
@@ -505,6 +510,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "DEC",
     evaluate: (i) => {
       const idx = (b(i[1]) ? 2 : 0) | (b(i[0]) ? 1 : 0);
+
       return {
         outputs: [idx === 0, idx === 1, idx === 2, idx === 3],
         state: null,
@@ -523,7 +529,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     evaluate: (i) => {
       let idx = 0;
 
-      for (let j = 3; j >= 0; j--) {
+      for (let j = 3; j >= 0; j -= 1) {
         if (b(i[j])) {
           idx = j;
 
@@ -544,8 +550,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     height: 70,
     symbol: "CMP",
     evaluate: (i) => {
-      const a = b(i[0]) ? 1 : 0,
-        bv = b(i[1]) ? 1 : 0;
+      const a = b(i[0]) ? 1 : 0;
+      const bv = b(i[1]) ? 1 : 0;
 
       return { outputs: [a < bv, a === bv, a > bv], state: null };
     },
@@ -599,7 +605,7 @@ export class ComponentLibrary {
     for (const def of this.typeMap.values()) {
       if (!groups.has(def.category)) groups.set(def.category, []);
 
-      groups.get(def.category)!.push(def.type);
+      groups.get(def.category)?.push(def.type);
     }
 
     for (const cat of ORDER) {

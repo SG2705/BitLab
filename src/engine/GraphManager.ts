@@ -13,7 +13,7 @@
  * whenever the graph structure changes.
  */
 
-import type { Wire, WireId, ComponentId } from "./types";
+import type { ComponentId, Wire, WireId } from "./types";
 
 const KEY_SEPARATOR = ":";
 
@@ -147,6 +147,7 @@ export class GraphManager {
     for (const id of nodes) inDeg.set(id, 0);
 
     for (const [id, ds] of this.downstream) {
+      // eslint-disable-next-line no-void
       void id;
 
       for (const d of ds) inDeg.set(d, (inDeg.get(d) ?? 0) + 1);
@@ -161,11 +162,15 @@ export class GraphManager {
     const result: ComponentId[] = [];
 
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.shift();
+
+      if (!node) continue;
+
       result.push(node);
 
       for (const next of this.downstream.get(node) ?? []) {
         const newDeg = (inDeg.get(next) ?? 0) - 1;
+
         inDeg.set(next, newDeg);
 
         if (newDeg === 0) queue.push(next);
@@ -187,7 +192,7 @@ export class GraphManager {
     const order = this.topologicalSort();
     const ranks = new Map<ComponentId, number>();
 
-    for (let i = 0; i < order.length; i++) {
+    for (let i = 0; i < order.length; i += 1) {
       ranks.set(order[i], i);
     }
 
@@ -211,3 +216,5 @@ export class GraphManager {
     this.cachedRanks = null;
   }
 }
+
+export default GraphManager;

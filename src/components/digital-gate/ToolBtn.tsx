@@ -1,5 +1,6 @@
-import { cn } from "@/lib/utils";
 import { memo } from "react";
+
+import { cn } from "@/lib/utils";
 
 interface ToolBtnProps {
   active: boolean;
@@ -11,6 +12,7 @@ interface ToolBtnProps {
 function ToolBtn({ active, onClick, icon, label }: ToolBtnProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       title={label}
       className={cn(

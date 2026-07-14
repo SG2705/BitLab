@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -18,4 +19,5 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   },
 );
 
+// eslint-disable-next-line import/prefer-default-export
 export { Input };

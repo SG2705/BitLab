@@ -1,15 +1,18 @@
-import { Settings2, Copy, Trash2 } from "lucide-react";
+/* eslint-disable jsx-a11y/label-has-associated-control */
+import { memo } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
+import { Copy, Settings2, Trash2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn, fm } from "@/lib/utils";
-import { GATES } from "@/lib/circuit";
 import type { ComponentInstance } from "@/engine";
-import { memo } from "react";
+import { GATES } from "@/lib/circuit";
 import {
   GATE_TYPE_CONST,
   GATE_TYPE_LABELS,
   GATE_TYPE_TOGGLE,
 } from "@/lib/constants";
+import { cn, fm } from "@/lib/utils";
 
 interface PropertiesPanelProps {
   comp: ComponentInstance;
@@ -24,17 +27,19 @@ function PropertiesPanel({
   onDelete,
   onDuplicate,
 }: PropertiesPanelProps) {
+  const intl = useIntl();
   const gate = GATES[comp.type];
 
   return (
     <div className="p-3 border-b border-border">
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
-        <Settings2 className="h-3.5 w-3.5" /> Properties
+        <Settings2 className="h-3.5 w-3.5" />
+        <FormattedMessage id="aI80kg" defaultMessage="Properties" />
       </div>
       <div className="space-y-3">
         <div>
           <div className="text-[10px] uppercase text-muted-foreground mb-1">
-            Type
+            <FormattedMessage id="+U6ozc" defaultMessage="Type" />
           </div>
           <div className="text-sm font-mono text-primary">
             {fm(GATE_TYPE_LABELS[gate.type]?.messageKey)}
@@ -42,7 +47,7 @@ function PropertiesPanel({
         </div>
         <div>
           <label className="text-[10px] uppercase text-muted-foreground">
-            Label
+            <FormattedMessage id="753yX5" defaultMessage="Label" />
           </label>
           <Input
             value={comp.label ?? ""}
@@ -53,7 +58,7 @@ function PropertiesPanel({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">
-              X
+              <FormattedMessage id="MXPwVk" defaultMessage="X" />
             </label>
             <Input
               type="number"
@@ -64,7 +69,7 @@ function PropertiesPanel({
           </div>
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">
-              Y
+              <FormattedMessage id="SSHeHt" defaultMessage="Y" />
             </label>
             <Input
               type="number"
@@ -77,9 +82,10 @@ function PropertiesPanel({
         {comp.type === GATE_TYPE_TOGGLE || comp.type === GATE_TYPE_CONST ? (
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">
-              State
+              <FormattedMessage id="ku+mDU" defaultMessage="State" />
             </label>
             <button
+              type="button"
               onClick={() =>
                 onUpdate(comp.id, {
                   state: { ...(comp.state ?? {}), on: !comp.state?.on },
@@ -92,20 +98,31 @@ function PropertiesPanel({
                   : "bg-background/60 border-border text-muted-foreground",
               )}
             >
-              {comp.state?.on ? "HIGH (1)" : "LOW (0)"}
+              {comp.state?.on
+                ? intl.formatMessage({
+                    id: "97i0f9",
+                    defaultMessage: "HIGH (1)",
+                  })
+                : intl.formatMessage({
+                    id: "e+L5nJ",
+                    defaultMessage: "LOW (0)",
+                  })}
             </button>
           </div>
         ) : (
           <div>
             <div className="text-[10px] uppercase text-muted-foreground mb-1">
-              Live Outputs
+              <FormattedMessage id="iiWNbN" defaultMessage="Live Outputs" />
             </div>
             <div className="flex gap-1 flex-wrap">
               {comp.outputs.length === 0 ? (
-                <span className="text-xs text-muted-foreground">—</span>
+                <span className="text-xs text-muted-foreground">
+                  <FormattedMessage id="SL+c5a" defaultMessage="—" />
+                </span>
               ) : (
                 comp.outputs.map((o, i) => (
                   <span
+                    // eslint-disable-next-line react/no-array-index-key
                     key={i}
                     className={cn(
                       "px-2 py-0.5 rounded text-[10px] font-mono border",
@@ -114,7 +131,14 @@ function PropertiesPanel({
                         : "bg-secondary border-border text-muted-foreground",
                     )}
                   >
-                    {i}: {o ? "1" : "0"}
+                    <FormattedMessage
+                      id="+qEqKV"
+                      defaultMessage="{i}: {o}"
+                      values={{
+                        i,
+                        o: o ? "1" : "0",
+                      }}
+                    />
                   </span>
                 ))
               )}
@@ -129,7 +153,8 @@ function PropertiesPanel({
             onClick={onDuplicate}
             className="flex-1 h-8 gap-1"
           >
-            <Copy className="h-3 w-3" /> Duplicate
+            <Copy className="h-3 w-3" />
+            <FormattedMessage id="4fHiNl" defaultMessage="Duplicate" />
           </Button>
           <Button
             size="sm"
@@ -137,7 +162,8 @@ function PropertiesPanel({
             onClick={onDelete}
             className="flex-1 h-8 gap-1 hover:bg-destructive hover:text-destructive-foreground"
           >
-            <Trash2 className="h-3 w-3" /> Delete
+            <Trash2 className="h-3 w-3" />
+            <FormattedMessage id="K3r6DQ" defaultMessage="Delete" />
           </Button>
         </div>
       </div>

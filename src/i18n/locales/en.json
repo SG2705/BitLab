@@ -1,4 +1,242 @@
 {
-  "app.title": "BitLab",
-  "app.subtitle": "Digital Logic Circuit Designer"
+  "+U6ozc": {
+    "defaultMessage": "Type"
+  },
+  "+VMoL/": {
+    "defaultMessage": "Outputs"
+  },
+  "+qEqKV": {
+    "defaultMessage": "{i}: {o}"
+  },
+  "/VTiBR": {
+    "defaultMessage": "Encoder 4:2"
+  },
+  "0TVISU": {
+    "defaultMessage": "for the command palette"
+  },
+  "0s79PB": {
+    "defaultMessage": "JK Flip-Flop"
+  },
+  "0t4zU/": {
+    "defaultMessage": "XOR"
+  },
+  "1iDGfg": {
+    "defaultMessage": "{count} components"
+  },
+  "224+9R": {
+    "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
+  },
+  "4TCm1M": {
+    "defaultMessage": "{clockSpeed} Hz"
+  },
+  "4fHiNl": {
+    "defaultMessage": "Duplicate"
+  },
+  "73Dt+K": {
+    "defaultMessage": "BitLab v{version} · Event-Driven"
+  },
+  "753yX5": {
+    "defaultMessage": "Label"
+  },
+  "8ZVfG8": {
+    "defaultMessage": "100%"
+  },
+  "97i0f9": {
+    "defaultMessage": "HIGH (1)"
+  },
+  "9nolIL": {
+    "defaultMessage": "This page didn't load"
+  },
+  "AcAA5x": {
+    "defaultMessage": "Components"
+  },
+  "DRXWXB": {
+    "defaultMessage": "404"
+  },
+  "DYWVqY": {
+    "defaultMessage": "Mux 4:1"
+  },
+  "FazwRl": {
+    "defaultMessage": "Try again"
+  },
+  "G/iTZ2": {
+    "defaultMessage": "Drag a component from the toolbox onto the canvas."
+  },
+  "G3+QfR": {
+    "defaultMessage": "Constant"
+  },
+  "GkBxYy": {
+    "defaultMessage": "Start designing"
+  },
+  "HCR858": {
+    "defaultMessage": "Empty circuit."
+  },
+  "INlWvJ": {
+    "defaultMessage": "OR"
+  },
+  "K3r6DQ": {
+    "defaultMessage": "Delete"
+  },
+  "KP63fg": {
+    "defaultMessage": "Button"
+  },
+  "KWFusF": {
+    "defaultMessage": "Sequential"
+  },
+  "KiXNvz": {
+    "defaultMessage": "Run"
+  },
+  "LaoRGw": {
+    "defaultMessage": "Toggle"
+  },
+  "M+am2n": {
+    "defaultMessage": "Logic Gates"
+  },
+  "MXPwVk": {
+    "defaultMessage": "X"
+  },
+  "N2HbmZ": {
+    "defaultMessage": "Fit"
+  },
+  "PJTLiq": {
+    "defaultMessage": "D Flip-Flop"
+  },
+  "QRccCM": {
+    "defaultMessage": "Page not found"
+  },
+  "Qu+roW": {
+    "defaultMessage": "7 Seg"
+  },
+  "SL+c5a": {
+    "defaultMessage": "—"
+  },
+  "SSHeHt": {
+    "defaultMessage": "Y"
+  },
+  "SWMHO+": {
+    "defaultMessage": "Go home"
+  },
+  "SbT8HW": {
+    "defaultMessage": "BitLab"
+  },
+  "UGU8kA": {
+    "defaultMessage": "AND"
+  },
+  "UVS4sK": {
+    "defaultMessage": "Decoder 2:4"
+  },
+  "VAZneg": {
+    "defaultMessage": "Comparator"
+  },
+  "a3I/Dc": {
+    "defaultMessage": "SR Latch"
+  },
+  "aI80kg": {
+    "defaultMessage": "Properties"
+  },
+  "aUbg5p": {
+    "defaultMessage": "Full Adder"
+  },
+  "cpOWpz": {
+    "defaultMessage": "⌘K"
+  },
+  "cwHYMN": {
+    "defaultMessage": "NOR"
+  },
+  "e+L5nJ": {
+    "defaultMessage": "LOW (0)"
+  },
+  "eA7dRH": {
+    "defaultMessage": "Palette"
+  },
+  "eVwJCE": {
+    "defaultMessage": "{count} wires"
+  },
+  "hW1dfn": {
+    "defaultMessage": "No commands found."
+  },
+  "hxKJOS": {
+    "defaultMessage": "T Flip-Flop"
+  },
+  "iiWNbN": {
+    "defaultMessage": "Live Outputs"
+  },
+  "jOgiMP": {
+    "defaultMessage": "NOT"
+  },
+  "k5fiSA": {
+    "defaultMessage": "Buffer"
+  },
+  "kRdz1D": {
+    "defaultMessage": "Type a command..."
+  },
+  "kjUTRa": {
+    "defaultMessage": "OR-3"
+  },
+  "ku+mDU": {
+    "defaultMessage": "State"
+  },
+  "lS7pBq": {
+    "defaultMessage": "Circuit Explorer"
+  },
+  "m0Naku": {
+    "defaultMessage": "Half Adder"
+  },
+  "nDyaq/": {
+    "defaultMessage": "Running"
+  },
+  "oX0iuy": {
+    "defaultMessage": "Demux 1:2"
+  },
+  "ocyr/d": {
+    "defaultMessage": "NAND"
+  },
+  "p+mBVZ": {
+    "defaultMessage": "Tick {count}"
+  },
+  "pYCJ3X": {
+    "defaultMessage": "No entries."
+  },
+  "qCyPKf": {
+    "defaultMessage": "Clock"
+  },
+  "qEOrHH": {
+    "defaultMessage": "Arithmetic"
+  },
+  "qnonu0": {
+    "defaultMessage": "{percentage}%"
+  },
+  "rS8jJE": {
+    "defaultMessage": "XNOR"
+  },
+  "s9nYnY": {
+    "defaultMessage": "The page you're looking for doesn't exist or has been moved."
+  },
+  "sNY4nx": {
+    "defaultMessage": "Idle"
+  },
+  "sPjOJQ": {
+    "defaultMessage": "LED"
+  },
+  "sqjS0A": {
+    "defaultMessage": "{cat} · {length}"
+  },
+  "tFFMkF": {
+    "defaultMessage": "Pause"
+  },
+  "uEqOPm": {
+    "defaultMessage": "Mux 2:1"
+  },
+  "uPTSs/": {
+    "defaultMessage": "AND-3"
+  },
+  "uizmax": {
+    "defaultMessage": "Press"
+  },
+  "vCWikx": {
+    "defaultMessage": "Tick"
+  },
+  "wS/QCK": {
+    "defaultMessage": "Inputs"
+  }
 }

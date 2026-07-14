@@ -1,4 +1,10 @@
-import { CONSOLE_TAB, PIN_KIND, THEME, TOOL, WIRE_TYPE } from "@/lib/constants";
+import {
+  type CONSOLE_TAB,
+  type PIN_KIND,
+  type THEME,
+  type TOOL,
+  type WIRE_TYPE,
+} from "@/lib/constants";
 
 export type Theme = (typeof THEME)[keyof typeof THEME];
 

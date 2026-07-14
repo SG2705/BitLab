@@ -1,5 +1,6 @@
-import { GRID } from "@/lib/constants";
 import { memo } from "react";
+
+import { GRID } from "@/lib/constants";
 
 interface GridBackgroundProps {
   view: { x: number; y: number; k: number };

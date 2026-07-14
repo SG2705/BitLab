@@ -5,6 +5,9 @@ interface GateChipProps {
   onDragStart: () => void;
 }
 
+/**
+ * GateChip
+ */
 function GateChip({ type, onDragStart }: GateChipProps) {
   const def = GATES[type];
 

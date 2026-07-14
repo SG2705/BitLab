@@ -1,6 +1,7 @@
-import { GATES } from "@/lib/circuit";
-import type { CircuitSnapshot } from "@/engine";
 import { memo } from "react";
+
+import type { CircuitSnapshot } from "@/engine";
+import { GATES } from "@/lib/circuit";
 
 interface MinimapProps {
   snapshot: CircuitSnapshot;

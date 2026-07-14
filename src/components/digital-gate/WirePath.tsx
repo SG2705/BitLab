@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils";
-import { WireType } from "@/lib/types";
 import { memo } from "react";
+
+import { type WireType } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface Point {
   x: number;
@@ -13,20 +14,28 @@ interface WirePathProps {
   live: boolean;
   running: boolean;
   style: WireType;
-  selected?: boolean;
-  preview?: boolean;
+  isSelected?: boolean;
+  isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
 
 function bezierPath(p1: Point, p2: Point): string {
   const dx = Math.max(40, Math.abs(p2.x - p1.x) / 2);
+
   return `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
 }
 
 function orthoPath(p1: Point, p2: Point): string {
   const mx = (p1.x + p2.x) / 2;
+
   return `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
 }
+
+WirePath.defaultProps = {
+  isSelected: false,
+  isPreview: false,
+  onClick: () => {},
+};
 
 function WirePath({
   p1,
@@ -34,8 +43,8 @@ function WirePath({
   live,
   running,
   style,
-  selected,
-  preview,
+  isSelected,
+  isPreview,
   onClick,
 }: WirePathProps) {
   const d = style === "ortho" ? orthoPath(p1, p2) : bezierPath(p1, p2);
@@ -47,11 +56,11 @@ function WirePath({
       <path
         d={d}
         stroke={color}
-        strokeWidth={selected ? 3 : 2}
+        strokeWidth={isSelected ? 3 : 2}
         fill="none"
-        strokeDasharray={preview ? "5 5" : undefined}
+        strokeDasharray={isPreview ? "5 5" : undefined}
         className={cn(live && running && "wire-flow", live && "signal-glow")}
-        style={{ opacity: preview ? 0.7 : 1 }}
+        style={{ opacity: isPreview ? 0.7 : 1 }}
       />
     </g>
   );

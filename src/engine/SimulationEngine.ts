@@ -13,17 +13,18 @@
  * pattern defined in types.ts.
  */
 
+import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/lib/constants";
+
+import { type ComponentLibrary } from "./ComponentLibrary";
+import { type GraphManager } from "./GraphManager";
+import { type SignalPropagator } from "./SignalPropagator";
 import type {
   ComponentInstance,
   EngineEvent,
   EngineListener,
-  SimulationStatus,
   SimulationStats,
+  SimulationStatus,
 } from "./types";
-import { SignalPropagator } from "./SignalPropagator";
-import { GraphManager } from "./GraphManager";
-import { ComponentLibrary } from "./ComponentLibrary";
-import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/lib/constants";
 
 export interface SimulationEngineOptions {
   clockHz?: number; // simulation ticks per second (default 8)
@@ -107,7 +108,7 @@ export class SimulationEngine {
       const def = defs.get(comp.type);
       const initialState = def.initialState();
       const initialOutputs = def.evaluate(
-        new Array(def.inputs).fill(false),
+        new Array<boolean>(def.inputs).fill(false),
         initialState,
       ).outputs;
 
@@ -115,7 +116,7 @@ export class SimulationEngine {
         ...comp,
         state: initialState,
         outputs: initialOutputs,
-        inputs: new Array(def.inputs).fill(false),
+        inputs: new Array<boolean>(def.inputs).fill(false),
       };
     }
 
@@ -156,9 +157,11 @@ export class SimulationEngine {
     if (this.lastTime === null) this.lastTime = now;
 
     const elapsed = now - this.lastTime;
+
     this.lastTime = now;
 
     const interval = 1000 / this.clockHz;
+
     this.accumulator += elapsed;
 
     let ticked = false;
@@ -170,7 +173,7 @@ export class SimulationEngine {
       this.accumulator -= interval;
 
       ticked = true;
-      catchUp++;
+      catchUp += 1;
     }
 
     if (ticked) {
@@ -188,7 +191,7 @@ export class SimulationEngine {
    * signal changes through the full combinational network.
    */
   private doTick(dt: number): void {
-    this.tick++;
+    this.tick += 1;
 
     const seeds: string[] = [];
 
@@ -213,10 +216,11 @@ export class SimulationEngine {
 
     if (seeds.length > 0) {
       const result = this.propagator.propagate(seeds, this.components);
+
       this.eventsProcessed += result.evaluations;
 
       if (result.oscillationDetected) {
-        this.oscillationsDetected++;
+        this.oscillationsDetected += 1;
         this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
       }
     }
@@ -230,10 +234,11 @@ export class SimulationEngine {
    */
   triggerPropagation(changedIds: string[]): void {
     const result = this.propagator.propagate(changedIds, this.components);
+
     this.eventsProcessed += result.evaluations;
 
     if (result.oscillationDetected) {
-      this.oscillationsDetected++;
+      this.oscillationsDetected += 1;
       this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
     }
 
