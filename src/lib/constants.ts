@@ -1,5 +1,5 @@
 import { defineMessages } from "react-intl";
-import { CircuitSnapshot, library } from "./engine";
+import { CircuitSnapshot } from "@/engine";
 
 // Localization
 export const MESSAGES = defineMessages({
@@ -136,7 +136,7 @@ export const CONSOLE_TAB = {
 export const BASE_LOG = {
   t: 0,
   kind: CONSOLE_TAB.LOG,
-  msg: "Digital Gate ready. Drag components from the toolbox to get started.",
+  msg: "BitLab ready. Drag components from the toolbox to get started.",
 };
 export const GRID = 20;
 export const TOOL = {

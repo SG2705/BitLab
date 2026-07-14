@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 import { Terminal, AlertTriangle, Activity, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CircuitSnapshot, SimulationStats } from "@/engine";
-import { ConsoleTab, LogEntry } from "@/types";
+import { ConsoleTab, LogEntry } from "@/lib/types";
 import { CONSOLE_TAB } from "@/lib/constants";
 
 interface PerfCardProps {

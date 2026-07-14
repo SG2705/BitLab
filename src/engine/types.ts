@@ -1,4 +1,4 @@
-// Core types for the Digital Gate simulation engine.
+// Core types for the BitLab simulation engine.
 // No UI or framework dependencies.
 
 import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/lib/constants";

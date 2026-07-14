@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { WireType } from "@/types";
+import { WireType } from "@/lib/types";
 import { memo } from "react";
 
 interface Point {

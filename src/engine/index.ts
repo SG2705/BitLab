@@ -1,5 +1,5 @@
 /**
- * Public API for the Digital Gate simulation engine.
+ * Public API for the BitLab simulation engine.
  *
  * Import from "@/engine" to access the engine in application code.
  * The engine has zero UI framework dependencies.

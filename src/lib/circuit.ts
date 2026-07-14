@@ -8,7 +8,7 @@
 import { PIN_KIND } from "@/lib/constants";
 import { library } from "@/engine";
 import type { ComponentInstance } from "@/engine";
-import { PinKind } from "@/types";
+import { PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";
 export type { ComponentInstance as CircuitComp };

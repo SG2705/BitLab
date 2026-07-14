@@ -28,7 +28,14 @@ import ExplorerPanel from "./ExplorerPanel";
 import ConsolePanel from "./ConsolePanel";
 import Minimap from "./Minimap";
 import CommandPalette from "./CommandPalette";
-import { ConsoleTab, LogEntry, PinKind, Theme, Tool, WireType } from "@/types";
+import {
+  ConsoleTab,
+  LogEntry,
+  PinKind,
+  Theme,
+  Tool,
+  WireType,
+} from "@/lib/types";
 import {
   BASE_LOG,
   CONSOLE_TAB,
@@ -805,7 +812,8 @@ export function DigitalGateApp() {
             { label: "Reset simulation", action: reset },
             {
               label: "Toggle theme",
-              action: () => setTheme(theme === "dark" ? "light" : "dark"),
+              action: () =>
+                setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK),
             },
             { label: "Fit to screen", action: fitToScreen },
             { label: "Save project to local", action: saveProjectToLocal },

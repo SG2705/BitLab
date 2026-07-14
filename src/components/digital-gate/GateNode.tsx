@@ -10,7 +10,7 @@ import {
   GATE_TYPE_TOGGLE,
   PIN_KIND,
 } from "@/lib/constants";
-import { PinKind } from "@/types";
+import { PinKind } from "@/lib/types";
 
 // [a, b, c, d, e, f, g] segment patterns for hex digits 0-F
 const SEG7: boolean[][] = [

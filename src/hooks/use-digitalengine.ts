@@ -1,5 +1,5 @@
 /**
- * useDigitalEngine — React adapter for the Digital Gate simulation engine.
+ * useDigitalEngine — React adapter for the BitLab simulation engine.
  *
  * Creates and manages a single engine instance for the lifetime of the
  * component tree. Returns a stable interface that App.tsx can consume without

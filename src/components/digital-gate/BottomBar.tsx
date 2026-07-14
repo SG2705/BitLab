@@ -23,7 +23,7 @@ function BottomBar({ running, tick, compCount, wireCount }: BottomBarProps) {
       <span>Tick {tick}</span>
       <span>{compCount} components</span>
       <span>{wireCount} wires</span>
-      <span className="ml-auto">Digital Gate v2.0 · Event-Driven</span>
+      <span className="ml-auto">BitLab v1.0 · Event-Driven</span>
     </div>
   );
 }

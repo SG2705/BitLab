@@ -80,16 +80,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       meta: [
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { title: "Digital Gate — Digital Logic Circuit Designer" },
+        { title: "BitLab — Digital Logic Circuit Designer" },
         {
           name: "description",
           content:
             "A modern, professional digital logic circuit designer. Build, simulate, and share circuits with an EDA-grade infinite canvas.",
         },
-        { name: "author", content: "Digital Gate" },
+        { name: "author", content: "Sagar Gupta" },
         {
           property: "og:title",
-          content: "Digital Gate — Digital Logic Circuit Designer",
+          content: "BitLab — Digital Logic Circuit Designer",
         },
         {
           property: "og:description",
@@ -104,7 +104,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           rel: "stylesheet",
           href: appCss,
         },
-        // { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        {
+          rel: "icon",
+          href: "/favicon-32x32.png",
+          type: "image/png",
+          sizes: "32x32",
+        },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       ],
     }),
     shellComponent: RootShell,

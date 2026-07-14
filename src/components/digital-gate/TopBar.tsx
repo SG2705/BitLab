@@ -9,15 +9,15 @@ import {
   Save,
   FolderOpen,
   Plus,
-  Zap,
   Clock,
   Command,
   Sun,
   Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Theme } from "@/types";
+import { Theme } from "@/lib/types";
 import { memo } from "react";
+import { THEME } from "@/lib/constants";
 
 interface TopBarProps {
   running: boolean;
@@ -83,10 +83,12 @@ function TopBar({
   return (
     <header className="h-12 shrink-0 border-b border-border bg-panel/80 backdrop-blur flex items-center gap-2 px-3">
       <div className="flex items-center gap-2 mr-2">
-        <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm">
-          <Zap className="h-4 w-4 text-primary-foreground" />
-        </div>
-        <div className="font-bold tracking-tight">Digital Gate</div>
+        <img
+          src="/logo.png"
+          alt="BitLab"
+          className="h-7 w-7 rounded-lg object-contain"
+        />
+        <div className="font-bold tracking-tight">BitLab</div>
       </div>
       <div className="w-px h-6 bg-border" />
       <TBBtn
@@ -179,9 +181,11 @@ function TopBar({
           </kbd>
         </button>
         <TBBtn
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() =>
+            setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK)
+          }
           icon={
-            theme === "dark" ? (
+            theme === THEME.DARK ? (
               <Sun className="h-4 w-4" />
             ) : (
               <Moon className="h-4 w-4" />
