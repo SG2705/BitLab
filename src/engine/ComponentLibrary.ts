@@ -40,9 +40,9 @@ import {
   GATE_TYPE_TOGGLE,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
-} from "@/constants";
+} from "@/lib/constants";
 import type { ComponentDefinition, SignalValue, EvaluateResult } from "./types";
-import { fm } from "@/utils";
+import { fm } from "@/lib/utils";
 
 const b = (v: unknown): boolean => !!v;
 

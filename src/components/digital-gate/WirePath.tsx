@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import { WireType } from "@/types";
+import { memo } from "react";
 
 interface Point {
   x: number;
@@ -10,7 +12,7 @@ interface WirePathProps {
   p2: Point;
   live: boolean;
   running: boolean;
-  style: "bezier" | "ortho";
+  style: WireType;
   selected?: boolean;
   preview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
@@ -26,7 +28,7 @@ function orthoPath(p1: Point, p2: Point): string {
   return `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
 }
 
-export function WirePath({
+function WirePath({
   p1,
   p2,
   live,
@@ -54,3 +56,5 @@ export function WirePath({
     </g>
   );
 }
+
+export default memo(WirePath);

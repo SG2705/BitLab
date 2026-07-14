@@ -1,4 +1,5 @@
 import { defineMessages } from "react-intl";
+import { CircuitSnapshot, library } from "./engine";
 
 // Localization
 export const MESSAGES = defineMessages({
@@ -49,17 +50,6 @@ export const GATE_CATEGORY_OUTPUT = "gate_category-output";
 export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
 export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
 
-export const GATE_CATEGORY_LABELS: Record<
-  string,
-  { en: string; messageKey: Messages }
-> = {
-  LOGIC: { en: "Logic Gates", messageKey: "lb_logic_gates" },
-  INPUTS: { en: "Inputs", messageKey: "lb_inputs" },
-  OUTPUTS: { en: "Outputs", messageKey: "lb_outputs" },
-  SEQUENTIAL: { en: "Sequential", messageKey: "lb_sequential" },
-  ARITHMETIC: { en: "Arithmetic", messageKey: "lb_arithmetic" },
-};
-
 export const GATE_TYPE_AND = "AND";
 export const GATE_TYPE_OR = "OR";
 export const GATE_TYPE_XOR = "XOR";
@@ -89,6 +79,12 @@ export const GATE_TYPE_DECODER2 = "DECODER2";
 export const GATE_TYPE_ENCODER4 = "ENCODER4";
 export const GATE_TYPE_COMPARATOR = "COMPARATOR";
 
+// Wires
+export const WIRE_TYPE = {
+  BEZIER: "bezier",
+  ORTHO: "ortho",
+};
+
 // Engine
 export const ENGINE_EVENT_TYPE = {
   SNAPSHOT_CHANGED: "snapshot-changed",
@@ -111,7 +107,85 @@ export const SIMULATION_STATUS = {
   PAUSED: "paused",
 };
 
+// Circuit
+
+export const PIN_KIND = {
+  IN: "in",
+  OUT: "out",
+};
+
 // Project
 export const FORMAT_VERSION = 1;
 export const MAX_HISTORY = 100;
 export const STORAGE_KEY = "digital-gate-project";
+export const DEFAULT_CLOCK = 8;
+export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
+
+// App
+export const THEME = {
+  DARK: "dark",
+  LIGHT: "light",
+};
+export const CONSOLE_TAB = {
+  LOG: "log",
+  ERROR: "err",
+  WARN: "warn",
+  TIMELINE: "timeline",
+  PERF: "perf",
+};
+export const BASE_LOG = {
+  t: 0,
+  kind: CONSOLE_TAB.LOG,
+  msg: "Digital Gate ready. Drag components from the toolbox to get started.",
+};
+export const GRID = 20;
+export const TOOL = {
+  SELECT: "select",
+  PAN: "pan",
+};
+
+// Labels
+export const GATE_CATEGORY_LABELS: Record<
+  string,
+  { en: string; messageKey: Messages }
+> = {
+  [GATE_CATEGORY_LOGIC]: { en: "Logic Gates", messageKey: "lb_logic_gates" },
+  [GATE_CATEGORY_INPUT]: { en: "Inputs", messageKey: "lb_inputs" },
+  [GATE_CATEGORY_OUTPUT]: { en: "Outputs", messageKey: "lb_outputs" },
+  [GATE_CATEGORY_SEQUENTIAL]: { en: "Sequential", messageKey: "lb_sequential" },
+  [GATE_CATEGORY_ARITHMETIC]: { en: "Arithmetic", messageKey: "lb_arithmetic" },
+};
+
+export const GATE_TYPE_LABELS: Record<
+  string,
+  { en: string; messageKey: Messages }
+> = {
+  [GATE_TYPE_AND]: { en: "AND", messageKey: "lb_and" },
+  [GATE_TYPE_OR]: { en: "OR", messageKey: "lb_or" },
+  [GATE_TYPE_XOR]: { en: "XOR", messageKey: "lb_xor" },
+  [GATE_TYPE_XNOR]: { en: "XNOR", messageKey: "lb_xnor" },
+  [GATE_TYPE_NAND]: { en: "NAND", messageKey: "lb_nand" },
+  [GATE_TYPE_NOR]: { en: "NOR", messageKey: "lb_nor" },
+  [GATE_TYPE_NOT]: { en: "NOT", messageKey: "lb_not" },
+  [GATE_TYPE_BUFFER]: { en: "Buffer", messageKey: "lb_buffer" },
+  [GATE_TYPE_AND3]: { en: "AND-3", messageKey: "lb_and_3" },
+  [GATE_TYPE_OR3]: { en: "OR-3", messageKey: "lb_or_3" },
+  [GATE_TYPE_TOGGLE]: { en: "Toggle", messageKey: "lb_toggle" },
+  [GATE_TYPE_BUTTON]: { en: "Button", messageKey: "lb_button" },
+  [GATE_TYPE_CONST]: { en: "Constant", messageKey: "lb_const" },
+  [GATE_TYPE_CLOCK]: { en: "Clock", messageKey: "lb_clock" },
+  [GATE_TYPE_LED]: { en: "LED", messageKey: "lb_led" },
+  [GATE_TYPE_DISPLAY7]: { en: "7 Seg", messageKey: "lb_7_seg" },
+  [GATE_TYPE_SR_LATCH]: { en: "SR Latch", messageKey: "lb_sr_latch" },
+  [GATE_TYPE_DFF]: { en: "D Flip-Flop", messageKey: "lb_d_flip_flop" },
+  [GATE_TYPE_JKFF]: { en: "JK Flip-Flop", messageKey: "lb_jk_flip_flop" },
+  [GATE_TYPE_TIFF]: { en: "T Flip-Flop", messageKey: "lb_t_flip_flop" },
+  [GATE_TYPE_HALF_ADDER]: { en: "Half Adder", messageKey: "lb_halfadder" },
+  [GATE_TYPE_FULL_ADDER]: { en: "Full Adder", messageKey: "lb_adder" },
+  [GATE_TYPE_MUX2]: { en: "Mux 2:1", messageKey: "lb_mux_2_1" },
+  [GATE_TYPE_MUX4]: { en: "Mux 4:1", messageKey: "lb_mux_4_1" },
+  [GATE_TYPE_DEMUX2]: { en: "Demux 1:2", messageKey: "lb_dmux_1_2" },
+  [GATE_TYPE_DECODER2]: { en: "Decoder 2:4", messageKey: "lb_dcode_2_4" },
+  [GATE_TYPE_ENCODER4]: { en: "Encoder 4:2", messageKey: "lb_ecode_4_2" },
+  [GATE_TYPE_COMPARATOR]: { en: "Comparator", messageKey: "lb_comparator" },
+};

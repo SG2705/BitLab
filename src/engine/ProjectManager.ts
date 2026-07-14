@@ -15,7 +15,7 @@
 
 import type { CircuitSnapshot } from "./types";
 import type { CircuitManager } from "./CircuitManager";
-import { FORMAT_VERSION, MAX_HISTORY, STORAGE_KEY } from "@/constants";
+import { FORMAT_VERSION, MAX_HISTORY, STORAGE_KEY } from "@/lib/constants";
 
 export interface SerializedProject {
   version: number;

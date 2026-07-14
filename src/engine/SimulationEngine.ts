@@ -23,7 +23,7 @@ import type {
 import { SignalPropagator } from "./SignalPropagator";
 import { GraphManager } from "./GraphManager";
 import { ComponentLibrary } from "./ComponentLibrary";
-import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/constants";
+import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/lib/constants";
 
 export interface SimulationEngineOptions {
   clockHz?: number; // simulation ticks per second (default 8)

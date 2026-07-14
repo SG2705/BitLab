@@ -30,7 +30,7 @@ import {
 } from "./ComponentLibrary";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";
-import { ENGINE_EVENT_TYPE } from "@/constants";
+import { ENGINE_EVENT_TYPE } from "@/lib/constants";
 
 function uid(): string {
   return uuidv4();

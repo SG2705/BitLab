@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
@@ -12,90 +11,131 @@ import {
   Hand,
 } from "lucide-react";
 import { library } from "@/engine";
-import { useDigitalEngine } from "@/hooks/useDigitalEngine";
+import { useDigitalEngine } from "@/hooks/use-digitalengine";
 import type { ComponentInstance } from "@/engine";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, addLog, fm, snap } from "@/lib/utils";
 import { pinPos } from "@/lib/circuit";
 
-import { TopBar } from "./TopBar";
-import { ToolBtn } from "./ToolBtn";
-import { GateChip } from "./GateChip";
-import { GridBackground } from "./GridBackground";
-import { WirePath } from "./WirePath";
-import { GateNode } from "./GateNode";
-import { PropertiesPanel } from "./PropertiesPanel";
-import { ExplorerPanel } from "./ExplorerPanel";
-import { ConsolePanel } from "./ConsolePanel";
-import type { LogEntry } from "./ConsolePanel";
-import { Minimap } from "./Minimap";
-import { CommandPalette } from "./CommandPalette";
+import TopBar from "./TopBar";
+import ToolBtn from "./ToolBtn";
+import GateChip from "./GateChip";
+import GridBackground from "./GridBackground";
+import WirePath from "./WirePath";
+import GateNode from "./GateNode";
+import PropertiesPanel from "./PropertiesPanel";
+import ExplorerPanel from "./ExplorerPanel";
+import ConsolePanel from "./ConsolePanel";
+import Minimap from "./Minimap";
+import CommandPalette from "./CommandPalette";
+import { ConsoleTab, LogEntry, PinKind, Theme, Tool, WireType } from "@/types";
+import {
+  BASE_LOG,
+  CONSOLE_TAB,
+  GATE_CATEGORY_LABELS,
+  GATE_TYPE_CONST,
+  GATE_TYPE_TOGGLE,
+  PIN_KIND,
+  SIMULATION_STATUS,
+  THEME,
+  TOOL,
+  WIRE_TYPE,
+} from "@/lib/constants";
+import BottomBar from "./BottomBar";
 
-type Tool = "select" | "pan";
-
-const GRID = 20;
-
-function snap(v: number) {
-  return Math.round(v / GRID) * GRID;
-}
-
-const CATEGORIES = library.getCategories();
+const GATE_CATEGORIES = library.getCategories();
+const DEFAULT_OPEN_GATE = Object.fromEntries(
+  GATE_CATEGORIES.map((c) => [c.name, true]),
+);
 const GATES: Record<string, ReturnType<typeof library.get>> = {};
 
-for (const cat of CATEGORIES) {
-  for (const g of cat.gates) {
-    GATES[g] = library.get(g);
-  }
+for (const cat of GATE_CATEGORIES) {
+  for (const g of cat.gates) GATES[g] = library.get(g);
 }
 
 export function DigitalGateApp() {
-  const [theme, setTheme] = useState<"dark" | "light">("light");
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("light", theme === "light");
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
-
+  // States
+  const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
   const [clockSpeed, setClockSpeed] = useState(8);
-  const eng = useDigitalEngine(clockSpeed);
 
-  const { snapshot, status, stats, canUndo, canRedo } = eng;
-  const running = status === "running";
+  const {
+    snapshot,
+    status,
+    stats,
+    canUndo,
+    canRedo,
+    addComponent,
+    moveComponents,
+    commitMove,
+    addWire,
+    removeWires,
+    removeComponents,
+    updateComponent,
+    duplicateComponents,
+    setInput,
+    undo,
+    redo,
+    pause,
+    start,
+    step,
+    reset,
+    exportJSON,
+    newProject,
+    saveProjectToLocal,
+    loadProjectFromLocal,
+  } = useDigitalEngine(clockSpeed);
+
+  const running = status === SIMULATION_STATUS.RUNNING;
   const tick = stats.tick;
 
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selWires, setSelWires] = useState<Set<string>>(new Set());
-
-  const [logs, setLogs] = useState<LogEntry[]>([
-    {
-      t: 0,
-      kind: "log",
-      msg: "Digital Gate ready. Drag components from the toolbox to get started.",
-    },
-  ]);
-  const [consoleTab, setConsoleTab] = useState<
-    "log" | "err" | "warn" | "timeline" | "perf"
-  >("log");
-  const [wireStyle, setWireStyle] = useState<"bezier" | "ortho">("bezier");
+  const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
+  const [consoleTab, setConsoleTab] = useState<ConsoleTab>(CONSOLE_TAB.LOG);
+  const [wireStyle, setWireStyle] = useState<WireType>(WIRE_TYPE.BEZIER);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [showMinimap] = useState(true);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [openCats, setOpenCats] = useState<Record<string, boolean>>(
-    Object.fromEntries(CATEGORIES.map((c) => [c.name, true])),
-  );
+  const [openCats, setOpenCats] =
+    useState<Record<string, boolean>>(DEFAULT_OPEN_GATE);
 
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
+  const [size, setSize] = useState({ w: 1200, h: 800 });
+  const [pendingWire, setPendingWire] = useState<{
+    from: { comp: string; pin: number };
+    mx: number;
+    my: number;
+  } | null>(null);
+  const [dragType, setDragType] = useState<string | null>(null);
+  const [panning, setPanning] = useState(false);
+  const [lasso, setLasso] = useState<{
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  } | null>(null);
+  const [tool, setTool] = useState<Tool>(TOOL.SELECT);
+
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const [size, setSize] = useState({ w: 1200, h: 800 });
+  const panStartRef = useRef<{
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+  } | null>(null);
+  const dragCompRef = useRef<{
+    id: string;
+    ox: number;
+    oy: number;
+    moved: boolean;
+  } | null>(null);
 
   useEffect(() => {
     const el = canvasRef.current;
 
-    if (!el) {
-      return;
-    }
+    if (!el) return;
 
     const ro = new ResizeObserver(() =>
       setSize({ w: el.clientWidth, h: el.clientHeight }),
@@ -106,11 +146,11 @@ export function DigitalGateApp() {
     return () => ro.disconnect();
   }, []);
 
-  const addLog = useCallback((kind: "log" | "warn" | "err", msg: string) => {
-    setLogs((l) => [...l, { t: Date.now(), kind, msg }]);
-  }, []);
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", theme === THEME.LIGHT);
+    document.documentElement.classList.toggle("dark", theme === THEME.DARK);
+  }, [theme]);
 
-  // Screen → world coords
   const toWorld = useCallback(
     (sx: number, sy: number) => {
       const rect = canvasRef.current!.getBoundingClientRect();
@@ -123,35 +163,21 @@ export function DigitalGateApp() {
     [view],
   );
 
-  // ── Drag-from-toolbox ───────────────────────────────────────────────────────
-  const [dragType, setDragType] = useState<string | null>(null);
-
   const onCanvasDrop = (e: React.DragEvent) => {
     const type = e.dataTransfer.getData("text/gate") || dragType;
 
-    if (!type || !GATES[type]) {
-      return;
-    }
+    if (!type || !GATES[type]) return;
 
-    const { x, y } = toWorld(e.clientX, e.clientY);
     const def = GATES[type];
+    const { x, y } = toWorld(e.clientX, e.clientY);
     const nx = snapEnabled ? snap(x - def.width / 2) : x - def.width / 2;
     const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
-    const comp = eng.addComponent(type, nx, ny);
+    const comp = addComponent(type, nx, ny);
 
-    addLog("log", `Added ${def.label} (${comp.id})`);
+    addLog(CONSOLE_TAB.LOG, `Added ${def.label} (${comp.id})`, setLogs);
 
     setDragType(null);
   };
-
-  // ── Pan / zoom ──────────────────────────────────────────────────────────────
-  const [panning, setPanning] = useState(false);
-  const panStart = useRef<{
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-  } | null>(null);
 
   const onWheel = (e: React.WheelEvent) => {
     if (e.ctrlKey || e.metaKey) {
@@ -170,37 +196,20 @@ export function DigitalGateApp() {
     }
   };
 
-  // ── Component dragging ──────────────────────────────────────────────────────
-  const dragCompRef = useRef<{
-    id: string;
-    ox: number;
-    oy: number;
-    moved: boolean;
-  } | null>(null);
-
-  // ── Wire creation ───────────────────────────────────────────────────────────
-  const [pendingWire, setPendingWire] = useState<{
-    from: { comp: string; pin: number };
-    mx: number;
-    my: number;
-  } | null>(null);
-
-  // ── Lasso selection ─────────────────────────────────────────────────────────
-  const [lasso, setLasso] = useState<{
-    x0: number;
-    y0: number;
-    x1: number;
-    y1: number;
-  } | null>(null);
-
   const onCanvasMouseDown = (e: React.MouseEvent) => {
     if (e.button === 1 || tool === "pan" || (e.button === 0 && e.altKey)) {
       setPanning(true);
 
-      panStart.current = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+      panStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        vx: view.x,
+        vy: view.y,
+      };
 
       return;
     }
+
     if (
       e.target === svgRef.current ||
       (e.target as SVGElement).classList?.contains("bg-hit")
@@ -217,11 +226,11 @@ export function DigitalGateApp() {
   };
 
   const onCanvasMouseMove = (e: React.MouseEvent) => {
-    if (panning && panStart.current) {
+    if (panning && panStartRef.current) {
       setView((v) => ({
         ...v,
-        x: panStart.current!.vx + (e.clientX - panStart.current!.x),
-        y: panStart.current!.vy + (e.clientY - panStart.current!.y),
+        x: panStartRef.current!.vx + (e.clientX - panStartRef.current!.x),
+        y: panStartRef.current!.vy + (e.clientY - panStartRef.current!.y),
       }));
 
       return;
@@ -237,14 +246,13 @@ export function DigitalGateApp() {
 
       const cur = snapshot.components[id];
 
-      if (!cur) {
-        return;
-      }
+      if (!cur) return;
+
       const dx = nx - cur.x;
       const dy = ny - cur.y;
       const ids = selection.has(id) ? Array.from(selection) : [id];
 
-      eng.moveComponents(ids, dx, dy);
+      moveComponents(ids, dx, dy);
 
       return;
     }
@@ -265,12 +273,9 @@ export function DigitalGateApp() {
   const onCanvasMouseUp = () => {
     setPanning(false);
 
-    panStart.current = null;
+    if (dragCompRef.current?.moved) commitMove();
 
-    if (dragCompRef.current?.moved) {
-      eng.commitMove();
-    }
-
+    panStartRef.current = null;
     dragCompRef.current = null;
 
     if (lasso) {
@@ -283,9 +288,7 @@ export function DigitalGateApp() {
       for (const c of Object.values(snapshot.components)) {
         const def = GATES[c.type];
 
-        if (!def) {
-          continue;
-        }
+        if (!def) continue;
 
         if (
           c.x + def.width >= x &&
@@ -300,19 +303,14 @@ export function DigitalGateApp() {
       setLasso(null);
     }
 
-    if (pendingWire) {
-      setPendingWire(null);
-    }
+    if (pendingWire) setPendingWire(null);
   };
 
   const startCompDrag = (e: React.MouseEvent, c: ComponentInstance) => {
     e.stopPropagation();
 
-    if (!e.shiftKey && !selection.has(c.id)) {
-      setSelection(new Set([c.id]));
-    } else if (e.shiftKey) {
-      setSelection(new Set([...selection, c.id]));
-    }
+    if (!e.shiftKey && !selection.has(c.id)) setSelection(new Set([c.id]));
+    else if (e.shiftKey) setSelection(new Set([...selection, c.id]));
 
     const p = toWorld(e.clientX, e.clientY);
 
@@ -330,6 +328,7 @@ export function DigitalGateApp() {
     pin: number,
   ) => {
     e.stopPropagation();
+    e.preventDefault();
 
     const p = toWorld(e.clientX, e.clientY);
 
@@ -343,9 +342,7 @@ export function DigitalGateApp() {
   ) => {
     e.stopPropagation();
 
-    if (!pendingWire) {
-      return;
-    }
+    if (!pendingWire) return;
 
     if (pendingWire.from.comp === comp.id) {
       setPendingWire(null);
@@ -353,21 +350,17 @@ export function DigitalGateApp() {
       return;
     }
 
-    const wire = eng.addWire(
+    const wire = addWire(
       pendingWire.from.comp,
       pendingWire.from.pin,
       comp.id,
       pin,
     );
 
-    if (wire) {
-      addLog("log", "Wire connected");
-    }
+    if (wire) addLog("log", `Wire connected (${wire.id})`, setLogs);
 
     setPendingWire(null);
   };
-
-  const [tool, setTool] = useState<Tool>("select");
 
   const deleteSelected = useCallback(() => {
     const wireIds = new Set<string>();
@@ -381,23 +374,22 @@ export function DigitalGateApp() {
         wireIds.add(w.id);
     }
 
-    eng.removeWires(Array.from(wireIds));
-    eng.removeComponents(Array.from(selection));
+    removeWires(Array.from(wireIds));
+    removeComponents(Array.from(selection));
 
     setSelection(new Set());
     setSelWires(new Set());
-  }, [selection, selWires, snapshot.wires, eng]);
+  }, [selection, selWires, snapshot.wires, removeComponents, removeWires]);
 
   const duplicateSelected = () => {
-    const idMap = eng.duplicateComponents(Array.from(selection));
+    const idMap = duplicateComponents(Array.from(selection));
 
     setSelection(new Set(idMap.values()));
   };
 
   const handleCompClick = (c: ComponentInstance) => {
-    if (c.type === "TOGGLE" || c.type === "CONST") {
-      eng.setInput(c.id, { on: !c.state?.on });
-    }
+    if (c.type === GATE_TYPE_TOGGLE || c.type === GATE_TYPE_CONST)
+      setInput(c.id, { on: !c.state?.on });
   };
 
   const fitToScreen = () => {
@@ -417,9 +409,7 @@ export function DigitalGateApp() {
     for (const c of comps) {
       const d = GATES[c.type];
 
-      if (!d) {
-        continue;
-      }
+      if (!d) continue;
 
       minX = Math.min(minX, c.x);
       minY = Math.min(minY, c.y);
@@ -439,70 +429,32 @@ export function DigitalGateApp() {
     const h = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
 
-      if (meta && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-
-        setCmdOpen((v) => !v);
-
-        return;
-      }
-
-      if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) {
-        e.preventDefault();
-
-        eng.undo();
-
-        return;
-      }
-
-      if (
-        meta &&
-        (e.key.toLowerCase() === "y" ||
-          (e.key.toLowerCase() === "z" && e.shiftKey))
-      ) {
-        e.preventDefault();
-
-        eng.redo();
-
-        return;
-      }
-
-      if (meta && e.key.toLowerCase() === "d") {
-        e.preventDefault();
-
-        duplicateSelected();
-
-        return;
-      }
-
-      if (meta && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-
-        eng.saveProject();
-
-        return;
-      }
-
       if (e.key === "Delete" || e.key === "Backspace") {
         if (
           (e.target as HTMLElement).tagName === "INPUT" ||
           (e.target as HTMLElement).tagName === "TEXTAREA"
-        ) {
+        )
           return;
-        }
 
         deleteSelected();
+
+        return;
       }
 
-      if (e.key === " ") {
-        e.preventDefault();
+      e.preventDefault();
 
-        if (running) {
-          eng.pause();
-        } else {
-          eng.start();
-        }
-      }
+      // if (e.key === " " && running) pause();
+      // if (e.key === " ") start();
+      if (meta && e.key.toLowerCase() === "k") setCmdOpen((v) => !v);
+      if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) undo();
+      if (meta && e.key.toLowerCase() === "d") duplicateSelected();
+      if (meta && e.key.toLowerCase() === "s") saveProjectToLocal();
+      if (
+        meta &&
+        (e.key.toLowerCase() === "y" ||
+          (e.key.toLowerCase() === "z" && e.shiftKey))
+      )
+        redo();
     };
 
     window.addEventListener("keydown", h);
@@ -512,13 +464,11 @@ export function DigitalGateApp() {
   }, [deleteSelected, running]);
 
   const filteredCats = useMemo(() => {
-    if (!search) {
-      return CATEGORIES;
-    }
+    if (!search) return GATE_CATEGORIES;
 
     const q = search.toLowerCase();
 
-    return CATEGORIES.map((c) => ({
+    return GATE_CATEGORIES.map((c) => ({
       ...c,
       gates: c.gates.filter(
         (g) =>
@@ -528,29 +478,34 @@ export function DigitalGateApp() {
     })).filter((c) => c.gates.length);
   }, [search]);
 
-  const selectedComp =
-    selection.size === 1 ? snapshot.components[Array.from(selection)[0]] : null;
+  const selectedComp = useMemo(
+    () =>
+      selection.size === 1
+        ? snapshot.components[Array.from(selection)[0]]
+        : null,
+    [selection, snapshot.components],
+  );
 
   return (
     <div className="h-full w-full flex flex-col text-foreground bg-background overflow-hidden font-display">
       <TopBar
         running={running}
-        setRunning={(r: boolean) => (r ? eng.start() : eng.pause())}
-        stepOnce={eng.step}
-        resetSim={eng.reset}
+        setRunning={(r: boolean) => (r ? start() : pause())}
+        stepOnce={step}
+        resetSim={reset}
         tick={tick}
         clockSpeed={clockSpeed}
         setClockSpeed={setClockSpeed}
-        undo={eng.undo}
-        redo={eng.redo}
+        undo={undo}
+        redo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
         theme={theme}
         setTheme={setTheme}
-        saveProject={eng.saveProject}
-        loadProject={eng.loadProject}
-        exportProject={eng.exportJSON}
-        newProject={eng.newProject}
+        saveProjectToLocal={saveProjectToLocal}
+        loadProjectFromLocal={loadProjectFromLocal}
+        exportProject={exportJSON}
+        newProject={newProject}
         openCmd={() => setCmdOpen(true)}
       />
 
@@ -585,7 +540,7 @@ export function DigitalGateApp() {
                   ) : (
                     <ChevronRight className="h-3 w-3" />
                   )}
-                  {cat.name}
+                  {fm(GATE_CATEGORY_LABELS[cat.name]?.messageKey)}
                 </button>
                 {openCats[cat.name] && (
                   <div className="grid grid-cols-2 gap-1.5 px-1 pb-2">
@@ -605,16 +560,17 @@ export function DigitalGateApp() {
 
         {/* Center canvas */}
         <main className="flex-1 relative min-w-0 bg-background">
+          {/* Canvas tool */}
           <div className="absolute z-20 top-3 left-3 flex items-center gap-1 glass-panel rounded-lg p-1 shadow-lg">
             <ToolBtn
-              active={tool === "select"}
-              onClick={() => setTool("select")}
+              active={tool === TOOL.SELECT}
+              onClick={() => setTool(TOOL.SELECT)}
               icon={<MousePointer2 className="h-4 w-4" />}
               label="Select (V)"
             />
             <ToolBtn
-              active={tool === "pan"}
-              onClick={() => setTool("pan")}
+              active={tool === TOOL.PAN}
+              onClick={() => setTool(TOOL.PAN)}
               icon={<Hand className="h-4 w-4" />}
               label="Pan (Space)"
             />
@@ -626,15 +582,19 @@ export function DigitalGateApp() {
               label="Snap to grid"
             />
             <ToolBtn
-              active={wireStyle === "ortho"}
+              active={wireStyle === WIRE_TYPE.ORTHO}
               onClick={() =>
-                setWireStyle(wireStyle === "ortho" ? "bezier" : "ortho")
+                setWireStyle(
+                  wireStyle === WIRE_TYPE.ORTHO
+                    ? WIRE_TYPE.BEZIER
+                    : WIRE_TYPE.ORTHO,
+                )
               }
               icon={<Activity className="h-4 w-4" />}
               label={`Wire: ${wireStyle}`}
             />
           </div>
-
+          {/* Canvas fit */}
           <div className="absolute z-20 top-3 right-3 flex items-center gap-1 glass-panel rounded-lg p-1 text-xs shadow-lg">
             <button
               onClick={fitToScreen}
@@ -656,8 +616,10 @@ export function DigitalGateApp() {
           <div
             ref={canvasRef}
             className={cn(
-              "absolute inset-0 overflow-hidden",
-              panning || tool === "pan" ? "cursor-grabbing" : "cursor-default",
+              "absolute inset-0 overflow-hidden select-none",
+              panning || tool === TOOL.PAN
+                ? "cursor-grabbing"
+                : "cursor-default",
             )}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onCanvasDrop}
@@ -668,6 +630,7 @@ export function DigitalGateApp() {
             onMouseLeave={onCanvasMouseUp}
           >
             <GridBackground view={view} size={size} />
+            {/* Wires and components */}
             <svg
               ref={svgRef}
               width={size.w}
@@ -676,18 +639,15 @@ export function DigitalGateApp() {
               style={{ pointerEvents: "auto" }}
             >
               <g transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}>
-                {/* Wires */}
                 {Object.values(snapshot.wires).map((w) => {
                   const a = snapshot.components[w.from.comp];
                   const b = snapshot.components[w.to.comp];
 
-                  if (!a || !b) {
-                    return null;
-                  }
+                  if (!a || !b) return null;
 
-                  const p1 = pinPos(a as any, "out", w.from.pin);
-                  const p2 = pinPos(b as any, "in", w.to.pin);
-                  const live = !!a.outputs[w.from.pin];
+                  const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
+                  const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+                  const live = Boolean(a.outputs[w.from.pin]);
 
                   return (
                     <WirePath
@@ -698,16 +658,14 @@ export function DigitalGateApp() {
                       running={running}
                       style={wireStyle}
                       selected={selWires.has(w.id)}
-                      onClick={(e: any) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
+
                         setSelWires((s) => {
                           const n = new Set(s);
 
-                          if (n.has(w.id)) {
-                            n.delete(w.id);
-                          } else {
-                            n.add(w.id);
-                          }
+                          if (n.has(w.id)) n.delete(w.id);
+                          else n.add(w.id);
 
                           return n;
                         });
@@ -715,16 +673,13 @@ export function DigitalGateApp() {
                     />
                   );
                 })}
-                {/* Pending wire */}
                 {pendingWire &&
                   (() => {
                     const src = snapshot.components[pendingWire.from.comp];
 
-                    if (!src) {
-                      return null;
-                    }
+                    if (!src) return null;
 
-                    const p1 = pinPos(src as any, "out", pendingWire.from.pin);
+                    const p1 = pinPos(src, PIN_KIND.OUT, pendingWire.from.pin);
 
                     return (
                       <WirePath
@@ -737,23 +692,29 @@ export function DigitalGateApp() {
                       />
                     );
                   })()}
-                {/* Components */}
                 {Object.values(snapshot.components).map((c) => (
                   <GateNode
                     key={c.id}
                     comp={c}
                     selected={selection.has(c.id)}
-                    onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
                     onClickBody={() => handleCompClick(c)}
-                    onPinDown={(pin: number, kind: string, e: any) => {
-                      if (kind === "out") startWire(e, c, pin);
+                    onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
+                    onPinDown={(
+                      e: React.MouseEvent,
+                      pin: number,
+                      kind: PinKind,
+                    ) => {
+                      if (kind === PIN_KIND.OUT) startWire(e, c, pin);
                     }}
-                    onPinUp={(pin: number, kind: string, e: any) => {
-                      if (kind === "in") finishWire(e, c, pin);
+                    onPinUp={(
+                      e: React.MouseEvent,
+                      pin: number,
+                      kind: PinKind,
+                    ) => {
+                      if (kind === PIN_KIND.IN) finishWire(e, c, pin);
                     }}
                   />
                 ))}
-                {/* Lasso */}
                 {lasso && (
                   <rect
                     x={Math.min(lasso.x0, lasso.x1)}
@@ -770,10 +731,11 @@ export function DigitalGateApp() {
               </g>
             </svg>
 
+            {/* MiniMap */}
             {showMinimap && (
               <Minimap snapshot={snapshot} view={view} size={size} />
             )}
-
+            {/* Empty Canvas */}
             {Object.keys(snapshot.components).length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
@@ -799,14 +761,16 @@ export function DigitalGateApp() {
 
         {/* Right properties */}
         <aside className="w-72 shrink-0 border-l border-border bg-panel/60 flex flex-col">
-          <PropertiesPanel
-            comp={selectedComp}
-            onUpdate={(id: string, patch: any) =>
-              eng.updateComponent(id, patch)
-            }
-            onDelete={deleteSelected}
-            onDuplicate={duplicateSelected}
-          />
+          {selectedComp && (
+            <PropertiesPanel
+              comp={selectedComp}
+              onUpdate={(id: string, patch: Partial<ComponentInstance>) =>
+                updateComponent(id, patch)
+              }
+              onDelete={deleteSelected}
+              onDuplicate={duplicateSelected}
+            />
+          )}
           <ExplorerPanel
             snapshot={snapshot}
             selection={selection}
@@ -825,46 +789,40 @@ export function DigitalGateApp() {
         stats={stats}
       />
 
-      <div className="h-6 shrink-0 border-t border-border bg-panel/80 flex items-center gap-4 px-3 text-[11px] text-muted-foreground font-mono">
-        <span className="flex items-center gap-1">
-          <span
-            className={cn(
-              "h-1.5 w-1.5 rounded-full",
-              running ? "bg-signal-on" : "bg-muted-foreground/40",
-            )}
-          />
-          {running ? "Running" : "Idle"}
-        </span>
-        <span>Tick {tick}</span>
-        <span>{Object.keys(snapshot.components).length} components</span>
-        <span>{Object.keys(snapshot.wires).length} wires</span>
-        <span className="ml-auto">Digital Gate v2.0 · Event-Driven</span>
-      </div>
+      <BottomBar
+        running={running}
+        tick={tick}
+        compCount={Object.keys(snapshot.components).length}
+        wireCount={Object.keys(snapshot.wires).length}
+      />
 
       {cmdOpen && (
         <CommandPalette
           onClose={() => setCmdOpen(false)}
           actions={[
-            { label: "Run simulation", action: eng.start },
-            { label: "Pause simulation", action: eng.pause },
-            { label: "Reset simulation", action: eng.reset },
+            { label: "Run simulation", action: start },
+            { label: "Pause simulation", action: pause },
+            { label: "Reset simulation", action: reset },
             {
               label: "Toggle theme",
               action: () => setTheme(theme === "dark" ? "light" : "dark"),
             },
             { label: "Fit to screen", action: fitToScreen },
-            { label: "Save project", action: eng.saveProject },
-            { label: "Export JSON", action: eng.exportJSON },
-            { label: "New project", action: eng.newProject },
-            ...CATEGORIES.flatMap((cat) =>
+            { label: "Save project to local", action: saveProjectToLocal },
+            { label: "Export JSON", action: exportJSON },
+            { label: "New project", action: newProject },
+            ...GATE_CATEGORIES.flatMap((cat) =>
               cat.gates.map((g) => ({
                 label: `Add ${GATES[g]?.label ?? g}`,
                 action: () => {
                   const def = GATES[g];
+
                   if (!def) return;
+
                   const cx = (size.w / 2 - view.x) / view.k;
                   const cy = (size.h / 2 - view.y) / view.k;
-                  eng.addComponent(g, snap(cx), snap(cy));
+
+                  addComponent(g, snap(cx), snap(cy));
                 },
               })),
             ),

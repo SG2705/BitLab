@@ -12,7 +12,7 @@ interface CommandPaletteProps {
   onClose: () => void;
 }
 
-export function CommandPalette({ actions, onClose }: CommandPaletteProps) {
+function CommandPalette({ actions, onClose }: CommandPaletteProps) {
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
   const filtered = actions
@@ -41,10 +41,13 @@ export function CommandPalette({ actions, onClose }: CommandPaletteProps) {
               if (e.key === "ArrowDown")
                 setI((v) => Math.min(v + 1, filtered.length - 1));
               if (e.key === "ArrowUp") setI((v) => Math.max(v - 1, 0));
+
               if (e.key === "Enter" && filtered[i]) {
                 filtered[i].action();
+
                 onClose();
               }
+
               if (e.key === "Escape") onClose();
             }}
             placeholder="Type a command…"
@@ -57,6 +60,7 @@ export function CommandPalette({ actions, onClose }: CommandPaletteProps) {
               key={a.label}
               onClick={() => {
                 a.action();
+
                 onClose();
               }}
               onMouseEnter={() => setI(idx)}
@@ -80,3 +84,5 @@ export function CommandPalette({ actions, onClose }: CommandPaletteProps) {
     </div>
   );
 }
+
+export default CommandPalette;

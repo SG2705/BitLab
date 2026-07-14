@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 interface ToolBtnProps {
   active: boolean;
@@ -7,7 +8,7 @@ interface ToolBtnProps {
   label: string;
 }
 
-export function ToolBtn({ active, onClick, icon, label }: ToolBtnProps) {
+function ToolBtn({ active, onClick, icon, label }: ToolBtnProps) {
   return (
     <button
       onClick={onClick}
@@ -23,3 +24,5 @@ export function ToolBtn({ active, onClick, icon, label }: ToolBtnProps) {
     </button>
   );
 }
+
+export default memo(ToolBtn);

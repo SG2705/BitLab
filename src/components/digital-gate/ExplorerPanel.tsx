@@ -2,6 +2,7 @@ import { Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GATES } from "@/lib/circuit";
 import type { ComponentInstance, CircuitSnapshot } from "@/engine";
+import { memo } from "react";
 
 interface ExplorerPanelProps {
   snapshot: CircuitSnapshot;
@@ -9,14 +10,16 @@ interface ExplorerPanelProps {
   setSelection: (s: Set<string>) => void;
 }
 
-export function ExplorerPanel({
+function ExplorerPanel({
   snapshot,
   selection,
   setSelection,
 }: ExplorerPanelProps) {
   const groups: Record<string, ComponentInstance[]> = {};
+
   for (const c of Object.values(snapshot.components)) {
     const cat = GATES[c.type]?.category ?? "Other";
+
     (groups[cat] ||= []).push(c);
   }
 
@@ -59,3 +62,5 @@ export function ExplorerPanel({
     </div>
   );
 }
+
+export default memo(ExplorerPanel);

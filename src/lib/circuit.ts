@@ -5,28 +5,26 @@
  * This file keeps the UI helper functions that depend on component geometry.
  */
 
+import { PIN_KIND } from "@/lib/constants";
 import { library } from "@/engine";
 import type { ComponentInstance } from "@/engine";
+import { PinKind } from "@/types";
 
-export type PinKind = "in" | "out";
-
-// Re-export the engine's types under the legacy names so any remaining
-// imports from "@/lib/circuit" continue to resolve.
-export type { ComponentInstance as CircuitComp };
 export type { Wire } from "@/engine";
+export type { ComponentInstance as CircuitComp };
 export type { CircuitSnapshot as Circuit } from "@/engine";
 
 /** Returns the canvas (world) position of a component pin for wire rendering. */
 export function pinPos(
-  comp: Pick<ComponentInstance, "type" | "x" | "y">,
+  comp: ComponentInstance,
   kind: PinKind,
   idx: number,
 ): { x: number; y: number } {
   const def = library.get(comp.type);
-  const count = kind === "in" ? def.inputs : def.outputs;
+  const count = kind === PIN_KIND.IN ? def.inputs : def.outputs;
   const spacing = def.height / (count + 1);
   const y = comp.y + spacing * (idx + 1);
-  const x = kind === "in" ? comp.x : comp.x + def.width;
+  const x = kind === PIN_KIND.IN ? comp.x : comp.x + def.width;
 
   return { x, y };
 }

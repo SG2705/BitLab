@@ -1,15 +1,9 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Terminal, AlertTriangle, Activity, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CircuitSnapshot, SimulationStats } from "@/engine";
-
-export interface LogEntry {
-  t: number;
-  kind: "log" | "warn" | "err";
-  msg: string;
-}
-
-type ConsoleTab = "log" | "err" | "warn" | "timeline" | "perf";
+import { ConsoleTab, LogEntry } from "@/types";
+import { CONSOLE_TAB } from "@/lib/constants";
 
 interface PerfCardProps {
   label: string;
@@ -35,7 +29,7 @@ interface ConsolePanelProps {
   stats: SimulationStats;
 }
 
-export function ConsolePanel({
+function ConsolePanel({
   tab,
   setTab,
   logs,
@@ -45,18 +39,32 @@ export function ConsolePanel({
   stats,
 }: ConsolePanelProps) {
   const [open, setOpen] = useState(true);
+
   const tabs = [
-    { id: "log" as ConsoleTab, label: "Simulation Log", icon: Terminal },
-    { id: "err" as ConsoleTab, label: "Errors", icon: AlertTriangle },
-    { id: "warn" as ConsoleTab, label: "Warnings", icon: AlertTriangle },
-    { id: "timeline" as ConsoleTab, label: "Event Timeline", icon: Activity },
-    { id: "perf" as ConsoleTab, label: "Performance", icon: Cpu },
+    {
+      id: CONSOLE_TAB.LOG,
+      label: "Simulation Log",
+      icon: Terminal,
+    },
+    {
+      id: CONSOLE_TAB.ERROR,
+      label: "Errors",
+      icon: AlertTriangle,
+    },
+    {
+      id: CONSOLE_TAB.WARN,
+      label: "Warnings",
+      icon: AlertTriangle,
+    },
+    { id: CONSOLE_TAB.TIMELINE, label: "Event Timeline", icon: Activity },
+    { id: CONSOLE_TAB.PERF, label: "Performance", icon: Cpu },
   ];
+
   const filtered =
-    tab === "err"
-      ? logs.filter((l) => l.kind === "err")
-      : tab === "warn"
-        ? logs.filter((l) => l.kind === "warn")
+    tab === CONSOLE_TAB.ERROR
+      ? logs.filter((l) => l.kind === CONSOLE_TAB.ERROR)
+      : tab === CONSOLE_TAB.WARN
+        ? logs.filter((l) => l.kind === CONSOLE_TAB.WARN)
         : logs;
 
   return (
@@ -93,7 +101,7 @@ export function ConsolePanel({
       </div>
       {open && (
         <div className="h-40 overflow-y-auto p-2 font-mono text-[11px]">
-          {tab === "perf" ? (
+          {tab === CONSOLE_TAB.PERF ? (
             <div className="grid grid-cols-4 gap-2 text-xs">
               <PerfCard
                 label="Components"
@@ -106,7 +114,7 @@ export function ConsolePanel({
               <PerfCard label="Tick" value={tick} />
               <PerfCard label="Events" value={stats.eventsProcessed} />
             </div>
-          ) : tab === "timeline" ? (
+          ) : tab === CONSOLE_TAB.TIMELINE ? (
             <div className="space-y-1">
               {logs.slice(-20).map((l, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -144,3 +152,5 @@ export function ConsolePanel({
     </div>
   );
 }
+
+export default memo(ConsolePanel);

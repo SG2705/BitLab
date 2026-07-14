@@ -18,6 +18,12 @@ import type {
   SimulationStatus,
   SimulationStats,
 } from "@/engine";
+import {
+  DEFAULT_CLOCK,
+  EMPTY_SNAPSHOT,
+  ENGINE_EVENT_TYPE,
+  SIMULATION_STATUS,
+} from "@/lib/constants";
 
 export interface DigitalEngineControls {
   // ── Read-only state ──────────────────────────────────────────────────────
@@ -63,21 +69,23 @@ export interface DigitalEngineControls {
   undo: () => void;
   redo: () => void;
   newProject: () => void;
-  saveProject: () => void;
-  loadProject: () => void;
   exportJSON: () => void;
   importJSON: () => Promise<boolean>;
   getProjectName: () => string;
+  saveProjectToLocal: () => void;
+  loadProjectFromLocal: () => void;
 }
 
-const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
-
-export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
+export function useDigitalEngine(
+  clockHz = DEFAULT_CLOCK,
+): DigitalEngineControls {
   const engineRef = useRef(createEngine());
   const { manager, project } = engineRef.current;
 
   const [snapshot, setSnapshot] = useState<CircuitSnapshot>(EMPTY_SNAPSHOT);
-  const [status, setStatus] = useState<SimulationStatus>("idle");
+  const [status, setStatus] = useState<SimulationStatus>(
+    SIMULATION_STATUS.IDLE,
+  );
   const [stats, setStats] = useState<SimulationStats>(() =>
     manager.getSimulationStats(),
   );
@@ -88,7 +96,10 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
 
   useEffect(() => {
     const unsub = manager.on((event) => {
-      if (event.type === "snapshot-changed" || event.type === "tick") {
+      if (
+        event.type === ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED ||
+        event.type === ENGINE_EVENT_TYPE.TICK
+      ) {
         setSnapshot(manager.getSnapshot());
         setStats(manager.getSimulationStats());
         setStatus(manager.getSimulationStatus());
@@ -110,6 +121,7 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
 
   const pushHistory = useCallback(() => {
     project.push();
+
     setCanUndo(project.canUndo());
     setCanRedo(project.canRedo());
   }, [project]);
@@ -210,9 +222,7 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
       for (const id of ids) {
         const src = manager.getComponent(id);
 
-        if (!src) {
-          continue;
-        }
+        if (!src) continue;
 
         const comp = manager.addComponent(src.type, {
           x: src.x + 20,
@@ -238,9 +248,7 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
     (fromComp: string, fromPin: number, toComp: string, toPin: number) => {
       const wire = manager.addWire(fromComp, fromPin, toComp, toPin);
 
-      if (wire) {
-        pushHistory();
-      }
+      if (wire) pushHistory();
 
       return wire;
     },
@@ -288,11 +296,11 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
     setCanRedo(false);
   }, [project]);
 
-  const saveProject = useCallback(() => {
+  const saveProjectToLocal = useCallback(() => {
     project.saveToLocalStorage();
   }, [project]);
 
-  const loadProject = useCallback(() => {
+  const loadProjectFromLocal = useCallback(() => {
     project.loadFromLocalStorage();
 
     setCanUndo(project.canUndo());
@@ -303,9 +311,10 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
     project.downloadJSON();
   }, [project]);
 
-  const importJSON = useCallback(async () => {
-    return project.importFromFile();
-  }, [project]);
+  const importJSON = useCallback(
+    async () => project.importFromFile(),
+    [project],
+  );
 
   const getProjectName = useCallback(() => project.getProjectName(), [project]);
 
@@ -336,10 +345,10 @@ export function useDigitalEngine(clockHz = 8): DigitalEngineControls {
     undo,
     redo,
     newProject,
-    saveProject,
-    loadProject,
     exportJSON,
     importJSON,
     getProjectName,
+    saveProjectToLocal,
+    loadProjectFromLocal,
   };
 }

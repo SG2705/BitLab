@@ -1,14 +1,16 @@
-const GRID = 20;
+import { GRID } from "@/lib/constants";
+import { memo } from "react";
 
 interface GridBackgroundProps {
   view: { x: number; y: number; k: number };
   size: { w: number; h: number };
 }
 
-export function GridBackground({ view, size }: GridBackgroundProps) {
+function GridBackground({ view, size }: GridBackgroundProps) {
   const step = GRID * view.k;
   const offX = view.x % step;
   const offY = view.y % step;
+
   return (
     <svg
       width={size.w}
@@ -48,3 +50,5 @@ export function GridBackground({ view, size }: GridBackgroundProps) {
     </svg>
   );
 }
+
+export default memo(GridBackground);

@@ -5,9 +5,11 @@ interface GateChipProps {
   onDragStart: () => void;
 }
 
-export function GateChip({ type, onDragStart }: GateChipProps) {
+function GateChip({ type, onDragStart }: GateChipProps) {
   const def = GATES[type];
+
   if (!def) return null;
+
   return (
     <div
       draggable
@@ -26,3 +28,5 @@ export function GateChip({ type, onDragStart }: GateChipProps) {
     </div>
   );
 }
+
+export default GateChip;

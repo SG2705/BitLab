@@ -16,6 +16,8 @@ import {
   Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Theme } from "@/types";
+import { memo } from "react";
 
 interface TopBarProps {
   running: boolean;
@@ -29,10 +31,10 @@ interface TopBarProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  theme: "dark" | "light";
-  setTheme: (t: "dark" | "light") => void;
-  saveProject: () => void;
-  loadProject: () => void;
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  saveProjectToLocal: () => void;
+  loadProjectFromLocal: () => void;
   exportProject: () => void;
   newProject: () => void;
   openCmd: () => void;
@@ -45,7 +47,7 @@ interface TBBtnProps {
   disabled?: boolean;
 }
 
-export function TBBtn({ onClick, icon, label, disabled }: TBBtnProps) {
+function TBBtn({ onClick, icon, label, disabled }: TBBtnProps) {
   return (
     <button
       onClick={onClick}
@@ -58,7 +60,7 @@ export function TBBtn({ onClick, icon, label, disabled }: TBBtnProps) {
   );
 }
 
-export function TopBar({
+function TopBar({
   running,
   setRunning,
   stepOnce,
@@ -72,8 +74,8 @@ export function TopBar({
   canRedo,
   theme,
   setTheme,
-  saveProject,
-  loadProject,
+  saveProjectToLocal,
+  loadProjectFromLocal,
   exportProject,
   newProject,
   openCmd,
@@ -93,14 +95,14 @@ export function TopBar({
         label="New"
       />
       <TBBtn
-        onClick={loadProject}
+        onClick={loadProjectFromLocal}
         icon={<FolderOpen className="h-4 w-4" />}
-        label="Open"
+        label="Open from local"
       />
       <TBBtn
-        onClick={saveProject}
+        onClick={saveProjectToLocal}
         icon={<Save className="h-4 w-4" />}
-        label="Save"
+        label="Save to local"
       />
       <TBBtn
         onClick={exportProject}
@@ -191,3 +193,5 @@ export function TopBar({
     </header>
   );
 }
+
+export default memo(TopBar);
