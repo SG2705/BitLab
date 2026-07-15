@@ -96,9 +96,14 @@ function ConsolePanel({
             // eslint-disable-next-line react/no-array-index-key
             <div key={i} className="flex items-center gap-2">
               <span className="text-muted-foreground">
-                {new Date(l.t).toLocaleTimeString()}
+                <FormattedMessage
+                  id="CxgWOn"
+                  defaultMessage="[{time}]"
+                  values={{
+                    time: new Date(l.t).toLocaleTimeString(),
+                  }}
+                />
               </span>
-              <span className="h-1 w-1 rounded-full bg-primary" />
               <span>{l.msg}</span>
             </div>
           ))}
