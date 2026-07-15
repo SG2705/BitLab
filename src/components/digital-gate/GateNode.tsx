@@ -192,7 +192,7 @@ function GateNode({
           fontFamily="var(--font-mono)"
           pointerEvents="none"
         >
-          {isCustomLabel ? comp.label?.slice(0, 8) : (def.symbol ?? def.label)}
+          {def.symbol ?? def.label}
         </text>
       )}
       <text
@@ -203,7 +203,7 @@ function GateNode({
         fontSize={9}
         pointerEvents="none"
       >
-        {isCustomLabel ? def.label : (comp.label ?? def.label)}
+        {isCustomLabel ? comp.label : (comp.label ?? def.label)}
       </text>
       {comp.type === GATE_TYPE_LED && (
         <circle

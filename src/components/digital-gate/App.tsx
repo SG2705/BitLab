@@ -583,17 +583,19 @@ function DigitalGateApp() {
     const h = (e: KeyboardEvent) => {
       const meta = e.ctrlKey || e.metaKey;
 
+      const inInput =
+        (e.target as HTMLElement).tagName === "INPUT" ||
+        (e.target as HTMLElement).tagName === "TEXTAREA";
+
       if (e.key === "Delete" || e.key === "Backspace") {
-        if (
-          (e.target as HTMLElement).tagName === "INPUT" ||
-          (e.target as HTMLElement).tagName === "TEXTAREA"
-        )
-          return;
+        if (inInput) return;
 
         deleteSelected();
 
         return;
       }
+
+      if (inInput) return;
 
       e.preventDefault();
 
