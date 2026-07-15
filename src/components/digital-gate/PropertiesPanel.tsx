@@ -7,6 +7,7 @@ import { Button, Input } from "@/components/ui";
 import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_CONST,
+  GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_LABELS,
   GATE_TYPE_TOGGLE,
 } from "@/lib/constants";
@@ -101,7 +102,28 @@ function PropertiesPanel({
             />
           </div>
         </div>
+        {!gate.isAnnotation && comp.type === GATE_TYPE_DIGIT_BIN && (
+          <div>
+            <label className="text-[10px] uppercase text-muted-foreground">
+              <FormattedMessage id="Gab3IF" defaultMessage="Digit (0-9)" />
+            </label>
+            <Input
+              type="number"
+              min={0}
+              max={9}
+              value={(comp.state?.digit as number) ?? 0}
+              onChange={(e) => {
+                const v = parseInt(e.target.value, 10);
+                const digit = !Number.isNaN(v) && v >= 0 && v <= 9 ? v : 0;
+
+                onUpdate(comp.id, { state: { ...comp.state, digit } });
+              }}
+              className="h-8 mt-1 bg-background/60"
+            />
+          </div>
+        )}
         {!gate.isAnnotation &&
+          comp.type !== GATE_TYPE_DIGIT_BIN &&
           (comp.type === GATE_TYPE_TOGGLE || comp.type === GATE_TYPE_CONST ? (
             <div>
               <label className="text-[10px] uppercase text-muted-foreground">

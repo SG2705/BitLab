@@ -6,6 +6,7 @@ import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
+  GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_LED,
   GATE_TYPE_PROBE,
@@ -51,7 +52,7 @@ function SevenSegDisplay({ value }: { value: number }) {
   const pattern = SEG7[value & 0xf] ?? SEG7[0];
 
   return (
-    <g transform="translate(16, 8)">
+    <g transform="translate(20, 13)">
       {SEG_RECTS.map(([x, y, w, h], i) => (
         <rect
           // eslint-disable-next-line react/no-array-index-key
@@ -172,6 +173,7 @@ function GateNode({
     GATE_TYPE_BUTTON,
     GATE_TYPE_CONST,
     GATE_TYPE_LED,
+    GATE_TYPE_DIGIT_BIN,
   ].includes(comp.type);
 
   // For input/output/clock components a custom label becomes the pin name in
@@ -261,6 +263,7 @@ function GateNode({
       />
       {comp.type !== GATE_TYPE_DISPLAY7 &&
         comp.type !== GATE_TYPE_PROBE &&
+        comp.type !== GATE_TYPE_DIGIT_BIN &&
         (IconComponent ? (
           <IconComponent
             x={def.width / 2 - 20}
@@ -318,6 +321,21 @@ function GateNode({
           width={def.width}
           height={def.height}
         />
+      )}
+      {comp.type === GATE_TYPE_DIGIT_BIN && (
+        <text
+          x={def.width / 2}
+          y={def.height / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={active ? "var(--color-signal-on)" : "var(--color-foreground)"}
+          fontSize={32}
+          fontWeight={700}
+          fontFamily="var(--font-mono)"
+          pointerEvents="none"
+        >
+          {(comp.state?.digit as number) ?? 0}
+        </text>
       )}
       {Array.from({ length: def.inputs }).map((_, i) => {
         const y = (def.height / (def.inputs + 1)) * (i + 1);

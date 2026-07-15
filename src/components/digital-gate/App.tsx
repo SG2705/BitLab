@@ -26,6 +26,7 @@ import {
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
   GATE_TYPE_CONST,
+  GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_TOGGLE,
   PIN_KIND,
   SIMULATION_STATUS,
@@ -440,6 +441,8 @@ function DigitalGateApp() {
   const handleCompClick = (c: ComponentInstance) => {
     if (c.type === GATE_TYPE_TOGGLE || c.type === GATE_TYPE_CONST)
       setInput(c.id, { on: !c.state?.on });
+    if (c.type === GATE_TYPE_DIGIT_BIN)
+      setInput(c.id, { digit: (((c.state?.digit as number) ?? -1) + 1) % 10 });
   };
 
   const saveCustomCircuitToLocal = useCallback(() => {

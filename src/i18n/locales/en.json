@@ -77,6 +77,9 @@
   "DYWVqY": {
     "defaultMessage": "Mux 4:1"
   },
+  "FJad6C": {
+    "defaultMessage": "Digit→Bin"
+  },
   "FR3H6g": {
     "defaultMessage": "No commands found"
   },
@@ -85,6 +88,9 @@
   },
   "G3+QfR": {
     "defaultMessage": "Constant"
+  },
+  "Gab3IF": {
+    "defaultMessage": "Digit (0-9)"
   },
   "GkBxYy": {
     "defaultMessage": "Start designing"

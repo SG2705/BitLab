@@ -195,6 +195,12 @@
       "value": "Mux 4:1"
     }
   ],
+  "FJad6C": [
+    {
+      "type": 0,
+      "value": "Digit→Bin"
+    }
+  ],
   "FR3H6g": [
     {
       "type": 0,
@@ -211,6 +217,12 @@
     {
       "type": 0,
       "value": "Constant"
+    }
+  ],
+  "Gab3IF": [
+    {
+      "type": 0,
+      "value": "Digit (0-9)"
     }
   ],
   "GkBxYy": [

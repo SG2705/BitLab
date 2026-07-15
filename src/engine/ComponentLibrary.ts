@@ -30,6 +30,7 @@ import {
   GATE_TYPE_DECODER3,
   GATE_TYPE_DEMUX2,
   GATE_TYPE_DFF,
+  GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_DLATCH,
   GATE_TYPE_ENCODER4,
@@ -308,6 +309,43 @@ const DEFINITIONS: ComponentDefinition[] = [
     },
   },
 
+  // ── Digit→Binary input ───────────────────────────────────────────────────────
+  {
+    type: GATE_TYPE_DIGIT_BIN,
+    label: fm("lb_digit_bin"),
+    category: GATE_CATEGORY_INPUT,
+    inputs: 0,
+    outputs: 8,
+    width: 80,
+    height: 120,
+    outputLabels: ["B7", "B6", "B5", "B4", "B3", "B2", "B1", "B0"],
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    initialState: () => ({ digit: 0 }),
+    evaluate: (_i, s) => {
+      const digit = s?.digit as number | null | undefined;
+      const zero: boolean[] = Array<boolean>(8).fill(false);
+
+      if (
+        typeof digit !== "number" ||
+        !Number.isInteger(digit) ||
+        digit < 0 ||
+        digit > 9
+      ) {
+        return { outputs: zero, state: s };
+      }
+
+      return {
+        outputs: Array.from({ length: 8 }, (_, bit) =>
+          Boolean((digit >> (7 - bit)) & 1),
+        ),
+        state: s,
+      };
+    },
+  },
+
   // ── Outputs ──────────────────────────────────────────────────────────────────
   {
     type: GATE_TYPE_LED,
@@ -332,7 +370,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputs: 4,
     outputs: 0,
     width: 70,
-    height: 80,
+    height: 90,
     symbol: "7",
     isSequential: false,
     isClock: false,

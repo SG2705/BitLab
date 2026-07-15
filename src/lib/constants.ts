@@ -55,6 +55,7 @@ export const MESSAGES = defineMessages({
   lb_splitter: { id: "xu5aZu", defaultMessage: "Splitter" },
   lb_comment: { id: "LgbKvU", defaultMessage: "Comment" },
   lb_probe: { id: "xXqJUI", defaultMessage: "Probe" },
+  lb_digit_bin: { id: "FJad6C", defaultMessage: "Digit→Bin" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -109,6 +110,7 @@ export const GATE_TYPE_TRIBUF = "TRIBUF";
 export const GATE_TYPE_PROBE = "PROBE";
 export const GATE_TYPE_SPLITTER = "SPLITTER";
 export const GATE_TYPE_COMMENT = "COMMENT";
+export const GATE_TYPE_DIGIT_BIN = "DIGIT_BIN";
 
 // Wires
 export const WIRE_TYPE = {
@@ -236,4 +238,5 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_PROBE]: { en: "Probe", messageKey: "lb_probe" },
   [GATE_TYPE_SPLITTER]: { en: "Splitter", messageKey: "lb_splitter" },
   [GATE_TYPE_COMMENT]: { en: "Comment", messageKey: "lb_comment" },
+  [GATE_TYPE_DIGIT_BIN]: { en: "Digit→Bin", messageKey: "lb_digit_bin" },
 };
