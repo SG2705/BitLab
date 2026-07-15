@@ -57,6 +57,13 @@ export class SignalPropagator {
     const evalCount = new Map<string, number>();
     const changed = new Set<string>();
 
+    // Snapshot outputs at the start of this pass so sequential gates read
+    // pre-clock-edge values regardless of the order they are evaluated.
+    // Combinational gates always read the live (updated) map.
+    const outputSnapshot = new Map<string, boolean[]>(
+      Object.entries(components).map(([id, c]) => [id, c.outputs.slice()]),
+    );
+
     // Seed: queue direct downstream of each seed component
     for (const seedId of seeds) {
       for (const downId of this.graph.getDownstream(seedId))
@@ -87,6 +94,12 @@ export class SignalPropagator {
         break;
       }
 
+      // Sequential gates read from the pre-pass snapshot so that chained
+      // flip-flops see each other's outputs from before this clock edge
+      // (non-blocking assignment semantics). Combinational gates read the
+      // live map so their paths settle within the same pass.
+      const useSnapshot = def.isSequential;
+
       // Build current input signals by reading connected source outputs
       const inputs: SignalValue[] = new Array<boolean>(def.inputs).fill(false);
 
@@ -94,9 +107,11 @@ export class SignalPropagator {
         const wire = this.graph.getInputWire(compId, pin);
 
         if (wire) {
-          const src = components[wire.from.comp];
+          const srcOutputs = useSnapshot
+            ? outputSnapshot.get(wire.from.comp)
+            : components[wire.from.comp]?.outputs;
 
-          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
+          if (srcOutputs) inputs[pin] = srcOutputs[wire.from.pin] ?? false;
         }
       }
 

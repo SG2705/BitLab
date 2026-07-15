@@ -177,6 +177,20 @@
       "value": " to import a .json file."
     }
   ],
+  "CxgWOn": [
+    {
+      "type": 0,
+      "value": "["
+    },
+    {
+      "type": 1,
+      "value": "time"
+    },
+    {
+      "type": 0,
+      "value": "]"
+    }
+  ],
   "DPeP5H": [
     {
       "type": 0,

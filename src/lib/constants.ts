@@ -169,7 +169,7 @@ export const CONSOLE_TAB = {
   PERF: "perf",
 };
 export const BASE_LOG = {
-  t: 0,
+  t: Date.now(),
   kind: CONSOLE_TAB.LOG,
   msg: "BitLab ready. Drag components from the toolbox to get started.",
 };

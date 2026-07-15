@@ -125,10 +125,15 @@ function ConsolePanel({
         )}
       >
         <span className="text-muted-foreground">
-          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
-          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}[
-          {new Date(l.t).toLocaleTimeString()}]
+          <FormattedMessage
+            id="CxgWOn"
+            defaultMessage="[{time}]"
+            values={{
+              time: new Date(l.t).toLocaleTimeString(),
+            }}
+          />
         </span>
+        &nbsp;
         {l.msg}
       </div>
     ));

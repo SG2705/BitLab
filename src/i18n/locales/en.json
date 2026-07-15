@@ -68,6 +68,9 @@
   "BRqTi+": {
     "defaultMessage": "Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
   },
+  "CxgWOn": {
+    "defaultMessage": "[{time}]"
+  },
   "DPeP5H": {
     "defaultMessage": "D Latch"
   },
