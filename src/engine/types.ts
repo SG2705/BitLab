@@ -77,6 +77,8 @@ export interface ComponentDefinition {
   isInput: boolean;
   /** True → this component is an output sink (LED, Lamp) */
   isOutput: boolean;
+  /** True → purely a canvas annotation; no pins, no simulation role */
+  isAnnotation?: boolean;
   initialState: () => Record<string, unknown> | null;
   /**
    * Pure combinational / sequential evaluation.

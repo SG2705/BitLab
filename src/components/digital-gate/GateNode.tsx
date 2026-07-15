@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useIntl } from "react-intl";
 
 import { type ComponentInstance, library } from "@/engine";
 import {
@@ -83,6 +84,7 @@ function GateNode({
   onPinDown,
   onPinUp,
 }: GateNodeProps) {
+  const intl = useIntl();
   const def = library.get(comp.type);
 
   const active = comp.outputs.some(Boolean) || Boolean(comp.state?.on);
@@ -93,7 +95,63 @@ function GateNode({
     GATE_TYPE_LED,
   ].includes(comp.type);
 
+  // For input/output/clock components a custom label becomes the pin name in
+  // custom circuits — show it prominently inside the gate body when set.
+  const isCustomLabel =
+    (def.isInput || def.isClock || def.isOutput) && Boolean(comp.label);
+
   if (!def) return null;
+
+  if (def.isAnnotation) {
+    return (
+      <g
+        transform={`translate(${comp.x}, ${comp.y})`}
+        onMouseDown={onMouseDown}
+      >
+        {isSelected && (
+          <rect
+            x={-4}
+            y={-4}
+            width={def.width + 8}
+            height={def.height + 8}
+            rx={6}
+            fill="none"
+            stroke="var(--color-primary)"
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+          />
+        )}
+        <rect
+          x={0}
+          y={0}
+          width={def.width}
+          height={def.height}
+          rx={4}
+          fill="var(--color-card)"
+          fillOpacity={0.5}
+          stroke="var(--color-muted-foreground)"
+          strokeWidth={1}
+          strokeDasharray="5 3"
+          onClick={onClickBody}
+          style={{ cursor: "grab" }}
+        />
+        <text
+          x={def.width / 2}
+          y={def.height / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="var(--color-muted-foreground)"
+          fontSize={10}
+          fontFamily="var(--font-mono)"
+          fontStyle="italic"
+          pointerEvents="none"
+        >
+          {comp.label ||
+            intl.formatMessage({ id: "qBo9Vt", defaultMessage: "// comment" })}
+        </text>
+      </g>
+    );
+  }
 
   return (
     <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
@@ -126,15 +184,15 @@ function GateNode({
       {comp.type !== GATE_TYPE_DISPLAY7 && (
         <text
           x={def.width / 2}
-          y={def.height / 2 + 5}
+          y={def.height / 2 + (isCustomLabel ? 4 : 5)}
           textAnchor="middle"
           fill={active ? "var(--color-signal-on)" : "var(--color-foreground)"}
-          fontSize={14}
+          fontSize={isCustomLabel ? 10 : 14}
           fontWeight={600}
           fontFamily="var(--font-mono)"
           pointerEvents="none"
         >
-          {def.symbol ?? def.label}
+          {isCustomLabel ? comp.label?.slice(0, 8) : (def.symbol ?? def.label)}
         </text>
       )}
       <text
@@ -145,7 +203,7 @@ function GateNode({
         fontSize={9}
         pointerEvents="none"
       >
-        {comp.label ?? def.label}
+        {isCustomLabel ? def.label : (comp.label ?? def.label)}
       </text>
       {comp.type === GATE_TYPE_LED && (
         <circle

@@ -1,4 +1,10 @@
 {
+  "+ObDCx": [
+    {
+      "type": 0,
+      "value": "Counter 4"
+    }
+  ],
   "+U6ozc": [
     {
       "type": 0,
@@ -23,6 +29,12 @@
     {
       "type": 1,
       "value": "o"
+    }
+  ],
+  "/Hbmdf": [
+    {
+      "type": 0,
+      "value": "Tri-State"
     }
   ],
   "/VTiBR": [
@@ -63,6 +75,18 @@
     {
       "type": 0,
       "value": "Something went wrong on our end. You can try refreshing or head back home."
+    }
+  ],
+  "2I9fUV": [
+    {
+      "type": 0,
+      "value": "Comparator 4"
+    }
+  ],
+  "2uOC49": [
+    {
+      "type": 0,
+      "value": "Decoder 3:8"
     }
   ],
   "4TCm1M": [
@@ -153,6 +177,12 @@
       "value": " to import a .json file."
     }
   ],
+  "DPeP5H": [
+    {
+      "type": 0,
+      "value": "D Latch"
+    }
+  ],
   "DRXWXB": [
     {
       "type": 0,
@@ -189,10 +219,22 @@
       "value": "Start designing"
     }
   ],
+  "H63+mc": [
+    {
+      "type": 0,
+      "value": "Shift Reg 4"
+    }
+  ],
   "INlWvJ": [
     {
       "type": 0,
       "value": "OR"
+    }
+  ],
+  "IRAMdG": [
+    {
+      "type": 0,
+      "value": "Used as pin name when saved as a custom circuit"
     }
   ],
   "K3r6DQ": [
@@ -223,6 +265,12 @@
     {
       "type": 0,
       "value": "Toggle"
+    }
+  ],
+  "LgbKvU": [
+    {
+      "type": 0,
+      "value": "Comment"
     }
   ],
   "M+am2n": [
@@ -315,6 +363,12 @@
       "value": "Comparator"
     }
   ],
+  "X/SJAt": [
+    {
+      "type": 0,
+      "value": "Half Sub"
+    }
+  ],
   "Xco1sn": [
     {
       "type": 0,
@@ -357,6 +411,12 @@
       "value": "LOW (0)"
     }
   ],
+  "e7nK/h": [
+    {
+      "type": 0,
+      "value": "Mux 8:1"
+    }
+  ],
   "eVwJCE": [
     {
       "type": 1,
@@ -377,6 +437,12 @@
     {
       "type": 0,
       "value": "Live Outputs"
+    }
+  ],
+  "jE808X": [
+    {
+      "type": 0,
+      "value": "Utility"
     }
   ],
   "jOgiMP": [
@@ -427,10 +493,22 @@
       "value": "Half Adder"
     }
   ],
+  "n+hlL2": [
+    {
+      "type": 0,
+      "value": "Register 4"
+    }
+  ],
   "nDyaq/": [
     {
       "type": 0,
       "value": "Running"
+    }
+  ],
+  "oNcdXR": [
+    {
+      "type": 0,
+      "value": "Full Sub"
     }
   ],
   "oX0iuy": [
@@ -459,6 +537,12 @@
     {
       "type": 0,
       "value": "Tick"
+    }
+  ],
+  "qBo9Vt": [
+    {
+      "type": 0,
+      "value": "// comment"
     }
   ],
   "qCyPKf": [
@@ -563,14 +647,10 @@
       "value": "Remove this custom circuit"
     }
   ],
-  "DPeP5H": [{ "type": 0, "value": "D Latch" }],
-  "n+hlL2": [{ "type": 0, "value": "Register 4" }],
-  "+ObDCx": [{ "type": 0, "value": "Counter 4" }],
-  "H63+mc": [{ "type": 0, "value": "Shift Reg 4" }],
-  "2uOC49": [{ "type": 0, "value": "Decoder 3:8" }],
-  "e7nK/h": [{ "type": 0, "value": "Mux 8:1" }],
-  "X/SJAt": [{ "type": 0, "value": "Half Sub" }],
-  "oNcdXR": [{ "type": 0, "value": "Full Sub" }],
-  "2I9fUV": [{ "type": 0, "value": "Comparator 4" }],
-  "/Hbmdf": [{ "type": 0, "value": "Tri-State" }]
+  "xu5aZu": [
+    {
+      "type": 0,
+      "value": "Splitter"
+    }
+  ]
 }

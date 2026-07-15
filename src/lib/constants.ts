@@ -51,6 +51,9 @@ export const MESSAGES = defineMessages({
   lb_full_sub: { id: "oNcdXR", defaultMessage: "Full Sub" },
   lb_cmp4: { id: "2I9fUV", defaultMessage: "Comparator 4" },
   lb_tribuf: { id: "/Hbmdf", defaultMessage: "Tri-State" },
+  lb_utility: { id: "jE808X", defaultMessage: "Utility" },
+  lb_splitter: { id: "xu5aZu", defaultMessage: "Splitter" },
+  lb_comment: { id: "LgbKvU", defaultMessage: "Comment" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -62,6 +65,7 @@ export const GATE_CATEGORY_OUTPUT = "gate_category-output";
 export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
 export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
 export const GATE_CATEGORY_CUSTOM = "gate_category-custom";
+export const GATE_CATEGORY_UTILITY = "gate_category-utility";
 
 export const GATE_TYPE_AND = "AND";
 export const GATE_TYPE_OR = "OR";
@@ -101,6 +105,8 @@ export const GATE_TYPE_HALF_SUB = "HALF_SUB";
 export const GATE_TYPE_FULL_SUB = "FULL_SUB";
 export const GATE_TYPE_CMP4 = "CMP4";
 export const GATE_TYPE_TRIBUF = "TRIBUF";
+export const GATE_TYPE_SPLITTER = "SPLITTER";
+export const GATE_TYPE_COMMENT = "COMMENT";
 
 // Wires
 export const WIRE_TYPE = {
@@ -179,6 +185,7 @@ export const GATE_CATEGORY_LABELS: Record<
   [GATE_CATEGORY_SEQUENTIAL]: { en: "Sequential", messageKey: "lb_sequential" },
   [GATE_CATEGORY_ARITHMETIC]: { en: "Arithmetic", messageKey: "lb_arithmetic" },
   [GATE_CATEGORY_CUSTOM]: { en: "Custom", messageKey: "lb_custom" },
+  [GATE_CATEGORY_UTILITY]: { en: "Utility", messageKey: "lb_utility" },
 };
 
 export const GATE_TYPE_LABELS: Record<
@@ -223,4 +230,6 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_FULL_SUB]: { en: "Full Sub", messageKey: "lb_full_sub" },
   [GATE_TYPE_CMP4]: { en: "Comparator 4", messageKey: "lb_cmp4" },
   [GATE_TYPE_TRIBUF]: { en: "Tri-State", messageKey: "lb_tribuf" },
+  [GATE_TYPE_SPLITTER]: { en: "Splitter", messageKey: "lb_splitter" },
+  [GATE_TYPE_COMMENT]: { en: "Comment", messageKey: "lb_comment" },
 };

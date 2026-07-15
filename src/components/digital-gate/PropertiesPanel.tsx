@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Copy, Settings2, Trash2 } from "lucide-react";
 
@@ -28,6 +28,12 @@ function PropertiesPanel({
   const intl = useIntl();
   const gate = library.get(comp.type);
 
+  const [labelValue, setLabelValue] = useState(comp.label ?? "");
+
+  useEffect(() => {
+    setLabelValue(comp.label ?? "");
+  }, [comp.id, comp.label]);
+
   return (
     <div className="p-3 border-b border-border">
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
@@ -50,10 +56,24 @@ function PropertiesPanel({
             <FormattedMessage id="753yX5" defaultMessage="Label" />
           </label>
           <Input
-            value={comp.label ?? ""}
-            onChange={(e) => onUpdate(comp.id, { label: e.target.value })}
+            value={labelValue}
+            placeholder={
+              gate.isInput || gate.isClock ? "e.g. CLK, A, EN…" : undefined
+            }
+            onChange={(e) => {
+              setLabelValue(e.target.value);
+              onUpdate(comp.id, { label: e.target.value });
+            }}
             className="h-8 mt-1 bg-background/60"
           />
+          {(gate.isInput || gate.isClock) && (
+            <p className="text-[9px] text-muted-foreground mt-1 leading-tight">
+              <FormattedMessage
+                id="IRAMdG"
+                defaultMessage="Used as pin name when saved as a custom circuit"
+              />
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -79,72 +99,73 @@ function PropertiesPanel({
             />
           </div>
         </div>
-        {comp.type === GATE_TYPE_TOGGLE || comp.type === GATE_TYPE_CONST ? (
-          <div>
-            <label className="text-[10px] uppercase text-muted-foreground">
-              <FormattedMessage id="ku+mDU" defaultMessage="State" />
-            </label>
-            <button
-              type="button"
-              onClick={() =>
-                onUpdate(comp.id, {
-                  state: { ...(comp.state ?? {}), on: !comp.state?.on },
-                })
-              }
-              className={cn(
-                "mt-1 w-full h-8 rounded-md border text-xs font-mono transition-colors",
-                comp.state?.on
-                  ? "bg-signal-on/20 border-signal-on text-signal-on signal-glow"
-                  : "bg-background/60 border-border text-muted-foreground",
-              )}
-            >
-              {comp.state?.on
-                ? intl.formatMessage({
-                    id: "97i0f9",
-                    defaultMessage: "HIGH (1)",
+        {!gate.isAnnotation &&
+          (comp.type === GATE_TYPE_TOGGLE || comp.type === GATE_TYPE_CONST ? (
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground">
+                <FormattedMessage id="ku+mDU" defaultMessage="State" />
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  onUpdate(comp.id, {
+                    state: { ...(comp.state ?? {}), on: !comp.state?.on },
                   })
-                : intl.formatMessage({
-                    id: "e+L5nJ",
-                    defaultMessage: "LOW (0)",
-                  })}
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="text-[10px] uppercase text-muted-foreground mb-1">
-              <FormattedMessage id="iiWNbN" defaultMessage="Live Outputs" />
+                }
+                className={cn(
+                  "mt-1 w-full h-8 rounded-md border text-xs font-mono transition-colors",
+                  comp.state?.on
+                    ? "bg-signal-on/20 border-signal-on text-signal-on signal-glow"
+                    : "bg-background/60 border-border text-muted-foreground",
+                )}
+              >
+                {comp.state?.on
+                  ? intl.formatMessage({
+                      id: "97i0f9",
+                      defaultMessage: "HIGH (1)",
+                    })
+                  : intl.formatMessage({
+                      id: "e+L5nJ",
+                      defaultMessage: "LOW (0)",
+                    })}
+              </button>
             </div>
-            <div className="flex gap-1 flex-wrap">
-              {comp.outputs.length === 0 ? (
-                <span className="text-xs text-muted-foreground">
-                  <FormattedMessage id="SL+c5a" defaultMessage="—" />
-                </span>
-              ) : (
-                comp.outputs.map((o, i) => (
-                  <span
-                    // eslint-disable-next-line react/no-array-index-key
-                    key={i}
-                    className={cn(
-                      "px-2 py-0.5 rounded text-[10px] font-mono border",
-                      o
-                        ? "bg-signal-on/20 border-signal-on text-signal-on"
-                        : "bg-secondary border-border text-muted-foreground",
-                    )}
-                  >
-                    <FormattedMessage
-                      id="+qEqKV"
-                      defaultMessage="{i}: {o}"
-                      values={{
-                        i,
-                        o: o ? "1" : "0",
-                      }}
-                    />
+          ) : (
+            <div>
+              <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                <FormattedMessage id="iiWNbN" defaultMessage="Live Outputs" />
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {comp.outputs.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    <FormattedMessage id="SL+c5a" defaultMessage="—" />
                   </span>
-                ))
-              )}
+                ) : (
+                  comp.outputs.map((o, i) => (
+                    <span
+                      // eslint-disable-next-line react/no-array-index-key
+                      key={i}
+                      className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-mono border",
+                        o
+                          ? "bg-signal-on/20 border-signal-on text-signal-on"
+                          : "bg-secondary border-border text-muted-foreground",
+                      )}
+                    >
+                      <FormattedMessage
+                        id="+qEqKV"
+                        defaultMessage="{i}: {o}"
+                        values={{
+                          i,
+                          o: o ? "1" : "0",
+                        }}
+                      />
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          ))}
 
         <div className="flex gap-2 pt-2 border-t border-border">
           <Button

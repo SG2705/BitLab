@@ -1,4 +1,7 @@
 {
+  "+ObDCx": {
+    "defaultMessage": "Counter 4"
+  },
   "+U6ozc": {
     "defaultMessage": "Type"
   },
@@ -7,6 +10,9 @@
   },
   "+qEqKV": {
     "defaultMessage": "{i}: {o}"
+  },
+  "/Hbmdf": {
+    "defaultMessage": "Tri-State"
   },
   "/VTiBR": {
     "defaultMessage": "Encoder 4:2"
@@ -25,6 +31,12 @@
   },
   "224+9R": {
     "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
+  },
+  "2I9fUV": {
+    "defaultMessage": "Comparator 4"
+  },
+  "2uOC49": {
+    "defaultMessage": "Decoder 3:8"
   },
   "4TCm1M": {
     "defaultMessage": "{clockSpeed} Hz"
@@ -56,6 +68,9 @@
   "BRqTi+": {
     "defaultMessage": "Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
   },
+  "DPeP5H": {
+    "defaultMessage": "D Latch"
+  },
   "DRXWXB": {
     "defaultMessage": "404"
   },
@@ -74,8 +89,14 @@
   "GkBxYy": {
     "defaultMessage": "Start designing"
   },
+  "H63+mc": {
+    "defaultMessage": "Shift Reg 4"
+  },
   "INlWvJ": {
     "defaultMessage": "OR"
+  },
+  "IRAMdG": {
+    "defaultMessage": "Used as pin name when saved as a custom circuit"
   },
   "K3r6DQ": {
     "defaultMessage": "Delete"
@@ -91,6 +112,9 @@
   },
   "LaoRGw": {
     "defaultMessage": "Toggle"
+  },
+  "LgbKvU": {
+    "defaultMessage": "Comment"
   },
   "M+am2n": {
     "defaultMessage": "Logic Gates"
@@ -137,6 +161,9 @@
   "VAZneg": {
     "defaultMessage": "Comparator"
   },
+  "X/SJAt": {
+    "defaultMessage": "Half Sub"
+  },
   "Xco1sn": {
     "defaultMessage": "Drag a component from the toolbox onto the canvas"
   },
@@ -158,6 +185,9 @@
   "e+L5nJ": {
     "defaultMessage": "LOW (0)"
   },
+  "e7nK/h": {
+    "defaultMessage": "Mux 8:1"
+  },
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
@@ -166,6 +196,9 @@
   },
   "iiWNbN": {
     "defaultMessage": "Live Outputs"
+  },
+  "jE808X": {
+    "defaultMessage": "Utility"
   },
   "jOgiMP": {
     "defaultMessage": "NOT"
@@ -191,8 +224,14 @@
   "m0Naku": {
     "defaultMessage": "Half Adder"
   },
+  "n+hlL2": {
+    "defaultMessage": "Register 4"
+  },
   "nDyaq/": {
     "defaultMessage": "Running"
+  },
+  "oNcdXR": {
+    "defaultMessage": "Full Sub"
   },
   "oX0iuy": {
     "defaultMessage": "Demux 1:2"
@@ -205,6 +244,9 @@
   },
   "p7+Jxw": {
     "defaultMessage": "Tick"
+  },
+  "qBo9Vt": {
+    "defaultMessage": "// comment"
   },
   "qCyPKf": {
     "defaultMessage": "Clock"
@@ -251,34 +293,7 @@
   "xissZQ": {
     "defaultMessage": "Remove this custom circuit"
   },
-  "DPeP5H": {
-    "defaultMessage": "D Latch"
-  },
-  "n+hlL2": {
-    "defaultMessage": "Register 4"
-  },
-  "+ObDCx": {
-    "defaultMessage": "Counter 4"
-  },
-  "H63+mc": {
-    "defaultMessage": "Shift Reg 4"
-  },
-  "2uOC49": {
-    "defaultMessage": "Decoder 3:8"
-  },
-  "e7nK/h": {
-    "defaultMessage": "Mux 8:1"
-  },
-  "X/SJAt": {
-    "defaultMessage": "Half Sub"
-  },
-  "oNcdXR": {
-    "defaultMessage": "Full Sub"
-  },
-  "2I9fUV": {
-    "defaultMessage": "Comparator 4"
-  },
-  "/Hbmdf": {
-    "defaultMessage": "Tri-State"
+  "xu5aZu": {
+    "defaultMessage": "Splitter"
   }
 }

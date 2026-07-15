@@ -14,12 +14,14 @@ import {
   GATE_CATEGORY_LOGIC,
   GATE_CATEGORY_OUTPUT,
   GATE_CATEGORY_SEQUENTIAL,
+  GATE_CATEGORY_UTILITY,
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CLOCK,
   GATE_TYPE_CMP4,
+  GATE_TYPE_COMMENT,
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
   GATE_TYPE_COUNTER4,
@@ -46,6 +48,7 @@ import {
   GATE_TYPE_OR3,
   GATE_TYPE_REG4,
   GATE_TYPE_SHREG4,
+  GATE_TYPE_SPLITTER,
   GATE_TYPE_SR_LATCH,
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
@@ -877,6 +880,36 @@ const DEFINITIONS: ComponentDefinition[] = [
     outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [b(i[1]) && b(i[0])], state: null }),
   }),
+
+  // ── Utility ──────────────────────────────────────────────────────────────────
+  cb({
+    type: GATE_TYPE_SPLITTER,
+    label: fm("lb_splitter"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 1,
+    outputs: 4,
+    width: 60,
+    height: 80,
+    symbol: "1:4",
+    inputLabels: ["IN"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
+    evaluate: (i) => {
+      const v = b(i[0]);
+
+      return { outputs: [v, v, v, v], state: null };
+    },
+  }),
+  cb({
+    type: GATE_TYPE_COMMENT,
+    label: fm("lb_comment"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 0,
+    outputs: 0,
+    width: 120,
+    height: 34,
+    isAnnotation: true,
+    evaluate: () => ({ outputs: [], state: null }),
+  }),
 ];
 
 // ── Registry class ────────────────────────────────────────────────────────────
@@ -1123,6 +1156,7 @@ export class ComponentLibrary {
       GATE_CATEGORY_OUTPUT,
       GATE_CATEGORY_SEQUENTIAL,
       GATE_CATEGORY_ARITHMETIC,
+      GATE_CATEGORY_UTILITY,
     ];
     const groups = new Map<string, string[]>();
     const result: Array<{ name: string; gates: string[] }> = [];
