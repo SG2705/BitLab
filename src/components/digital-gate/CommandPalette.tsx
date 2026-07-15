@@ -93,8 +93,8 @@ function CommandPalette({ actions, onClose }: CommandPaletteProps) {
           {filtered.length === 0 && (
             <div className="text-sm text-muted-foreground text-center py-8">
               <FormattedMessage
-                id="hW1dfn"
-                defaultMessage="No commands found."
+                id="FR3H6g"
+                defaultMessage="No commands found"
               />
             </div>
           )}

@@ -25,8 +25,8 @@ function NotFoundComponent() {
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           <FormattedMessage
-            id="s9nYnY"
-            defaultMessage="The page you're looking for doesn't exist or has been moved."
+            id="8vtLM0"
+            defaultMessage="The page you're looking for doesn't exist or has been moved"
           />
         </p>
         <div className="mt-6">

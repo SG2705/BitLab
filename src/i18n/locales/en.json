@@ -11,6 +11,9 @@
   "/VTiBR": {
     "defaultMessage": "Encoder 4:2"
   },
+  "0TVISU": {
+    "defaultMessage": "for the command palette"
+  },
   "0s79PB": {
     "defaultMessage": "JK Flip-Flop"
   },
@@ -19,9 +22,6 @@
   },
   "1iDGfg": {
     "defaultMessage": "{count} components"
-  },
-  "1sqhhP": {
-    "defaultMessage": "for the command palette"
   },
   "224+9R": {
     "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
@@ -32,9 +32,6 @@
   "4fHiNl": {
     "defaultMessage": "Duplicate"
   },
-  "5M6TNP": {
-    "defaultMessage": "Press"
-  },
   "73Dt+K": {
     "defaultMessage": "BitLab v{version} · Event-Driven"
   },
@@ -43,6 +40,9 @@
   },
   "8ZVfG8": {
     "defaultMessage": "100%"
+  },
+  "8vtLM0": {
+    "defaultMessage": "The page you're looking for doesn't exist or has been moved"
   },
   "97i0f9": {
     "defaultMessage": "HIGH (1)"
@@ -62,20 +62,17 @@
   "DYWVqY": {
     "defaultMessage": "Mux 4:1"
   },
+  "FR3H6g": {
+    "defaultMessage": "No commands found"
+  },
   "FazwRl": {
     "defaultMessage": "Try again"
-  },
-  "G/iTZ2": {
-    "defaultMessage": "Drag a component from the toolbox onto the canvas."
   },
   "G3+QfR": {
     "defaultMessage": "Constant"
   },
   "GkBxYy": {
     "defaultMessage": "Start designing"
-  },
-  "HCR858": {
-    "defaultMessage": "Empty circuit."
   },
   "INlWvJ": {
     "defaultMessage": "OR"
@@ -128,6 +125,9 @@
   "Sjo1P4": {
     "defaultMessage": "Custom"
   },
+  "Tv1nZc": {
+    "defaultMessage": "Empty circuit"
+  },
   "UGU8kA": {
     "defaultMessage": "AND"
   },
@@ -136,6 +136,9 @@
   },
   "VAZneg": {
     "defaultMessage": "Comparator"
+  },
+  "Xco1sn": {
+    "defaultMessage": "Drag a component from the toolbox onto the canvas"
   },
   "a3I/Dc": {
     "defaultMessage": "SR Latch"
@@ -158,9 +161,6 @@
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
-  "hW1dfn": {
-    "defaultMessage": "No commands found."
-  },
   "hxKJOS": {
     "defaultMessage": "T Flip-Flop"
   },
@@ -182,6 +182,9 @@
   "ku+mDU": {
     "defaultMessage": "State"
   },
+  "l10dAY": {
+    "defaultMessage": "No entries"
+  },
   "lS7pBq": {
     "defaultMessage": "Circuit Explorer"
   },
@@ -200,8 +203,8 @@
   "p+mBVZ": {
     "defaultMessage": "Tick {count}"
   },
-  "pYCJ3X": {
-    "defaultMessage": "No entries."
+  "p7+Jxw": {
+    "defaultMessage": "Tick"
   },
   "qCyPKf": {
     "defaultMessage": "Clock"
@@ -214,9 +217,6 @@
   },
   "rS8jJE": {
     "defaultMessage": "XNOR"
-  },
-  "s9nYnY": {
-    "defaultMessage": "The page you're looking for doesn't exist or has been moved."
   },
   "sNY4nx": {
     "defaultMessage": "Idle"
@@ -239,8 +239,8 @@
   "uPTSs/": {
     "defaultMessage": "AND-3"
   },
-  "vCWikx": {
-    "defaultMessage": "Tick"
+  "uizmax": {
+    "defaultMessage": "Press"
   },
   "wS/QCK": {
     "defaultMessage": "Inputs"

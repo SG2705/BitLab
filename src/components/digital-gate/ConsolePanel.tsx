@@ -109,7 +109,7 @@ function ConsolePanel({
     if (filtered.length === 0) {
       return (
         <div className="text-muted-foreground text-center py-6">
-          <FormattedMessage id="pYCJ3X" defaultMessage=" No entries." />
+          <FormattedMessage id="l10dAY" defaultMessage=" No entries" />
         </div>
       );
     }

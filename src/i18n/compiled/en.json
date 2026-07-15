@@ -31,6 +31,12 @@
       "value": "Encoder 4:2"
     }
   ],
+  "0TVISU": [
+    {
+      "type": 0,
+      "value": "for the command palette"
+    }
+  ],
   "0s79PB": [
     {
       "type": 0,
@@ -53,12 +59,6 @@
       "value": " components"
     }
   ],
-  "1sqhhP": [
-    {
-      "type": 0,
-      "value": "for the command palette"
-    }
-  ],
   "224+9R": [
     {
       "type": 0,
@@ -79,12 +79,6 @@
     {
       "type": 0,
       "value": "Duplicate"
-    }
-  ],
-  "5M6TNP": [
-    {
-      "type": 0,
-      "value": "Press"
     }
   ],
   "73Dt+K": [
@@ -111,6 +105,12 @@
     {
       "type": 0,
       "value": "100%"
+    }
+  ],
+  "8vtLM0": [
+    {
+      "type": 0,
+      "value": "The page you're looking for doesn't exist or has been moved"
     }
   ],
   "97i0f9": [
@@ -165,16 +165,16 @@
       "value": "Mux 4:1"
     }
   ],
+  "FR3H6g": [
+    {
+      "type": 0,
+      "value": "No commands found"
+    }
+  ],
   "FazwRl": [
     {
       "type": 0,
       "value": "Try again"
-    }
-  ],
-  "G/iTZ2": [
-    {
-      "type": 0,
-      "value": "Drag a component from the toolbox onto the canvas."
     }
   ],
   "G3+QfR": [
@@ -187,12 +187,6 @@
     {
       "type": 0,
       "value": "Start designing"
-    }
-  ],
-  "HCR858": [
-    {
-      "type": 0,
-      "value": "Empty circuit."
     }
   ],
   "INlWvJ": [
@@ -297,6 +291,12 @@
       "value": "Custom"
     }
   ],
+  "Tv1nZc": [
+    {
+      "type": 0,
+      "value": "Empty circuit"
+    }
+  ],
   "UGU8kA": [
     {
       "type": 0,
@@ -313,6 +313,12 @@
     {
       "type": 0,
       "value": "Comparator"
+    }
+  ],
+  "Xco1sn": [
+    {
+      "type": 0,
+      "value": "Drag a component from the toolbox onto the canvas"
     }
   ],
   "a3I/Dc": [
@@ -361,12 +367,6 @@
       "value": " wires"
     }
   ],
-  "hW1dfn": [
-    {
-      "type": 0,
-      "value": "No commands found."
-    }
-  ],
   "hxKJOS": [
     {
       "type": 0,
@@ -409,6 +409,12 @@
       "value": "State"
     }
   ],
+  "l10dAY": [
+    {
+      "type": 0,
+      "value": "No entries"
+    }
+  ],
   "lS7pBq": [
     {
       "type": 0,
@@ -449,10 +455,10 @@
       "value": "count"
     }
   ],
-  "pYCJ3X": [
+  "p7+Jxw": [
     {
       "type": 0,
-      "value": "No entries."
+      "value": "Tick"
     }
   ],
   "qCyPKf": [
@@ -481,12 +487,6 @@
     {
       "type": 0,
       "value": "XNOR"
-    }
-  ],
-  "s9nYnY": [
-    {
-      "type": 0,
-      "value": "The page you're looking for doesn't exist or has been moved."
     }
   ],
   "sNY4nx": [
@@ -539,10 +539,10 @@
       "value": "AND-3"
     }
   ],
-  "vCWikx": [
+  "uizmax": [
     {
       "type": 0,
-      "value": "Tick"
+      "value": "Press"
     }
   ],
   "wS/QCK": [

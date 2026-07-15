@@ -245,6 +245,7 @@ function TopBar({
         >
           <Command className="h-3 w-3" />
           <FormattedMessage id="wgnt2g" defaultMessage="Palette " />
+          &nbsp;
           <kbd className="ml-1 px-1 py-0.5 text-[10px] rounded bg-secondary border border-border">
             <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
           </kbd>

@@ -974,18 +974,20 @@ function DigitalGateApp() {
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
                     <FormattedMessage
-                      id="G/iTZ2"
-                      defaultMessage="Drag a component from the toolbox onto the canvas."
+                      id="Xco1sn"
+                      defaultMessage="Drag a component from the toolbox onto the canvas"
                     />
                   </div>
                   <div className="text-xs text-muted-foreground mt-3">
-                    <FormattedMessage id="5M6TNP" defaultMessage="Press " />
+                    <FormattedMessage id="uizmax" defaultMessage="Press" />
+                    &nbsp;
                     <kbd className="px-1.5 py-0.5 rounded bg-secondary border border-border">
                       <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
                     </kbd>
+                    &nbsp;
                     <FormattedMessage
-                      id="1sqhhP"
-                      defaultMessage=" for the command palette"
+                      id="0TVISU"
+                      defaultMessage="for the command palette"
                     />
                   </div>
                 </div>
