@@ -8,6 +8,7 @@
  */
 
 import {
+  DEFAULT_PROBE_SAMPLES,
   GATE_CATEGORY_ARITHMETIC,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_INPUT,
@@ -46,6 +47,7 @@ import {
   GATE_TYPE_NOT,
   GATE_TYPE_OR,
   GATE_TYPE_OR3,
+  GATE_TYPE_PROBE,
   GATE_TYPE_REG4,
   GATE_TYPE_SHREG4,
   GATE_TYPE_SPLITTER,
@@ -346,6 +348,31 @@ const DEFINITIONS: ComponentDefinition[] = [
         (b(i[0]) ? 1 : 0);
 
       return { outputs: [], state: { value } };
+    },
+  },
+  {
+    type: GATE_TYPE_PROBE,
+    label: fm("lb_probe"),
+    category: GATE_CATEGORY_OUTPUT,
+    inputs: 1,
+    outputs: 0,
+    width: 120,
+    height: 70,
+    inputLabels: ["IN"],
+    isSequential: true,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    initialState: () => ({ history: [] as boolean[] }),
+    evaluate: (inputs, state) => {
+      const v = Boolean(inputs[0]);
+      const prev = (state?.history as boolean[] | undefined) ?? [];
+      const history =
+        prev.length >= DEFAULT_PROBE_SAMPLES
+          ? [...prev.slice(1), v]
+          : [...prev, v];
+
+      return { outputs: [], state: { history } };
     },
   },
 

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { useIntl } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 
 import { type ComponentInstance, library } from "@/engine";
 import {
@@ -7,6 +7,7 @@ import {
   GATE_TYPE_CONST,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_LED,
+  GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
   PIN_KIND,
 } from "@/lib/constants";
@@ -64,6 +65,80 @@ function SevenSegDisplay({ value }: { value: number }) {
         />
       ))}
     </g>
+  );
+}
+
+function WaveformDisplay({
+  history,
+  width,
+  height,
+}: {
+  history: boolean[];
+  width: number;
+  height: number;
+}) {
+  const padX = 6;
+  const topY = 8;
+  const botY = height - 10;
+  const displayW = width - padX * 2;
+
+  if (history.length === 0) {
+    return (
+      <text
+        x={width / 2}
+        y={height / 2}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="var(--color-muted-foreground)"
+        fontSize={8}
+        fontFamily="var(--font-mono)"
+        pointerEvents="none"
+      >
+        <FormattedMessage id="xqZM36" defaultMessage="— no signal —" />
+      </text>
+    );
+  }
+
+  const n = history.length;
+  const parts: string[] = [];
+
+  for (let i = 0; i < n; i += 1) {
+    const x1 = padX + (i / n) * displayW;
+    const x2 = padX + ((i + 1) / n) * displayW;
+    const y = history[i] ? topY : botY;
+    // eslint-disable-next-line no-nested-ternary
+    const prevY = i > 0 ? (history[i - 1] ? topY : botY) : y;
+
+    if (i === 0) {
+      parts.push(`M ${x1} ${y}`);
+    } else if (prevY !== y) {
+      parts.push(`L ${x1} ${prevY} L ${x1} ${y}`);
+    }
+
+    parts.push(`L ${x2} ${y}`);
+  }
+
+  return (
+    <>
+      <line
+        x1={padX}
+        y1={(topY + botY) / 2}
+        x2={padX + displayW}
+        y2={(topY + botY) / 2}
+        stroke="var(--color-border)"
+        strokeWidth={0.5}
+        strokeDasharray="2 2"
+        pointerEvents="none"
+      />
+      <path
+        d={parts.join(" ")}
+        fill="none"
+        stroke="var(--color-signal-on)"
+        strokeWidth={1.5}
+        strokeLinejoin="miter"
+        pointerEvents="none"
+      />
+    </>
   );
 }
 
@@ -181,7 +256,7 @@ function GateNode({
         style={{ cursor: isIO ? "pointer" : "grab" }}
         className={cn(active && "signal-glow")}
       />
-      {comp.type !== GATE_TYPE_DISPLAY7 && (
+      {comp.type !== GATE_TYPE_DISPLAY7 && comp.type !== GATE_TYPE_PROBE && (
         <text
           x={def.width / 2}
           y={def.height / 2 + (isCustomLabel ? 4 : 5)}
@@ -220,6 +295,13 @@ function GateNode({
       )}
       {comp.type === GATE_TYPE_DISPLAY7 && (
         <SevenSegDisplay value={(comp.state?.value as number) ?? 0} />
+      )}
+      {comp.type === GATE_TYPE_PROBE && (
+        <WaveformDisplay
+          history={(comp.state?.history as boolean[]) ?? []}
+          width={def.width}
+          height={def.height}
+        />
       )}
       {Array.from({ length: def.inputs }).map((_, i) => {
         const y = (def.height / (def.inputs + 1)) * (i + 1);
