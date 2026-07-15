@@ -231,7 +231,10 @@ function DigitalGateApp() {
 
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
-      const k = Math.min(3, Math.max(0.2, view.k * (e.deltaY < 0 ? 1.1 : 0.9)));
+      const k = Math.min(
+        3,
+        Math.max(0.2, view.k * (e.deltaY < 0 ? 1.05 : 0.95)),
+      );
       const nx = mx - (mx - view.x) * (k / view.k);
       const ny = my - (my - view.y) * (k / view.k);
 

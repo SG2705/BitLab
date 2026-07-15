@@ -224,7 +224,7 @@ function TopBar({
               } as React.CSSProperties
             }
           >
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               // eslint-disable-next-line react/no-array-index-key
               <Fragment key={i}>
                 <div className="bottomwave" />
