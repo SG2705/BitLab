@@ -94,6 +94,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "&",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
   }),
   cb({
@@ -105,6 +107,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "≥1",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [i.some(b)], state: null }),
   }),
   cb({
@@ -116,6 +120,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "=1",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({
       outputs: [i.reduce((a: boolean, v) => a !== b(v), false)],
       state: null,
@@ -130,6 +136,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "=",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({
       outputs: [!i.reduce((a: boolean, v) => a !== b(v), false)],
       state: null,
@@ -144,6 +152,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "&̄",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [!i.every(b)], state: null }),
   }),
   cb({
@@ -155,6 +165,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 60,
     symbol: "≥1̄",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [!i.some(b)], state: null }),
   }),
   cb({
@@ -166,6 +178,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 60,
     height: 50,
     symbol: "!",
+    inputLabels: ["A"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [!b(i[0])], state: null }),
   }),
   cb({
@@ -177,6 +191,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 60,
     height: 50,
     symbol: "1",
+    inputLabels: ["A"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [b(i[0])], state: null }),
   }),
   cb({
@@ -188,6 +204,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 70,
     symbol: "&3",
+    inputLabels: ["A", "B", "C"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
   }),
   cb({
@@ -199,6 +217,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 70,
     height: 70,
     symbol: "≥1·3",
+    inputLabels: ["A", "B", "C"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [i.some(b)], state: null }),
   }),
 
@@ -303,6 +323,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: true,
+    inputLabels: ["D0", "D1", "D2", "D3"],
     initialState: () => ({ value: 0 }),
     evaluate: (i) => {
       const value =
@@ -329,6 +350,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: false,
+    inputLabels: ["S", "R"],
+    outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false }),
     evaluate: (i, s) => {
       let q = Boolean(s?.q);
@@ -358,6 +381,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: false,
+    inputLabels: ["D", "CLK"],
+    outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
       let q = Boolean(s?.q);
@@ -384,6 +409,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: false,
+    inputLabels: ["J", "K", "CLK"],
+    outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
       const clk = b(i[2]);
@@ -418,6 +445,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: false,
+    inputLabels: ["T", "CLK"],
+    outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
       let q = Boolean(s?.q);
@@ -441,6 +470,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 60,
     symbol: "½+",
+    inputLabels: ["A", "B"],
+    outputLabels: ["S", "C"],
     evaluate: (i) => ({
       outputs: [b(i[0]) !== b(i[1]), b(i[0]) && b(i[1])],
       state: null,
@@ -455,6 +486,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "Σ",
+    inputLabels: ["A", "B", "Cin"],
+    outputLabels: ["S", "Co"],
     evaluate: (i) => {
       const s = (b(i[0]) ? 1 : 0) + (b(i[1]) ? 1 : 0) + (b(i[2]) ? 1 : 0);
 
@@ -470,6 +503,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "M",
+    inputLabels: ["D0", "D1", "S"],
+    outputLabels: ["Y"],
     evaluate: (i) => ({ outputs: [b(i[2]) ? b(i[1]) : b(i[0])], state: null }),
   }),
   cb({
@@ -481,6 +516,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 90,
     symbol: "M4",
+    inputLabels: ["D0", "D1", "D2", "D3", "S0", "S1"],
+    outputLabels: ["Y"],
     evaluate: (i) => {
       const sel = (b(i[5]) ? 2 : 0) | (b(i[4]) ? 1 : 0);
 
@@ -496,6 +533,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 60,
     symbol: "DM",
+    inputLabels: ["D", "S"],
+    outputLabels: ["Y0", "Y1"],
     evaluate: (i) => {
       const sel = b(i[1]);
 
@@ -511,6 +550,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 80,
     symbol: "DEC",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
     evaluate: (i) => {
       const idx = (b(i[1]) ? 2 : 0) | (b(i[0]) ? 1 : 0);
 
@@ -529,6 +570,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 80,
     symbol: "ENC",
+    inputLabels: ["D0", "D1", "D2", "D3"],
+    outputLabels: ["A", "B"],
     evaluate: (i) => {
       let idx = 0;
 
@@ -552,6 +595,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "CMP",
+    inputLabels: ["A", "B"],
+    outputLabels: ["<", "=", ">"],
     evaluate: (i) => {
       const a = b(i[0]) ? 1 : 0;
       const bv = b(i[1]) ? 1 : 0;
@@ -701,6 +746,8 @@ export class ComponentLibrary {
       isClock: false,
       isInput: false,
       isOutput: false,
+      inputLabels,
+      outputLabels,
       initialState: () => ({
         compStates: { ...initialCompStates },
       }),

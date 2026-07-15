@@ -66,6 +66,9 @@ export interface ComponentDefinition {
   width: number;
   height: number;
   symbol?: string;
+  /** Per-pin names rendered next to each pin on the canvas, e.g. ["J","K","CLK"] */
+  inputLabels?: string[];
+  outputLabels?: string[];
   /** True → only updates on a clock edge; False → updates on any input change */
   isSequential: boolean;
   /** True → this component drives the simulation clock (has a tick() method) */

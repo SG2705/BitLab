@@ -165,6 +165,7 @@ function GateNode({
       )}
       {Array.from({ length: def.inputs }).map((_, i) => {
         const y = (def.height / (def.inputs + 1)) * (i + 1);
+        const pinLabel = def.inputLabels?.[i];
 
         return (
           // eslint-disable-next-line react/no-array-index-key
@@ -189,12 +190,27 @@ function GateNode({
               style={{ cursor: "crosshair" }}
               className="hover:stroke-primary"
             />
+            {pinLabel && (
+              <text
+                x={4}
+                y={y}
+                textAnchor="start"
+                dominantBaseline="middle"
+                fill="var(--color-muted-foreground)"
+                fontSize={7}
+                fontFamily="var(--font-mono)"
+                pointerEvents="none"
+              >
+                {pinLabel}
+              </text>
+            )}
           </g>
         );
       })}
       {Array.from({ length: def.outputs }).map((_, i) => {
         const y = (def.height / (def.outputs + 1)) * (i + 1);
         const on = Boolean(comp.outputs[i]);
+        const pinLabel = def.outputLabels?.[i];
 
         return (
           // eslint-disable-next-line react/no-array-index-key
@@ -219,6 +235,20 @@ function GateNode({
               style={{ cursor: "crosshair" }}
               className={cn("hover:stroke-primary", on && "signal-glow")}
             />
+            {pinLabel && (
+              <text
+                x={def.width - 4}
+                y={y}
+                textAnchor="end"
+                dominantBaseline="middle"
+                fill="var(--color-muted-foreground)"
+                fontSize={7}
+                fontFamily="var(--font-mono)"
+                pointerEvents="none"
+              >
+                {pinLabel}
+              </text>
+            )}
           </g>
         );
       })}
