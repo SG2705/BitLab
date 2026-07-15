@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
+import { GATE_ICON, type GateIcon } from "@/components/ui";
 import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_BUTTON,
@@ -177,6 +178,7 @@ function GateNode({
   // custom circuits — show it prominently inside the gate body when set.
   const isCustomLabel =
     (def.isInput || def.isClock || def.isOutput) && Boolean(comp.label);
+  const IconComponent = GATE_ICON[comp.type as GateIcon];
 
   if (def.isAnnotation) {
     return (
@@ -257,20 +259,33 @@ function GateNode({
         style={{ cursor: isIO ? "pointer" : "grab" }}
         className={cn(active && "signal-glow")}
       />
-      {comp.type !== GATE_TYPE_DISPLAY7 && comp.type !== GATE_TYPE_PROBE && (
-        <text
-          x={def.width / 2}
-          y={def.height / 2 + (isCustomLabel ? 4 : 5)}
-          textAnchor="middle"
-          fill={active ? "var(--color-signal-on)" : "var(--color-foreground)"}
-          fontSize={isCustomLabel ? 10 : 14}
-          fontWeight={600}
-          fontFamily="var(--font-mono)"
-          pointerEvents="none"
-        >
-          {def.symbol ?? def.label}
-        </text>
-      )}
+      {comp.type !== GATE_TYPE_DISPLAY7 &&
+        comp.type !== GATE_TYPE_PROBE &&
+        (IconComponent ? (
+          <IconComponent
+            x={def.width / 2 - 20}
+            y={def.height / 2 - 20}
+            width={40}
+            height={40}
+            stroke={
+              active ? "var(--color-signal-on)" : "var(--color-foreground)"
+            }
+            pointerEvents="none"
+          />
+        ) : (
+          <text
+            x={def.width / 2}
+            y={def.height / 2 + (isCustomLabel ? 4 : 5)}
+            textAnchor="middle"
+            fill={active ? "var(--color-signal-on)" : "var(--color-foreground)"}
+            fontSize={isCustomLabel ? 10 : 14}
+            fontWeight={600}
+            fontFamily="var(--font-mono)"
+            pointerEvents="none"
+          >
+            {def.symbol ?? def.label}
+          </text>
+        ))}
       <text
         x={def.width / 2}
         y={def.height + 14}

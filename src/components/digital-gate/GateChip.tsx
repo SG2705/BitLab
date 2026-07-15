@@ -1,6 +1,7 @@
 import { FormattedMessage, useIntl } from "react-intl";
 import { Package } from "lucide-react";
 
+import { GATE_ICON, type GateIcon } from "@/components/ui";
 import { library } from "@/engine";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,8 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
   const def = library.has(type) ? library.get(type) : null;
 
   if (!def) return null;
+
+  const IconComponent = GATE_ICON[def.type as GateIcon];
 
   return (
     <div
@@ -68,7 +71,16 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
           isCustom ? "text-accent" : "text-primary",
         )}
       >
-        {def.symbol ?? def.label.slice(0, 4)}
+        {IconComponent ? (
+          <IconComponent
+            width={20}
+            height={20}
+            stroke="var(--color-foreground)"
+            pointerEvents="none"
+          />
+        ) : (
+          (def.symbol ?? def.label.slice(0, 4))
+        )}
       </div>
       <div className="text-[10px] text-muted-foreground group-hover:text-foreground truncate w-full text-center">
         {isCustom ? (

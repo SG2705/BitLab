@@ -35,6 +35,9 @@
   "2uOC49": {
     "defaultMessage": "Decoder 3:8"
   },
+  "45rhyt": {
+    "defaultMessage": "SR"
+  },
   "4TCm1M": {
     "defaultMessage": "{clockSpeed} Hz"
   },
@@ -106,6 +109,9 @@
   },
   "KiXNvz": {
     "defaultMessage": "Run"
+  },
+  "KslodS": {
+    "defaultMessage": "D"
   },
   "LaoRGw": {
     "defaultMessage": "Toggle"
@@ -215,6 +221,9 @@
   "l10dAY": {
     "defaultMessage": "No entries"
   },
+  "lLzTuh": {
+    "defaultMessage": "0-F"
+  },
   "lS7pBq": {
     "defaultMessage": "Circuit Explorer"
   },
@@ -245,6 +254,9 @@
   "p7+Jxw": {
     "defaultMessage": "Tick"
   },
+  "pTk7NT": {
+    "defaultMessage": "JK"
+  },
   "qBo9Vt": {
     "defaultMessage": "// comment"
   },
@@ -265,6 +277,9 @@
   },
   "sPjOJQ": {
     "defaultMessage": "LED"
+  },
+  "sjlqAC": {
+    "defaultMessage": "T"
   },
   "sqjS0A": {
     "defaultMessage": "{cat} · {length}"
@@ -301,5 +316,8 @@
   },
   "xu5aZu": {
     "defaultMessage": "Splitter"
+  },
+  "zsr0Bz": {
+    "defaultMessage": "EN"
   }
 }

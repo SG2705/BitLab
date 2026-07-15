@@ -1,6 +1,8 @@
-export { default as Input } from "./input";
-export { default as Button, buttonVariants } from "./button";
+export { default as Input } from "./Input";
+export { default as Button, buttonVariants } from "./Button";
 export { default as BitLabLogo } from "./BitLabLogo";
+export { default as GATE_ICON } from "./GateIcon";
 
 // Types
-export type { ButtonProps } from "./button";
+export type { ButtonProps } from "./Button";
+export type { GateIcon } from "./GateIcon";

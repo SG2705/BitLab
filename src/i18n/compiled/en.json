@@ -71,12 +71,6 @@
       "value": " components"
     }
   ],
-  "224+9R": [
-    {
-      "type": 0,
-      "value": "Something went wrong on our end. You can try refreshing or head back home."
-    }
-  ],
   "2I9fUV": [
     {
       "type": 0,
@@ -87,6 +81,12 @@
     {
       "type": 0,
       "value": "Decoder 3:8"
+    }
+  ],
+  "45rhyt": [
+    {
+      "type": 0,
+      "value": "SR"
     }
   ],
   "4TCm1M": [
@@ -259,6 +259,12 @@
     {
       "type": 0,
       "value": "Run"
+    }
+  ],
+  "KslodS": [
+    {
+      "type": 0,
+      "value": "D"
     }
   ],
   "LaoRGw": [
@@ -481,6 +487,12 @@
       "value": "No entries"
     }
   ],
+  "lLzTuh": [
+    {
+      "type": 0,
+      "value": "0-F"
+    }
+  ],
   "lS7pBq": [
     {
       "type": 0,
@@ -491,6 +503,12 @@
     {
       "type": 0,
       "value": "Half Adder"
+    }
+  ],
+  "m9VoMp": [
+    {
+      "type": 0,
+      "value": "Something went wrong on our end. You can try refreshing or head back home."
     }
   ],
   "n+hlL2": [
@@ -539,6 +557,12 @@
       "value": "Tick"
     }
   ],
+  "pTk7NT": [
+    {
+      "type": 0,
+      "value": "JK"
+    }
+  ],
   "qBo9Vt": [
     {
       "type": 0,
@@ -583,6 +607,12 @@
     {
       "type": 0,
       "value": "LED"
+    }
+  ],
+  "sjlqAC": [
+    {
+      "type": 0,
+      "value": "T"
     }
   ],
   "sqjS0A": [
@@ -641,22 +671,34 @@
       "value": "Palette"
     }
   ],
-  "xissZQ": [
-    {
-      "type": 0,
-      "value": "Remove this custom circuit"
-    }
-  ],
   "xXqJUI": [
     {
       "type": 0,
       "value": "Probe"
     }
   ],
+  "xissZQ": [
+    {
+      "type": 0,
+      "value": "Remove this custom circuit"
+    }
+  ],
+  "xqZM36": [
+    {
+      "type": 0,
+      "value": "— no signal —"
+    }
+  ],
   "xu5aZu": [
     {
       "type": 0,
       "value": "Splitter"
+    }
+  ],
+  "zsr0Bz": [
+    {
+      "type": 0,
+      "value": "EN"
     }
   ]
 }

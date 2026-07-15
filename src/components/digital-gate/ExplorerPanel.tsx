@@ -2,9 +2,11 @@ import { memo } from "react";
 import { FormattedMessage } from "react-intl";
 import { Cpu } from "lucide-react";
 
+import { GATE_ICON, type GateIcon } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { GATES } from "@/lib/circuit";
-import { cn } from "@/lib/utils";
+import { GATE_CATEGORY_LABELS } from "@/lib/constants";
+import { cn, fm } from "@/lib/utils";
 
 interface ExplorerPanelProps {
   snapshot: CircuitSnapshot;
@@ -43,30 +45,45 @@ function ExplorerPanel({
               id="sqjS0A"
               defaultMessage="{cat} · {length}"
               values={{
-                cat,
+                cat: GATE_CATEGORY_LABELS[cat]
+                  ? fm(GATE_CATEGORY_LABELS[cat].messageKey)
+                  : cat,
                 length: list.length,
               }}
             />
           </div>
           <div className="space-y-0.5">
-            {list.map((c) => (
-              <button
-                type="button"
-                key={c.id}
-                onClick={() => setSelection(new Set([c.id]))}
-                className={cn(
-                  "w-full text-left px-2 py-1 rounded text-xs flex items-center gap-2 hover:bg-secondary transition-colors",
-                  selection.has(c.id) && "bg-primary/20 text-primary",
-                )}
-              >
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {GATES[c.type]?.symbol}
-                </span>
-                <span className="truncate">
-                  {c.label ?? GATES[c.type]?.label}
-                </span>
-              </button>
-            ))}
+            {list.map((c) => {
+              const IconComponent = GATE_ICON[c.type as GateIcon];
+
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => setSelection(new Set([c.id]))}
+                  className={cn(
+                    "w-full text-left px-2 py-1 rounded text-xs flex items-center gap-2 hover:bg-secondary transition-colors",
+                    selection.has(c.id) && "bg-primary/20 text-primary",
+                  )}
+                >
+                  <span className="font-mono text-[10px] text-muted-foreground">
+                    {IconComponent ? (
+                      <IconComponent
+                        width={15}
+                        height={15}
+                        stroke="var(--color-foreground)"
+                        pointerEvents="none"
+                      />
+                    ) : (
+                      GATES[c.type]?.symbol
+                    )}
+                  </span>
+                  <span className="truncate">
+                    {c.label ?? GATES[c.type]?.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       ))}
