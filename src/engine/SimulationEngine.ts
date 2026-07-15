@@ -221,7 +221,11 @@ export class SimulationEngine {
     }
 
     if (seeds.length > 0) {
-      const result = this.propagator.propagate(seeds, this.components);
+      const result = this.propagator.propagate(
+        seeds,
+        this.components,
+        this.tick,
+      );
 
       this.eventsProcessed += result.evaluations;
 
@@ -239,7 +243,11 @@ export class SimulationEngine {
    * toggled an input). Propagates signals downstream immediately.
    */
   triggerPropagation(changedIds: string[]): void {
-    const result = this.propagator.propagate(changedIds, this.components);
+    const result = this.propagator.propagate(
+      changedIds,
+      this.components,
+      this.tick,
+    );
 
     this.eventsProcessed += result.evaluations;
 

@@ -29,6 +29,7 @@ import {
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_TOGGLE,
   PIN_KIND,
+  SAVE_LOCAL_ON_ACTION,
   SIMULATION_STATUS,
   THEME,
   TOOL,
@@ -218,6 +219,8 @@ function DigitalGateApp() {
     const comp = addComponent(type, nx, ny);
 
     addLog(CONSOLE_TAB.LOG, `Added ${def.label} (${comp.id})`);
+
+    if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
 
     setDragType(null);
   };
@@ -409,6 +412,7 @@ function DigitalGateApp() {
     );
 
     if (wire) addLog("log", `Wire connected (${wire.id})`);
+    if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
 
     setPendingWire(null);
   };
@@ -531,6 +535,7 @@ function DigitalGateApp() {
           setCustomBump((v) => v + 1);
 
           saveCustomCircuitToLocal();
+
           addLog(CONSOLE_TAB.LOG, `Imported "${name}" as gate unit.`);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);

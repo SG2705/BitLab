@@ -401,14 +401,26 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: false,
     isInput: false,
     isOutput: false,
-    initialState: () => ({ history: [] as boolean[] }),
-    evaluate: (inputs, state) => {
+    initialState: () => ({
+      history: [] as Array<{ v: boolean; t: number }>,
+    }),
+    evaluate: (inputs, state, context) => {
       const v = Boolean(inputs[0]);
-      const prev = (state?.history as boolean[] | undefined) ?? [];
-      const history =
-        prev.length >= DEFAULT_PROBE_SAMPLES
-          ? [...prev.slice(1), v]
-          : [...prev, v];
+      const t = context?.tick ?? 0;
+
+      // Migrate from old boolean[] format gracefully
+      const raw = state?.history as unknown[] | undefined;
+      const prev: Array<{ v: boolean; t: number }> =
+        Array.isArray(raw) &&
+        raw.length > 0 &&
+        typeof raw[0] === "object" &&
+        raw[0] !== null
+          ? (raw as Array<{ v: boolean; t: number }>)
+          : [];
+
+      // Keep one extra entry beyond the visible window so the renderer can
+      // always look up the signal value at the window's left edge.
+      const history = [...prev, { v, t }].slice(-(DEFAULT_PROBE_SAMPLES + 1));
 
       return { outputs: [], state: { history } };
     },

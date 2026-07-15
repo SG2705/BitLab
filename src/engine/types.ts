@@ -87,6 +87,7 @@ export interface ComponentDefinition {
   evaluate: (
     inputs: SignalValue[],
     state: Record<string, unknown> | null,
+    context?: { tick: number },
   ) => EvaluateResult;
   /**
    * Time-based advancement for clock/timer components.

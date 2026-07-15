@@ -4,6 +4,7 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { GATE_ICON, type GateIcon } from "@/components/ui";
 import { type ComponentInstance, library } from "@/engine";
 import {
+  DEFAULT_PROBE_SAMPLES,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
@@ -70,19 +71,25 @@ function SevenSegDisplay({ value }: { value: number }) {
   );
 }
 
+interface ProbeSample {
+  v: boolean;
+  t: number;
+}
+
 function WaveformDisplay({
   history,
   width,
   height,
 }: {
-  history: boolean[];
+  history: ProbeSample[];
   width: number;
   height: number;
 }) {
   const padX = 6;
   const topY = 8;
-  const botY = height - 10;
+  const botY = height - 15;
   const displayW = width - padX * 2;
+  const windowSize = DEFAULT_PROBE_SAMPLES;
 
   if (history.length === 0) {
     return (
@@ -101,24 +108,49 @@ function WaveformDisplay({
     );
   }
 
-  const n = history.length;
+  const endTick = history[history.length - 1].t;
+  const startTick = endTick - windowSize + 1;
+
+  // Map a tick number to an x coordinate
+  const tickToX = (t: number) =>
+    padX + ((t - startTick) / windowSize) * displayW;
+
+  // Entries that are relevant: the last entry before the window (carries the
+  // initial value into the visible range) plus all entries inside the window.
+  const lastBefore = history.filter((e) => e.t < startTick);
+  const anchor =
+    lastBefore.length > 0 ? [lastBefore[lastBefore.length - 1]] : [];
+  const inWindow = history.filter((e) => e.t >= startTick);
+  const relevant: ProbeSample[] = [...anchor, ...inWindow];
+
   const parts: string[] = [];
 
-  for (let i = 0; i < n; i += 1) {
-    const x1 = padX + (i / n) * displayW;
-    const x2 = padX + ((i + 1) / n) * displayW;
-    const y = history[i] ? topY : botY;
-    // eslint-disable-next-line no-nested-ternary
-    const prevY = i > 0 ? (history[i - 1] ? topY : botY) : y;
+  for (let i = 0; i < relevant.length; i += 1) {
+    const entry = relevant[i];
+    const nextT = i + 1 < relevant.length ? relevant[i + 1].t : endTick + 1;
+    const x1 = Math.max(tickToX(entry.t), padX);
+    const x2 = Math.min(tickToX(nextT), padX + displayW);
+    const y = entry.v ? topY : botY;
 
     if (i === 0) {
       parts.push(`M ${x1} ${y}`);
-    } else if (prevY !== y) {
-      parts.push(`L ${x1} ${prevY} L ${x1} ${y}`);
+    } else {
+      const prevY = relevant[i - 1].v ? topY : botY;
+
+      if (prevY !== y) {
+        parts.push(`L ${x1} ${prevY} L ${x1} ${y}`);
+      }
     }
 
     parts.push(`L ${x2} ${y}`);
   }
+
+  // X-axis: tick marks at every integer tick, labels every other tick
+  const tickNums = Array.from(
+    { length: windowSize + 1 },
+    (_, i) => startTick + i,
+  );
+  const labelNums = tickNums.filter((_, i) => i % 2 === 0);
 
   return (
     <>
@@ -140,6 +172,41 @@ function WaveformDisplay({
         strokeLinejoin="miter"
         pointerEvents="none"
       />
+      <line
+        x1={padX}
+        y1={botY}
+        x2={padX + displayW}
+        y2={botY}
+        stroke="var(--color-border)"
+        strokeWidth={0.5}
+        pointerEvents="none"
+      />
+      {tickNums.map((t) => (
+        <line
+          key={t}
+          x1={tickToX(t)}
+          y1={botY}
+          x2={tickToX(t)}
+          y2={botY + 3}
+          stroke="var(--color-border)"
+          strokeWidth={0.5}
+          pointerEvents="none"
+        />
+      ))}
+      {labelNums.map((t) => (
+        <text
+          key={t}
+          x={tickToX(t)}
+          y={botY + 11}
+          textAnchor="middle"
+          fill="var(--color-muted-foreground)"
+          fontSize={6}
+          fontFamily="var(--font-mono)"
+          pointerEvents="none"
+        >
+          {t}
+        </text>
+      ))}
     </>
   );
 }
@@ -317,7 +384,7 @@ function GateNode({
       )}
       {comp.type === GATE_TYPE_PROBE && (
         <WaveformDisplay
-          history={(comp.state?.history as boolean[]) ?? []}
+          history={(comp.state?.history as ProbeSample[]) ?? []}
           width={def.width}
           height={def.height}
         />

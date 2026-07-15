@@ -150,10 +150,11 @@ export const PIN_KIND = {
 // Project
 export const VERSION = 1;
 export const MAX_HISTORY = 100;
+export const SAVE_LOCAL_ON_ACTION = false;
 export const CURR_CIR_KEY = "current-circuit-key";
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 4;
-export const DEFAULT_PROBE_SAMPLES = 8;
+export const DEFAULT_PROBE_SAMPLES = 16;
 export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
 
 // App

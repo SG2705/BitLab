@@ -50,6 +50,7 @@ export class SignalPropagator {
   propagate(
     seeds: string[],
     components: Record<string, ComponentInstance>,
+    tick: number = 0,
   ): PropagationResult {
     let oscillation = false;
     const ranks = this.graph.getTopologicalRanks();
@@ -116,7 +117,7 @@ export class SignalPropagator {
       }
 
       // Evaluate
-      const result = def.evaluate(inputs, comp.state);
+      const result = def.evaluate(inputs, comp.state, { tick });
 
       totalEvals += 1;
 
@@ -199,7 +200,7 @@ export class SignalPropagator {
       }
 
       let outputChanged = false;
-      const result = def.evaluate(inputs, comp.state);
+      const result = def.evaluate(inputs, comp.state, { tick: 0 });
 
       totalEvals += 1;
 
