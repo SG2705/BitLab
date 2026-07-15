@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import type { ComponentInstance } from "@/engine";
-import { GATES } from "@/lib/circuit";
+import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
@@ -84,7 +83,7 @@ function GateNode({
   onPinDown,
   onPinUp,
 }: GateNodeProps) {
-  const def = GATES[comp.type];
+  const def = library.get(comp.type);
 
   const active = comp.outputs.some(Boolean) || Boolean(comp.state?.on);
   const isIO = [

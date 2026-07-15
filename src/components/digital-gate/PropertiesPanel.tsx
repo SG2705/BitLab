@@ -5,8 +5,7 @@ import { Copy, Settings2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ComponentInstance } from "@/engine";
-import { GATES } from "@/lib/circuit";
+import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_CONST,
   GATE_TYPE_LABELS,
@@ -28,7 +27,7 @@ function PropertiesPanel({
   onDuplicate,
 }: PropertiesPanelProps) {
   const intl = useIntl();
-  const gate = GATES[comp.type];
+  const gate = library.get(comp.type);
 
   return (
     <div className="p-3 border-b border-border">
@@ -42,7 +41,9 @@ function PropertiesPanel({
             <FormattedMessage id="+U6ozc" defaultMessage="Type" />
           </div>
           <div className="text-sm font-mono text-primary">
-            {fm(GATE_TYPE_LABELS[gate.type]?.messageKey)}
+            {GATE_TYPE_LABELS[gate.type]
+              ? fm(GATE_TYPE_LABELS[gate.type].messageKey)
+              : gate.label}
           </div>
         </div>
         <div>

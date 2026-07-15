@@ -5,6 +5,7 @@ import {
   Command,
   FolderOpen,
   Moon,
+  Package,
   Pause,
   Play,
   Plus,
@@ -15,6 +16,7 @@ import {
   StepForward,
   Sun,
   Undo2,
+  Upload,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,8 @@ interface TopBarProps {
   exportProject: () => void;
   newProject: () => void;
   openCmd: () => void;
+  importCircuit: () => void;
+  createCircuitFromGates: () => void;
 }
 
 interface TBBtnProps {
@@ -86,6 +90,8 @@ function TopBar({
   exportProject,
   newProject,
   openCmd,
+  createCircuitFromGates,
+  importCircuit,
 }: TopBarProps) {
   const intl = useIntl();
 
@@ -121,6 +127,17 @@ function TopBar({
         onClick={exportProject}
         icon={<Save className="h-4 w-4 rotate-180" />}
         label="Export"
+      />
+      <div className="w-px h-6 bg-border mx-1" />
+      <TBBtn
+        onClick={createCircuitFromGates}
+        icon={<Package className="h-4 w-4" />}
+        label="Save current circuit as reusable gate"
+      />
+      <TBBtn
+        onClick={importCircuit}
+        icon={<Upload className="h-4 w-4" />}
+        label="Import circuit file as gate"
       />
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn

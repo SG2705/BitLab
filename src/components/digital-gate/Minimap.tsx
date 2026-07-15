@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import type { CircuitSnapshot } from "@/engine";
-import { GATES } from "@/lib/circuit";
+import { type CircuitSnapshot, library } from "@/engine";
 
 interface MinimapProps {
   snapshot: CircuitSnapshot;
@@ -23,7 +22,7 @@ function Minimap({ snapshot, view, size }: MinimapProps) {
   let maxY = 300;
 
   for (const c of comps) {
-    const d = GATES[c.type];
+    const d = library.get(c.type);
 
     if (!d) continue;
 
@@ -51,7 +50,7 @@ function Minimap({ snapshot, view, size }: MinimapProps) {
     <div className="absolute bottom-3 right-3 glass-panel rounded-md p-1 shadow-lg pointer-events-none">
       <svg width={W} height={H}>
         {comps.map((c) => {
-          const d = GATES[c.type];
+          const d = library.get(c.type);
 
           if (!d) return null;
 

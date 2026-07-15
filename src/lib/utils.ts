@@ -19,12 +19,12 @@ export const fm = (
   values?: Record<string, string | number | undefined>,
 ) => intl.formatMessage(MESSAGES[key], values);
 
-export const addLog = (
-  kind: ConsoleTab,
-  msg: string,
+export const initializeLogger = (
   setter: (value: SetStateAction<LogEntry[]>) => void,
 ) => {
-  setter((l) => [...l, { t: Date.now(), kind, msg }]);
+  return (kind: ConsoleTab, msg: string) => {
+    setter((l) => [...l, { t: Date.now(), kind, msg }]);
+  };
 };
 
 export const snap = (v: number) => {

@@ -13,6 +13,7 @@ import { type PinKind } from "@/lib/types";
 export type { Wire } from "@/engine";
 export type { ComponentInstance as CircuitComp };
 export type { CircuitSnapshot as Circuit } from "@/engine";
+export type { CustomGateMeta } from "@/engine";
 
 /** Returns the canvas (world) position of a component pin for wire rendering. */
 export function pinPos(
@@ -20,6 +21,8 @@ export function pinPos(
   kind: PinKind,
   idx: number,
 ): { x: number; y: number } {
+  if (!library.has(comp.type)) return { x: comp.x, y: comp.y };
+
   const def = library.get(comp.type);
   const count = kind === PIN_KIND.IN ? def.inputs : def.outputs;
   const spacing = def.height / (count + 1);
@@ -29,9 +32,19 @@ export function pinPos(
   return { x, y };
 }
 
-// Legacy GATES / CATEGORIES exports so any remaining non-migrated code compiles.
-export const GATES = Object.fromEntries(
-  library.getAll().map((d) => [d.type, d]),
+// Dynamic proxy — always reflects the live library, including custom gates.
+export const GATES = new Proxy<Record<string, ReturnType<typeof library.get>>>(
+  {},
+  {
+    get(_target, type) {
+      if (typeof type !== "string") return undefined;
+
+      return library.has(type) ? library.get(type) : undefined;
+    },
+    has(_target, type) {
+      return typeof type === "string" && library.has(type);
+    },
+  },
 );
 
 export const CATEGORIES = library.getCategories();

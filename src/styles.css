@@ -146,3 +146,77 @@
     opacity: 0.55;
   }
 }
+
+/* ── BitLabLogo animations ───────────────────────────────────────────────── */
+
+@keyframes dg-ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dg-ring-glow {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dg-gate-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes dg-wire-flow {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@keyframes dg-signal-in-a {
+  0%,
+  40%,
+  100% {
+    fill: color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+  50%,
+  90% {
+    fill: var(--primary);
+  }
+}
+
+@keyframes dg-signal-in-b {
+  0%,
+  20%,
+  100% {
+    fill: color-mix(in oklab, var(--accent) 30%, transparent);
+  }
+  30%,
+  70% {
+    fill: var(--accent);
+  }
+}
+
+@keyframes dg-signal-out {
+  0%,
+  60%,
+  100% {
+    fill: color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+  70%,
+  95% {
+    fill: var(--primary);
+    filter: drop-shadow(0 0 4px var(--primary));
+  }
+}

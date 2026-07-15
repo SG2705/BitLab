@@ -8,18 +8,21 @@ import {
   Grid3x3,
   Hand,
   MousePointer2,
+  Package,
   Search,
-  Zap,
+  Upload,
 } from "lucide-react";
 
+import BitLabLogo from "@/components/ui/BitLabLogo";
 import { Input } from "@/components/ui/input";
-import type { ComponentInstance } from "@/engine";
+import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
 import { useDigitalEngine } from "@/hooks/use-digitalengine";
 import { pinPos } from "@/lib/circuit";
 import {
   BASE_LOG,
   CONSOLE_TAB,
+  GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
   GATE_TYPE_CONST,
   GATE_TYPE_TOGGLE,
@@ -37,7 +40,7 @@ import {
   type Tool,
   type WireType,
 } from "@/lib/types";
-import { addLog, cn, fm, snap } from "@/lib/utils";
+import { cn, fm, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
 import CommandPalette from "./CommandPalette";
@@ -52,15 +55,11 @@ import ToolBtn from "./ToolBtn";
 import TopBar from "./TopBar";
 import WirePath from "./WirePath";
 
-const GATE_CATEGORIES = library.getCategories();
-const DEFAULT_OPEN_GATE = Object.fromEntries(
-  GATE_CATEGORIES.map((c) => [c.name, true]),
+const BUILT_IN_OPEN = Object.fromEntries(
+  library.getCategories().map((c) => [c.name, true]),
 );
-const GATES: Record<string, ReturnType<typeof library.get>> = {};
 
-for (const cat of GATE_CATEGORIES) {
-  for (const g of cat.gates) GATES[g] = library.get(g);
-}
+const CUSTOM_CIR_KEYS = "bitlab_custom_gates";
 
 /**
  * DigitalGateApp
@@ -71,7 +70,9 @@ function DigitalGateApp() {
   // States
   const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
   const [clockSpeed, setClockSpeed] = useState(8);
+  const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
 
+  const addLog = initializeLogger(setLogs);
   const {
     snapshot,
     status,
@@ -98,21 +99,22 @@ function DigitalGateApp() {
     saveProjectToLocal,
     loadProjectFromLocal,
   } = useDigitalEngine(clockSpeed);
-
   const running = status === SIMULATION_STATUS.RUNNING;
   const { tick } = stats;
 
   const [selection, setSelection] = useState<Set<string>>(new Set());
   const [selWires, setSelWires] = useState<Set<string>>(new Set());
-  const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
   const [consoleTab, setConsoleTab] = useState<ConsoleTab>(CONSOLE_TAB.LOG);
   const [wireStyle, setWireStyle] = useState<WireType>(WIRE_TYPE.BEZIER);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [showMinimap] = useState(true);
   const [cmdOpen, setCmdOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [openCats, setOpenCats] =
-    useState<Record<string, boolean>>(DEFAULT_OPEN_GATE);
+  const [openCats, setOpenCats] = useState<Record<string, boolean>>({
+    ...BUILT_IN_OPEN,
+    [GATE_CATEGORY_CUSTOM]: true,
+  });
+  const [customBump, setCustomBump] = useState(0);
 
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
   const [size, setSize] = useState({ w: 1200, h: 800 });
@@ -131,6 +133,7 @@ function DigitalGateApp() {
   } | null>(null);
   const [tool, setTool] = useState<Tool>(TOOL.SELECT);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const panStartRef = useRef<{
@@ -162,6 +165,29 @@ function DigitalGateApp() {
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOM_CIR_KEYS);
+
+      if (!raw) return;
+
+      const saved = JSON.parse(raw) as {
+        name: string;
+        circuit: CircuitSnapshot;
+      }[];
+
+      let anyRegistered = false;
+
+      for (const { name, circuit } of saved) {
+        if (library.registerCustomGate(name, circuit)) anyRegistered = true;
+      }
+
+      if (anyRegistered) setCustomBump((v) => v + 1);
+    } catch {
+      // corrupt or missing storage — ignore
+    }
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("light", theme === THEME.LIGHT);
     document.documentElement.classList.toggle("dark", theme === THEME.DARK);
   }, [theme]);
@@ -183,15 +209,15 @@ function DigitalGateApp() {
   const onCanvasDrop = (e: React.DragEvent) => {
     const type = e.dataTransfer.getData("text/gate") || dragType;
 
-    if (!type || !GATES[type]) return;
+    if (!type || !library.has(type)) return;
 
-    const def = GATES[type];
+    const def = library.get(type);
     const { x, y } = toWorld(e.clientX, e.clientY);
     const nx = snapEnabled ? snap(x - def.width / 2) : x - def.width / 2;
     const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
     const comp = addComponent(type, nx, ny);
 
-    addLog(CONSOLE_TAB.LOG, `Added ${def.label} (${comp.id})`, setLogs);
+    addLog(CONSOLE_TAB.LOG, `Added ${def.label} (${comp.id})`);
 
     setDragType(null);
   };
@@ -308,9 +334,9 @@ function DigitalGateApp() {
       const sel = new Set<string>();
 
       for (const c of Object.values(snapshot.components)) {
-        const def = GATES[c.type];
+        if (!library.has(c.type)) continue;
 
-        if (!def) continue;
+        const def = library.get(c.type);
 
         if (
           c.x + def.width >= x &&
@@ -379,7 +405,7 @@ function DigitalGateApp() {
       pin,
     );
 
-    if (wire) addLog("log", `Wire connected (${wire.id})`, setLogs);
+    if (wire) addLog("log", `Wire connected (${wire.id})`);
 
     setPendingWire(null);
   };
@@ -414,6 +440,113 @@ function DigitalGateApp() {
       setInput(c.id, { on: !c.state?.on });
   };
 
+  const saveCustomCircuitToLocal = useCallback(() => {
+    try {
+      const gates = library.getCustomGates();
+
+      localStorage.setItem(
+        CUSTOM_CIR_KEYS,
+        JSON.stringify(
+          gates.map((m) => ({ name: m.name, circuit: m.circuit })),
+        ),
+      );
+    } catch {
+      // localStorage unavailable
+    }
+  }, []);
+
+  const createCircuitFromGates = () => {
+    if (Object.keys(snapshot.components).length === 0) {
+      addLog(CONSOLE_TAB.WARN, "Cannot create a gate from an empty circuit.");
+
+      return;
+    }
+
+    // eslint-disable-next-line no-alert
+    const name = window.prompt('Name your circuit (e.g. "4-bit Adder")');
+
+    if (!name) return;
+
+    const type = library.registerCustomGate(name.trim(), snapshot);
+
+    if (!type) {
+      addLog(
+        CONSOLE_TAB.ERROR,
+        "Gate needs at least one input (Toggle/Button/Const/Clock) or output (LED).",
+      );
+
+      return;
+    }
+
+    setOpenCats((o) => ({ ...o, [GATE_CATEGORY_CUSTOM]: true }));
+    setCustomBump((v) => v + 1);
+
+    saveCustomCircuitToLocal();
+    addLog(
+      CONSOLE_TAB.LOG,
+      `Registered custom gate "${name}". Drag it from the Custom category.`,
+    );
+  };
+
+  const importCustomCircuitFromFile = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+
+    e.target.value = "";
+
+    if (!file) return;
+
+    const suggested = file.name.replace(/\.[^.]+$/, "");
+
+    file
+      .text()
+      .then((text) => {
+        try {
+          const data = JSON.parse(text) as CircuitSnapshot;
+
+          if (!data || typeof data !== "object" || !data.components)
+            throw new Error("Invalid circuit file");
+
+          // eslint-disable-next-line no-alert
+          const name = window.prompt("Circuit name", suggested) || suggested;
+
+          const type = library.registerCustomGate(name.trim(), data);
+
+          if (!type) {
+            addLog(
+              CONSOLE_TAB.ERROR,
+              "Imported circuit has no I/O components (add Toggles / LEDs to define pins).",
+            );
+
+            return;
+          }
+
+          setOpenCats((o) => ({ ...o, [GATE_CATEGORY_CUSTOM]: true }));
+          setCustomBump((v) => v + 1);
+
+          saveCustomCircuitToLocal();
+          addLog(CONSOLE_TAB.LOG, `Imported "${name}" as gate unit.`);
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+
+          addLog(CONSOLE_TAB.ERROR, `Import failed: ${msg}`);
+        }
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+
+        addLog(CONSOLE_TAB.ERROR, `File read failed: ${msg}`);
+      });
+  };
+
+  const removeCustomCircuit = (type: string) => {
+    library.unregister(type);
+
+    setCustomBump((v) => v + 1);
+    saveCustomCircuitToLocal();
+  };
+
   const fitToScreen = () => {
     const comps = Object.values(snapshot.components);
 
@@ -429,9 +562,9 @@ function DigitalGateApp() {
     let maxY = -Infinity;
 
     for (const c of comps) {
-      const d = GATES[c.type];
+      if (!library.has(c.type)) continue;
 
-      if (!d) continue;
+      const d = library.get(c.type);
 
       minX = Math.min(minX, c.x);
       minY = Math.min(minY, c.y);
@@ -485,20 +618,35 @@ function DigitalGateApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteSelected, running]);
 
+  // Always include the Custom category so the empty-state hint is always shown.
+  const liveGateCategories = useMemo(() => {
+    const cats = library.getCategories();
+
+    if (!cats.some((c) => c.name === GATE_CATEGORY_CUSTOM)) {
+      cats.push({ name: GATE_CATEGORY_CUSTOM, gates: [] });
+    }
+
+    return cats;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customBump]);
+
   const filteredCats = useMemo(() => {
-    if (!search) return GATE_CATEGORIES;
+    if (!search) return liveGateCategories;
 
     const q = search.toLowerCase();
 
-    return GATE_CATEGORIES.map((c) => ({
-      ...c,
-      gates: c.gates.filter(
-        (g) =>
-          GATES[g]?.label.toLowerCase().includes(q) ||
-          g.toLowerCase().includes(q),
-      ),
-    })).filter((c) => c.gates.length);
-  }, [search]);
+    return liveGateCategories
+      .map((c) => ({
+        ...c,
+        gates: c.gates.filter(
+          (g) =>
+            (library.has(g) &&
+              library.get(g).label.toLowerCase().includes(q)) ||
+            g.toLowerCase().includes(q),
+        ),
+      }))
+      .filter((c) => c.gates.length);
+  }, [search, liveGateCategories]);
 
   const selectedComp = useMemo(
     () =>
@@ -510,6 +658,16 @@ function DigitalGateApp() {
 
   return (
     <div className="h-full w-full flex flex-col text-foreground bg-background overflow-hidden font-display">
+      {/* Hidden file input for importing circuits as gates */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={importCustomCircuitFromFile}
+      />
+
+      {/* Header */}
       <TopBar
         running={running}
         setRunning={(r: boolean) => (r ? start() : pause())}
@@ -529,11 +687,14 @@ function DigitalGateApp() {
         exportProject={exportJSON}
         newProject={newProject}
         openCmd={() => setCmdOpen(true)}
+        createCircuitFromGates={createCircuitFromGates}
+        importCircuit={() => fileInputRef.current?.click()}
       />
 
       <div className="flex-1 flex min-h-0">
         {/* Left toolbox */}
         <aside className="w-64 shrink-0 border-r border-border bg-panel/60 flex flex-col">
+          {/* Component Search */}
           <div className="p-3 border-b border-border">
             <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
               <Cpu className="h-3.5 w-3.5" />
@@ -549,6 +710,7 @@ function DigitalGateApp() {
               />
             </div>
           </div>
+          {/* Component categories */}
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {filteredCats.map((cat) => (
               <div key={cat.name}>
@@ -564,7 +726,9 @@ function DigitalGateApp() {
                   ) : (
                     <ChevronRight className="h-3 w-3" />
                   )}
-                  {fm(GATE_CATEGORY_LABELS[cat.name]?.messageKey)}
+                  {GATE_CATEGORY_LABELS[cat.name]
+                    ? fm(GATE_CATEGORY_LABELS[cat.name].messageKey)
+                    : cat.name}
                 </button>
                 {openCats[cat.name] && (
                   <div className="grid grid-cols-2 gap-1.5 px-1 pb-2">
@@ -573,8 +737,27 @@ function DigitalGateApp() {
                         key={g}
                         type={g}
                         onDragStart={() => setDragType(g)}
+                        isCustom={library.isCustom(g)}
+                        onRemove={() => removeCustomCircuit(g)}
                       />
                     ))}
+                    {cat.name === GATE_CATEGORY_CUSTOM &&
+                      cat.gates.length === 0 && (
+                        <div className="col-span-2 text-[10.5px] text-muted-foreground/80 border border-dashed border-border rounded-md p-2 leading-snug">
+                          <FormattedMessage
+                            id="BRqTi+"
+                            defaultMessage="Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
+                            values={{
+                              save: (
+                                <Package className="h-3 w-3 inline -mt-0.5" />
+                              ),
+                              upload: (
+                                <Upload className="h-3 w-3 inline -mt-0.5" />
+                              ),
+                            }}
+                          />
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -779,9 +962,10 @@ function DigitalGateApp() {
             {Object.keys(snapshot.components).length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
-                  <div className="mx-auto mb-4 h-16 w-16 rounded-2xl glass-panel flex items-center justify-center">
+                  <BitLabLogo />
+                  {/* <div className="mx-auto mb-4 h-16 w-16 rounded-2xl glass-panel flex items-center justify-center">
                     <Zap className="h-7 w-7 text-primary" />
-                  </div>
+                  </div> */}
                   <div className="text-lg font-semibold">
                     <FormattedMessage
                       id="GkBxYy"
@@ -812,6 +996,7 @@ function DigitalGateApp() {
 
         {/* Right properties */}
         <aside className="w-72 shrink-0 border-l border-border bg-panel/60 flex flex-col">
+          {/* Properties */}
           {selectedComp && (
             <PropertiesPanel
               comp={selectedComp}
@@ -822,6 +1007,7 @@ function DigitalGateApp() {
               onDuplicate={duplicateSelected}
             />
           )}
+          {/* Circuit configs */}
           <ExplorerPanel
             snapshot={snapshot}
             selection={selection}
@@ -830,16 +1016,17 @@ function DigitalGateApp() {
         </aside>
       </div>
 
+      {/* Bottom console */}
       <ConsolePanel
         tab={consoleTab}
         setTab={setConsoleTab}
         logs={logs}
         tick={tick}
-
         snapshot={snapshot}
         stats={stats}
       />
 
+      {/* Footer */}
       <BottomBar
         running={running}
         tick={tick}
@@ -847,6 +1034,7 @@ function DigitalGateApp() {
         wireCount={Object.keys(snapshot.wires).length}
       />
 
+      {/* Global search */}
       {cmdOpen && (
         <CommandPalette
           onClose={() => setCmdOpen(false)}
@@ -863,13 +1051,11 @@ function DigitalGateApp() {
             { label: "Save project to local", action: saveProjectToLocal },
             { label: "Export JSON", action: exportJSON },
             { label: "New project", action: newProject },
-            ...GATE_CATEGORIES.flatMap((cat) =>
+            ...liveGateCategories.flatMap((cat) =>
               cat.gates.map((g) => ({
-                label: `Add ${GATES[g]?.label ?? g}`,
+                label: `Add ${library.has(g) ? library.get(g).label : g}`,
                 action: () => {
-                  const def = GATES[g];
-
-                  if (!def) return;
+                  if (!library.has(g)) return;
 
                   const cx = (size.w / 2 - view.x) / view.k;
                   const cy = (size.h / 2 - view.y) / view.k;

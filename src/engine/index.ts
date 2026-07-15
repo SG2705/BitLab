@@ -25,6 +25,7 @@ export type {
 export { EventQueue } from "./EventQueue";
 export { GraphManager } from "./GraphManager";
 export { ComponentLibrary, library } from "./ComponentLibrary";
+export type { CustomGateMeta } from "./ComponentLibrary";
 export { SignalPropagator } from "./SignalPropagator";
 export type { SimulationEngineOptions } from "./SimulationEngine";
 export { SimulationEngine } from "./SimulationEngine";

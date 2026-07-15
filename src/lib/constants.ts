@@ -4,6 +4,7 @@ import { type CircuitSnapshot } from "@/engine";
 
 // Localization
 export const MESSAGES = defineMessages({
+  lb_custom: { id: "Sjo1P4", defaultMessage: "Custom" },
   lb_logic_gates: { id: "M+am2n", defaultMessage: "Logic Gates" },
   lb_inputs: { id: "wS/QCK", defaultMessage: "Inputs" },
   lb_outputs: { id: "+VMoL/", defaultMessage: "Outputs" },
@@ -50,6 +51,7 @@ export const GATE_CATEGORY_INPUT = "gate_category-input";
 export const GATE_CATEGORY_OUTPUT = "gate_category-output";
 export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
 export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
+export const GATE_CATEGORY_CUSTOM = "gate_category-custom";
 
 export const GATE_TYPE_AND = "AND";
 export const GATE_TYPE_OR = "OR";
@@ -118,7 +120,8 @@ export const PIN_KIND = {
 // Project
 export const VERSION = 1;
 export const MAX_HISTORY = 100;
-export const STORAGE_KEY = "digital-gate-project";
+export const CURR_CIR_KEY = "current-circuit-key";
+export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 8;
 export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
 
@@ -155,6 +158,7 @@ export const GATE_CATEGORY_LABELS: Record<
   [GATE_CATEGORY_OUTPUT]: { en: "Outputs", messageKey: "lb_outputs" },
   [GATE_CATEGORY_SEQUENTIAL]: { en: "Sequential", messageKey: "lb_sequential" },
   [GATE_CATEGORY_ARITHMETIC]: { en: "Arithmetic", messageKey: "lb_arithmetic" },
+  [GATE_CATEGORY_CUSTOM]: { en: "Custom", messageKey: "lb_custom" },
 };
 
 export const GATE_TYPE_LABELS: Record<

@@ -9,6 +9,7 @@
 
 import {
   GATE_CATEGORY_ARITHMETIC,
+  GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_LOGIC,
   GATE_CATEGORY_OUTPUT,
@@ -44,7 +45,19 @@ import {
 } from "@/lib/constants";
 import { fm } from "@/lib/utils";
 
-import type { ComponentDefinition, EvaluateResult, SignalValue } from "./types";
+import type {
+  CircuitSnapshot,
+  ComponentDefinition,
+  EvaluateResult,
+  SignalValue,
+} from "./types";
+
+export interface CustomGateMeta {
+  name: string;
+  inputLabels: string[];
+  outputLabels: string[];
+  circuit: CircuitSnapshot;
+}
 
 const b = (v: unknown): boolean => !!v;
 
@@ -562,6 +575,8 @@ const DEFINITIONS: ComponentDefinition[] = [
 
 export class ComponentLibrary {
   private typeMap: Map<string, ComponentDefinition> = new Map();
+  private customTypes: Set<string> = new Set();
+  private customMeta: Map<string, CustomGateMeta> = new Map();
 
   constructor(defs: ComponentDefinition[] = DEFINITIONS) {
     for (const d of defs) {
@@ -581,13 +596,203 @@ export class ComponentLibrary {
     return this.typeMap.has(type);
   }
 
+  isCustom(type: string): boolean {
+    return this.customTypes.has(type);
+  }
+
+  getCustomMeta(type: string): CustomGateMeta | undefined {
+    return this.customMeta.get(type);
+  }
+
+  getCustomGates(): CustomGateMeta[] {
+    return Array.from(this.customMeta.values());
+  }
+
   getAll(): ComponentDefinition[] {
     return Array.from(this.typeMap.values());
   }
 
-  /** Register a custom component definition (for future custom components) */
+  /** Register a component definition. */
   register(def: ComponentDefinition): void {
     this.typeMap.set(def.type, def);
+  }
+
+  /** Remove a previously registered component (custom gates only). */
+  unregister(type: string): void {
+    this.typeMap.delete(type);
+    this.customTypes.delete(type);
+    this.customMeta.delete(type);
+  }
+
+  /**
+   * Analyse `circuit`, derive inputs/outputs, build a black-box
+   * ComponentDefinition that evaluates the sub-circuit, and register it.
+   *
+   * Returns the new type string on success, or null when the circuit has
+   * neither input components (Toggle/Button/Const/Clock) nor output
+   * components (LED/Display7).
+   */
+  registerCustomGate(name: string, circuit: CircuitSnapshot): string | null {
+    const comps = Object.values(circuit.components);
+
+    const inputComps = comps
+      .filter((c) => {
+        if (!this.has(c.type)) return false;
+        const def = this.get(c.type);
+
+        return def.isInput || def.isClock;
+      })
+      .sort((p, q) => p.y - q.y || p.x - q.x);
+
+    const outputComps = comps
+      .filter((c) => {
+        if (!this.has(c.type)) return false;
+
+        return this.get(c.type).isOutput;
+      })
+      .sort((p, q) => p.y - q.y || p.x - q.x);
+
+    if (inputComps.length === 0 && outputComps.length === 0) return null;
+
+    const inputIds = inputComps.map((c) => c.id);
+    const outputIds = outputComps.map((c) => c.id);
+    const inputLabels = inputComps.map((c, i) => c.label || `IN${i}`);
+    const outputLabels = outputComps.map((c, i) => c.label || `OUT${i}`);
+
+    // Wires indexed by target component
+    const inWires: Record<
+      string,
+      { fromComp: string; fromPin: number; toPin: number }[]
+    > = {};
+
+    for (const w of Object.values(circuit.wires)) {
+      if (!inWires[w.to.comp]) inWires[w.to.comp] = [];
+
+      inWires[w.to.comp].push({
+        fromComp: w.from.comp,
+        fromPin: w.from.pin,
+        toPin: w.to.pin,
+      });
+    }
+
+    // Middle components (not input/output) — evaluated during propagation
+    const middleIds = comps
+      .filter((c) => !inputIds.includes(c.id) && !outputIds.includes(c.id))
+      .map((c) => c.id);
+
+    // Snapshot of initial component states for reset
+    const initialCompStates: Record<string, Record<string, unknown> | null> =
+      {};
+
+    for (const c of comps) {
+      if (!this.has(c.type)) continue;
+
+      initialCompStates[c.id] = this.get(c.type).initialState();
+    }
+
+    const numInputs = inputIds.length;
+    const numOutputs = outputIds.length;
+    const safeName = name.replace(/\W+/g, "_").toUpperCase();
+    const type = `CUSTOM_${safeName}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+    const libHas = this.has.bind(this);
+    const libGet = this.get.bind(this);
+
+    const def: ComponentDefinition = {
+      type,
+      label: name,
+      category: GATE_CATEGORY_CUSTOM,
+      inputs: numInputs,
+      outputs: numOutputs,
+      width: 90,
+      height: Math.max(60, Math.max(numInputs, numOutputs) * 22 + 20),
+      symbol: name.slice(0, 4),
+      isSequential: false,
+      isClock: false,
+      isInput: false,
+      isOutput: false,
+      initialState: () => ({
+        compStates: { ...initialCompStates },
+      }),
+      evaluate(externalInputs, state) {
+        const compStates: Record<string, Record<string, unknown> | null> = {
+          ...((state?.compStates as Record<
+            string,
+            Record<string, unknown> | null
+          >) ?? initialCompStates),
+        };
+
+        // Current output signals for every sub-component
+        const signals: Record<string, boolean[]> = {};
+
+        for (const c of comps) {
+          if (!libHas(c.type)) continue;
+
+          signals[c.id] = new Array<boolean>(libGet(c.type).outputs).fill(
+            false,
+          );
+        }
+
+        // Drive input components from external inputs
+        inputIds.forEach((id, i) => {
+          signals[id] = [Boolean(externalInputs[i])];
+          compStates[id] = { on: Boolean(externalInputs[i]) };
+        });
+
+        // Propagate through middle components (10 passes handles most cycles)
+        for (let pass = 0; pass < 10; pass += 1) {
+          for (const id of middleIds) {
+            const c = circuit.components[id];
+
+            if (!c || !libHas(c.type)) continue;
+
+            const cdef = libGet(c.type);
+            const ins = new Array<boolean>(cdef.inputs).fill(false);
+
+            for (const w of inWires[id] ?? []) {
+              if (w.toPin < ins.length)
+                ins[w.toPin] = signals[w.fromComp]?.[w.fromPin] ?? false;
+            }
+
+            const result = cdef.evaluate(ins, compStates[id]);
+
+            signals[id] = result.outputs;
+            compStates[id] = result.state;
+          }
+        }
+
+        // Drive output components (LEDs) so their state.on is updated
+        for (const id of outputIds) {
+          const c = circuit.components[id];
+
+          if (!c || !libHas(c.type)) continue;
+
+          const cdef = libGet(c.type);
+          const ins = new Array<boolean>(cdef.inputs).fill(false);
+
+          for (const w of inWires[id] ?? []) {
+            if (w.toPin < ins.length)
+              ins[w.toPin] = signals[w.fromComp]?.[w.fromPin] ?? false;
+          }
+
+          const result = cdef.evaluate(ins, compStates[id]);
+
+          signals[id] = result.outputs;
+          compStates[id] = result.state;
+        }
+
+        // Read state.on from evaluated output components
+        const outputs = outputIds.map((id) => !!compStates[id]?.on);
+
+        return { outputs, state: { compStates } };
+      },
+    };
+
+    this.typeMap.set(type, def);
+    this.customTypes.add(type);
+    this.customMeta.set(type, { name, inputLabels, outputLabels, circuit });
+
+    return type;
   }
 
   /** Category → sorted list of types */
@@ -613,7 +818,7 @@ export class ComponentLibrary {
         result.push({ name: cat, gates: groups.get(cat) ?? [] });
     }
 
-    // Append any categories not in ORDER
+    // Append any categories not in ORDER (e.g. Custom)
     for (const [cat, gates] of groups) {
       if (!ORDER.includes(cat)) result.push({ name: cat, gates });
     }

@@ -13,7 +13,7 @@
  *   • Cloud sync (stub interface provided)
  */
 
-import { MAX_HISTORY, STORAGE_KEY, VERSION } from "@/lib/constants";
+import { CURR_CIR_KEY, MAX_HISTORY, VERSION } from "@/lib/constants";
 
 import type { CircuitManager } from "./CircuitManager";
 import type { CircuitSnapshot } from "./types";
@@ -108,13 +108,13 @@ export class ProjectManager {
       circuit: this.manager.getSnapshot(),
     };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+    localStorage.setItem(CURR_CIR_KEY, JSON.stringify(project));
 
     if (name) this.projectName = name;
   }
 
   loadFromLocalStorage(): boolean {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(CURR_CIR_KEY);
 
     if (!raw) return false;
 
