@@ -109,7 +109,9 @@ function WaveformDisplay({
   }
 
   const endTick = history[history.length - 1].t;
-  const startTick = endTick - windowSize + 1;
+  // Clamp to 0: the first few ticks fill in from the left instead of showing
+  // negative tick labels. windowSize is the fixed x-axis span in ticks.
+  const startTick = Math.max(0, endTick - windowSize + 1);
 
   // Map a tick number to an x coordinate
   const tickToX = (t: number) =>
@@ -145,9 +147,10 @@ function WaveformDisplay({
     parts.push(`L ${x2} ${y}`);
   }
 
-  // X-axis: tick marks at every integer tick, labels every other tick
+  // Tick marks stop at endTick (the current tick), not endTick+1, so the
+  // rightmost label always matches the simulation tick counter.
   const tickNums = Array.from(
-    { length: windowSize + 1 },
+    { length: endTick - startTick + 1 },
     (_, i) => startTick + i,
   );
   const labelNums = tickNums.filter((_, i) => i % 2 === 0);
