@@ -41,6 +41,16 @@ export const MESSAGES = defineMessages({
     id: "VAZneg",
     defaultMessage: "Comparator",
   },
+  lb_dlatch: { id: "DPeP5H", defaultMessage: "D Latch" },
+  lb_reg4: { id: "n+hlL2", defaultMessage: "Register 4" },
+  lb_counter4: { id: "+ObDCx", defaultMessage: "Counter 4" },
+  lb_shreg4: { id: "H63+mc", defaultMessage: "Shift Reg 4" },
+  lb_decoder3: { id: "2uOC49", defaultMessage: "Decoder 3:8" },
+  lb_mux8: { id: "e7nK/h", defaultMessage: "Mux 8:1" },
+  lb_half_sub: { id: "X/SJAt", defaultMessage: "Half Sub" },
+  lb_full_sub: { id: "oNcdXR", defaultMessage: "Full Sub" },
+  lb_cmp4: { id: "2I9fUV", defaultMessage: "Comparator 4" },
+  lb_tribuf: { id: "/Hbmdf", defaultMessage: "Tri-State" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -81,6 +91,16 @@ export const GATE_TYPE_DEMUX2 = "DEMUX2";
 export const GATE_TYPE_DECODER2 = "DECODER2";
 export const GATE_TYPE_ENCODER4 = "ENCODER4";
 export const GATE_TYPE_COMPARATOR = "COMPARATOR";
+export const GATE_TYPE_DLATCH = "DLATCH";
+export const GATE_TYPE_REG4 = "REG4";
+export const GATE_TYPE_COUNTER4 = "COUNTER4";
+export const GATE_TYPE_SHREG4 = "SHREG4";
+export const GATE_TYPE_DECODER3 = "DECODER3";
+export const GATE_TYPE_MUX8 = "MUX8";
+export const GATE_TYPE_HALF_SUB = "HALF_SUB";
+export const GATE_TYPE_FULL_SUB = "FULL_SUB";
+export const GATE_TYPE_CMP4 = "CMP4";
+export const GATE_TYPE_TRIBUF = "TRIBUF";
 
 // Wires
 export const WIRE_TYPE = {
@@ -193,4 +213,14 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_DECODER2]: { en: "Decoder 2:4", messageKey: "lb_dcode_2_4" },
   [GATE_TYPE_ENCODER4]: { en: "Encoder 4:2", messageKey: "lb_ecode_4_2" },
   [GATE_TYPE_COMPARATOR]: { en: "Comparator", messageKey: "lb_comparator" },
+  [GATE_TYPE_DLATCH]: { en: "D Latch", messageKey: "lb_dlatch" },
+  [GATE_TYPE_REG4]: { en: "Register 4", messageKey: "lb_reg4" },
+  [GATE_TYPE_COUNTER4]: { en: "Counter 4", messageKey: "lb_counter4" },
+  [GATE_TYPE_SHREG4]: { en: "Shift Reg 4", messageKey: "lb_shreg4" },
+  [GATE_TYPE_DECODER3]: { en: "Decoder 3:8", messageKey: "lb_decoder3" },
+  [GATE_TYPE_MUX8]: { en: "Mux 8:1", messageKey: "lb_mux8" },
+  [GATE_TYPE_HALF_SUB]: { en: "Half Sub", messageKey: "lb_half_sub" },
+  [GATE_TYPE_FULL_SUB]: { en: "Full Sub", messageKey: "lb_full_sub" },
+  [GATE_TYPE_CMP4]: { en: "Comparator 4", messageKey: "lb_cmp4" },
+  [GATE_TYPE_TRIBUF]: { en: "Tri-State", messageKey: "lb_tribuf" },
 };

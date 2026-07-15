@@ -19,27 +19,37 @@ import {
   GATE_TYPE_BUFFER,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CLOCK,
+  GATE_TYPE_CMP4,
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
+  GATE_TYPE_COUNTER4,
   GATE_TYPE_DECODER2,
+  GATE_TYPE_DECODER3,
   GATE_TYPE_DEMUX2,
   GATE_TYPE_DFF,
   GATE_TYPE_DISPLAY7,
+  GATE_TYPE_DLATCH,
   GATE_TYPE_ENCODER4,
   GATE_TYPE_FULL_ADDER,
+  GATE_TYPE_FULL_SUB,
   GATE_TYPE_HALF_ADDER,
+  GATE_TYPE_HALF_SUB,
   GATE_TYPE_JKFF,
   GATE_TYPE_LED,
   GATE_TYPE_MUX2,
   GATE_TYPE_MUX4,
+  GATE_TYPE_MUX8,
   GATE_TYPE_NAND,
   GATE_TYPE_NOR,
   GATE_TYPE_NOT,
   GATE_TYPE_OR,
   GATE_TYPE_OR3,
+  GATE_TYPE_REG4,
+  GATE_TYPE_SHREG4,
   GATE_TYPE_SR_LATCH,
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
+  GATE_TYPE_TRIBUF,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/lib/constants";
@@ -460,6 +470,144 @@ const DEFINITIONS: ComponentDefinition[] = [
     },
   },
 
+  {
+    type: GATE_TYPE_DLATCH,
+    label: fm("lb_dlatch"),
+    category: GATE_CATEGORY_SEQUENTIAL,
+    inputs: 2,
+    outputs: 2,
+    width: 80,
+    height: 70,
+    symbol: "DL",
+    isSequential: true,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    inputLabels: ["D", "E"],
+    outputLabels: ["Q", "Q'"],
+    initialState: () => ({ q: false }),
+    evaluate: (i, s) => {
+      let q = Boolean(s?.q);
+
+      if (b(i[1])) q = b(i[0]);
+
+      return { outputs: [q, !q], state: { q } };
+    },
+  },
+  {
+    type: GATE_TYPE_REG4,
+    label: fm("lb_reg4"),
+    category: GATE_CATEGORY_SEQUENTIAL,
+    inputs: 5,
+    outputs: 4,
+    width: 80,
+    height: 100,
+    symbol: "REG",
+    isSequential: true,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    inputLabels: ["D0", "D1", "D2", "D3", "CLK"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
+    initialState: () => ({ q: 0, prevClk: false }),
+    evaluate: (i, s) => {
+      let q = (s?.q as number) ?? 0;
+      const clk = b(i[4]);
+
+      if (clk && !s?.prevClk) {
+        q =
+          (b(i[3]) ? 8 : 0) |
+          (b(i[2]) ? 4 : 0) |
+          (b(i[1]) ? 2 : 0) |
+          (b(i[0]) ? 1 : 0);
+      }
+
+      return {
+        outputs: [
+          Boolean(q & 1),
+          Boolean(q & 2),
+          Boolean(q & 4),
+          Boolean(q & 8),
+        ],
+        state: { q, prevClk: clk },
+      };
+    },
+  },
+  {
+    type: GATE_TYPE_COUNTER4,
+    label: fm("lb_counter4"),
+    category: GATE_CATEGORY_SEQUENTIAL,
+    inputs: 2,
+    outputs: 4,
+    width: 80,
+    height: 90,
+    symbol: "CTR",
+    isSequential: true,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    inputLabels: ["CLK", "RST"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
+    initialState: () => ({ count: 0, prevClk: false }),
+    evaluate: (i, s) => {
+      let count = (s?.count as number) ?? 0;
+      const clk = b(i[0]);
+
+      if (b(i[1])) {
+        count = 0;
+      } else if (clk && !s?.prevClk) {
+        count = (count + 1) & 0xf;
+      }
+
+      return {
+        outputs: [
+          Boolean(count & 1),
+          Boolean(count & 2),
+          Boolean(count & 4),
+          Boolean(count & 8),
+        ],
+        state: { count, prevClk: clk },
+      };
+    },
+  },
+  {
+    type: GATE_TYPE_SHREG4,
+    label: fm("lb_shreg4"),
+    category: GATE_CATEGORY_SEQUENTIAL,
+    inputs: 3,
+    outputs: 4,
+    width: 80,
+    height: 90,
+    symbol: "SHR",
+    isSequential: true,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    inputLabels: ["SI", "CLK", "RST"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
+    initialState: () => ({ bits: 0, prevClk: false }),
+    evaluate: (i, s) => {
+      let bits = (s?.bits as number) ?? 0;
+      const clk = b(i[1]);
+
+      if (b(i[2])) {
+        bits = 0;
+      } else if (clk && !s?.prevClk) {
+        bits = ((bits << 1) | (b(i[0]) ? 1 : 0)) & 0xf;
+      }
+
+      return {
+        outputs: [
+          Boolean(bits & 1),
+          Boolean(bits & 2),
+          Boolean(bits & 4),
+          Boolean(bits & 8),
+        ],
+        state: { bits, prevClk: clk },
+      };
+    },
+  },
+
   // ── Arithmetic ────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_HALF_ADDER,
@@ -604,6 +752,131 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [a < bv, a === bv, a > bv], state: null };
     },
   }),
+  cb({
+    type: GATE_TYPE_DECODER3,
+    label: fm("lb_decoder3"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 3,
+    outputs: 8,
+    width: 80,
+    height: 120,
+    symbol: "3:8",
+    inputLabels: ["A", "B", "C"],
+    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
+    evaluate: (i) => {
+      const idx = (b(i[2]) ? 4 : 0) | (b(i[1]) ? 2 : 0) | (b(i[0]) ? 1 : 0);
+
+      return {
+        outputs: [0, 1, 2, 3, 4, 5, 6, 7].map((j) => idx === j),
+        state: null,
+      };
+    },
+  }),
+  cb({
+    type: GATE_TYPE_MUX8,
+    label: fm("lb_mux8"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 11,
+    outputs: 1,
+    width: 80,
+    height: 160,
+    symbol: "M8",
+    inputLabels: [
+      "D0",
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "S0",
+      "S1",
+      "S2",
+    ],
+    outputLabels: ["Y"],
+    evaluate: (i) => {
+      const sel = (b(i[10]) ? 4 : 0) | (b(i[9]) ? 2 : 0) | (b(i[8]) ? 1 : 0);
+
+      return { outputs: [b(i[sel])], state: null };
+    },
+  }),
+  cb({
+    type: GATE_TYPE_HALF_SUB,
+    label: fm("lb_half_sub"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 2,
+    outputs: 2,
+    width: 80,
+    height: 60,
+    symbol: "½−",
+    inputLabels: ["A", "B"],
+    outputLabels: ["D", "Bo"],
+    evaluate: (i) => ({
+      outputs: [b(i[0]) !== b(i[1]), !b(i[0]) && b(i[1])],
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_FULL_SUB,
+    label: fm("lb_full_sub"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 3,
+    outputs: 2,
+    width: 80,
+    height: 70,
+    symbol: "Σ−",
+    inputLabels: ["A", "B", "Bin"],
+    outputLabels: ["D", "Bo"],
+    evaluate: (i) => {
+      const A = b(i[0]);
+      const B = b(i[1]);
+      const Bin = b(i[2]);
+      const D = (A !== B) !== Bin;
+      const Bo = (!A && B) || (!A && Bin) || (B && Bin);
+
+      return { outputs: [D, Bo], state: null };
+    },
+  }),
+  cb({
+    type: GATE_TYPE_CMP4,
+    label: fm("lb_cmp4"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 8,
+    outputs: 3,
+    width: 80,
+    height: 120,
+    symbol: "≥≤",
+    inputLabels: ["A0", "A1", "A2", "A3", "B0", "B1", "B2", "B3"],
+    outputLabels: ["<", "=", ">"],
+    evaluate: (i) => {
+      const a =
+        (b(i[3]) ? 8 : 0) |
+        (b(i[2]) ? 4 : 0) |
+        (b(i[1]) ? 2 : 0) |
+        (b(i[0]) ? 1 : 0);
+      const bv =
+        (b(i[7]) ? 8 : 0) |
+        (b(i[6]) ? 4 : 0) |
+        (b(i[5]) ? 2 : 0) |
+        (b(i[4]) ? 1 : 0);
+
+      return { outputs: [a < bv, a === bv, a > bv], state: null };
+    },
+  }),
+  cb({
+    type: GATE_TYPE_TRIBUF,
+    label: fm("lb_tribuf"),
+    category: GATE_CATEGORY_ARITHMETIC,
+    inputs: 2,
+    outputs: 1,
+    width: 60,
+    height: 50,
+    symbol: "Z",
+    inputLabels: ["A", "EN"],
+    outputLabels: ["Y"],
+    evaluate: (i) => ({ outputs: [b(i[1]) && b(i[0])], state: null }),
+  }),
 ];
 
 // ── Registry class ────────────────────────────────────────────────────────────
@@ -667,12 +940,13 @@ export class ComponentLibrary {
    * neither input components (Toggle/Button/Const/Clock) nor output
    * components (LED/Display7).
    */
-  registerCustomGate(name: string, circuit: CircuitSnapshot): string | null {
+  registerCustomCircuit(name: string, circuit: CircuitSnapshot): string | null {
     const comps = Object.values(circuit.components);
 
     const inputComps = comps
       .filter((c) => {
         if (!this.has(c.type)) return false;
+
         const def = this.get(c.type);
 
         return def.isInput || def.isClock;

@@ -562,5 +562,15 @@
       "type": 0,
       "value": "Remove this custom circuit"
     }
-  ]
+  ],
+  "DPeP5H": [{ "type": 0, "value": "D Latch" }],
+  "n+hlL2": [{ "type": 0, "value": "Register 4" }],
+  "+ObDCx": [{ "type": 0, "value": "Counter 4" }],
+  "H63+mc": [{ "type": 0, "value": "Shift Reg 4" }],
+  "2uOC49": [{ "type": 0, "value": "Decoder 3:8" }],
+  "e7nK/h": [{ "type": 0, "value": "Mux 8:1" }],
+  "X/SJAt": [{ "type": 0, "value": "Half Sub" }],
+  "oNcdXR": [{ "type": 0, "value": "Full Sub" }],
+  "2I9fUV": [{ "type": 0, "value": "Comparator 4" }],
+  "/Hbmdf": [{ "type": 0, "value": "Tri-State" }]
 }

@@ -250,5 +250,35 @@
   },
   "xissZQ": {
     "defaultMessage": "Remove this custom circuit"
+  },
+  "DPeP5H": {
+    "defaultMessage": "D Latch"
+  },
+  "n+hlL2": {
+    "defaultMessage": "Register 4"
+  },
+  "+ObDCx": {
+    "defaultMessage": "Counter 4"
+  },
+  "H63+mc": {
+    "defaultMessage": "Shift Reg 4"
+  },
+  "2uOC49": {
+    "defaultMessage": "Decoder 3:8"
+  },
+  "e7nK/h": {
+    "defaultMessage": "Mux 8:1"
+  },
+  "X/SJAt": {
+    "defaultMessage": "Half Sub"
+  },
+  "oNcdXR": {
+    "defaultMessage": "Full Sub"
+  },
+  "2I9fUV": {
+    "defaultMessage": "Comparator 4"
+  },
+  "/Hbmdf": {
+    "defaultMessage": "Tri-State"
   }
 }

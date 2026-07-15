@@ -177,7 +177,7 @@ function DigitalGateApp() {
       let anyRegistered = false;
 
       for (const { name, circuit } of saved) {
-        if (library.registerCustomGate(name, circuit)) anyRegistered = true;
+        if (library.registerCustomCircuit(name, circuit)) anyRegistered = true;
       }
 
       if (anyRegistered) setCustomBump((v) => v + 1);
@@ -466,7 +466,7 @@ function DigitalGateApp() {
 
     if (!name) return;
 
-    const type = library.registerCustomGate(name.trim(), snapshot);
+    const type = library.registerCustomCircuit(name.trim(), snapshot);
 
     if (!type) {
       addLog(
@@ -510,7 +510,7 @@ function DigitalGateApp() {
           // eslint-disable-next-line no-alert
           const name = window.prompt("Circuit name", suggested) || suggested;
 
-          const type = library.registerCustomGate(name.trim(), data);
+          const type = library.registerCustomCircuit(name.trim(), data);
 
           if (!type) {
             addLog(
