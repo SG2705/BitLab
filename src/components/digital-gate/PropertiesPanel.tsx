@@ -3,8 +3,7 @@ import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Copy, Settings2, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
 import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_CONST,

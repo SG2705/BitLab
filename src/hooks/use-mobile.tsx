@@ -26,5 +26,4 @@ function useIsMobile() {
   return Boolean(isMobile);
 }
 
-// eslint-disable-next-line import/prefer-default-export
-export { useIsMobile };
+export default useIsMobile;

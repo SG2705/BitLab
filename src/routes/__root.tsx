@@ -103,7 +103,12 @@ function RootComponent() {
   };
 
   return (
-    <IntlProvider locale={defaultLocale} messages={enMessages}>
+    <IntlProvider
+      locale={defaultLocale}
+      messages={Object.fromEntries(
+        Object.entries(enMessages).map(([k, v]) => [k, v.defaultMessage]),
+      )}
+    >
       <QueryClientProvider client={queryClient}>
         <Outlet />
       </QueryClientProvider>

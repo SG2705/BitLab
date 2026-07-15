@@ -19,7 +19,7 @@ import {
   Upload,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 

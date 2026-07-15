@@ -53,6 +53,9 @@
   "AcAA5x": {
     "defaultMessage": "Components"
   },
+  "BRqTi+": {
+    "defaultMessage": "Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
+  },
   "DRXWXB": {
     "defaultMessage": "404"
   },
@@ -121,6 +124,9 @@
   },
   "SbT8HW": {
     "defaultMessage": "BitLab"
+  },
+  "Sjo1P4": {
+    "defaultMessage": "Custom"
   },
   "UGU8kA": {
     "defaultMessage": "AND"
@@ -241,5 +247,8 @@
   },
   "wgnt2g": {
     "defaultMessage": "Palette"
+  },
+  "xissZQ": {
+    "defaultMessage": "Remove this custom circuit"
   }
 }

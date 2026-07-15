@@ -19,5 +19,4 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   },
 );
 
-// eslint-disable-next-line import/prefer-default-export
-export { Input };
+export default Input;

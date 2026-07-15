@@ -13,15 +13,15 @@ import {
   Upload,
 } from "lucide-react";
 
-import BitLabLogo from "@/components/ui/BitLabLogo";
-import { Input } from "@/components/ui/input";
+import { BitLabLogo, Input } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { useDigitalEngine } from "@/hooks/use-digitalengine";
+import { useDigitalEngine } from "@/hooks";
 import { pinPos } from "@/lib/circuit";
 import {
   BASE_LOG,
   CONSOLE_TAB,
+  CUSTOM_CIR_KEYS,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
   GATE_TYPE_CONST,
@@ -58,8 +58,6 @@ import WirePath from "./WirePath";
 const BUILT_IN_OPEN = Object.fromEntries(
   library.getCategories().map((c) => [c.name, true]),
 );
-
-const CUSTOM_CIR_KEYS = "bitlab_custom_gates";
 
 /**
  * DigitalGateApp

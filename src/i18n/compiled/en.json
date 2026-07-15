@@ -31,12 +31,6 @@
       "value": "Encoder 4:2"
     }
   ],
-  "0TVISU": [
-    {
-      "type": 0,
-      "value": "for the command palette"
-    }
-  ],
   "0s79PB": [
     {
       "type": 0,
@@ -59,6 +53,12 @@
       "value": " components"
     }
   ],
+  "1sqhhP": [
+    {
+      "type": 0,
+      "value": "for the command palette"
+    }
+  ],
   "224+9R": [
     {
       "type": 0,
@@ -79,6 +79,12 @@
     {
       "type": 0,
       "value": "Duplicate"
+    }
+  ],
+  "5M6TNP": [
+    {
+      "type": 0,
+      "value": "Press"
     }
   ],
   "73Dt+K": [
@@ -123,6 +129,28 @@
     {
       "type": 0,
       "value": "Components"
+    }
+  ],
+  "BRqTi+": [
+    {
+      "type": 0,
+      "value": "Build a circuit, add Toggle/Button inputs and LED outputs, then click "
+    },
+    {
+      "type": 1,
+      "value": "save"
+    },
+    {
+      "type": 0,
+      "value": " to save it as a reusable gate — or "
+    },
+    {
+      "type": 1,
+      "value": "upload"
+    },
+    {
+      "type": 0,
+      "value": " to import a .json file."
     }
   ],
   "DRXWXB": [
@@ -263,6 +291,12 @@
       "value": "BitLab"
     }
   ],
+  "Sjo1P4": [
+    {
+      "type": 0,
+      "value": "Custom"
+    }
+  ],
   "UGU8kA": [
     {
       "type": 0,
@@ -315,12 +349,6 @@
     {
       "type": 0,
       "value": "LOW (0)"
-    }
-  ],
-  "eA7dRH": [
-    {
-      "type": 0,
-      "value": "Palette"
     }
   ],
   "eVwJCE": [
@@ -493,6 +521,12 @@
       "value": "Pause"
     }
   ],
+  "tSOV46": [
+    {
+      "type": 0,
+      "value": "Digital Logic Simulator Canvas"
+    }
+  ],
   "uEqOPm": [
     {
       "type": 0,
@@ -505,12 +539,6 @@
       "value": "AND-3"
     }
   ],
-  "uizmax": [
-    {
-      "type": 0,
-      "value": "Press"
-    }
-  ],
   "vCWikx": [
     {
       "type": 0,
@@ -521,6 +549,18 @@
     {
       "type": 0,
       "value": "Inputs"
+    }
+  ],
+  "wgnt2g": [
+    {
+      "type": 0,
+      "value": "Palette"
+    }
+  ],
+  "xissZQ": [
+    {
+      "type": 0,
+      "value": "Remove this custom circuit"
     }
   ]
 }

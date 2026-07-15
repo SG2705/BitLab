@@ -356,3 +356,5 @@ export function useDigitalEngine(
     loadProjectFromLocal,
   };
 }
+
+export default useDigitalEngine;
