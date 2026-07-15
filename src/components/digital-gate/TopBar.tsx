@@ -179,7 +179,7 @@ function TopBar({
       />
       <TBBtn
         onClick={stepOnce}
-        isDisabled={!hasComponents}
+        isDisabled={!hasComponents || isRunning}
         icon={<StepForward className="h-4 w-4" />}
         label="Step"
       />

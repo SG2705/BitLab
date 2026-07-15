@@ -59,7 +59,7 @@ export interface CustomGateMeta {
   circuit: CircuitSnapshot;
 }
 
-const b = (v: unknown): boolean => !!v;
+const b = (v: unknown): boolean => Boolean(v);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -217,7 +217,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
+    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
   },
   {
     type: GATE_TYPE_BUTTON,
@@ -233,7 +233,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
+    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
   },
   {
     type: GATE_TYPE_CONST,
@@ -249,7 +249,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: true }),
-    evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
+    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
   },
   {
     type: GATE_TYPE_CLOCK,
@@ -265,7 +265,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: false,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
+    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
     tick(state) {
       const on = !(state?.on as boolean);
 
@@ -331,7 +331,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ q: false }),
     evaluate: (i, s) => {
-      let q = !!s?.q;
+      let q = Boolean(s?.q);
       const S = b(i[0]);
       const R = b(i[1]);
 
@@ -360,7 +360,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
-      let q = !!s?.q;
+      let q = Boolean(s?.q);
       const clk = b(i[1]);
 
       // Sample D on rising clock edge
@@ -387,7 +387,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
       const clk = b(i[2]);
-      let q = !!s?.q;
+      let q = Boolean(s?.q);
 
       if (clk && !s?.prevClk) {
         const J = b(i[0]);
@@ -420,7 +420,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ q: false, prevClk: false }),
     evaluate: (i, s) => {
-      let q = !!s?.q;
+      let q = Boolean(s?.q);
       const clk = b(i[1]);
 
       if (clk && !s?.prevClk && b(i[0])) {
@@ -540,7 +540,7 @@ const DEFINITIONS: ComponentDefinition[] = [
         }
       }
 
-      return { outputs: [!!(idx & 1), !!(idx & 2)], state: null };
+      return { outputs: [Boolean(idx & 1), Boolean(idx & 2)], state: null };
     },
   }),
   cb({
@@ -771,8 +771,17 @@ export class ComponentLibrary {
           compStates[id] = result.state;
         }
 
-        // Read state.on from evaluated output components
-        const outputs = outputIds.map((id) => !!compStates[id]?.on);
+        // Read a boolean signal from each output component's state.
+        // LED stores { on: boolean }; Display7 stores { value: number }.
+        const outputs = outputIds.map((id) => {
+          const st = compStates[id];
+
+          if (st == null) return false;
+          if ("on" in st) return Boolean(st.on);
+          if ("value" in st) return (st.value as number) !== 0;
+
+          return false;
+        });
 
         return { outputs, state: { compStates } };
       },

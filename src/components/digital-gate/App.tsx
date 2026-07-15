@@ -22,6 +22,7 @@ import {
   BASE_LOG,
   CONSOLE_TAB,
   CUSTOM_CIR_KEYS,
+  DEFAULT_CLOCK,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
   GATE_TYPE_CONST,
@@ -67,7 +68,7 @@ function DigitalGateApp() {
 
   // States
   const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
-  const [clockSpeed, setClockSpeed] = useState(8);
+  const [clockSpeed, setClockSpeed] = useState(DEFAULT_CLOCK);
   const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
 
   const addLog = initializeLogger(setLogs);

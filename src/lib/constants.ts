@@ -122,7 +122,7 @@ export const VERSION = 1;
 export const MAX_HISTORY = 100;
 export const CURR_CIR_KEY = "current-circuit-key";
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
-export const DEFAULT_CLOCK = 8;
+export const DEFAULT_CLOCK = 4;
 export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
 
 // App
