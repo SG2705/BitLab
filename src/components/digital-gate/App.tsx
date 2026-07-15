@@ -97,7 +97,7 @@ function DigitalGateApp() {
     saveProjectToLocal,
     loadProjectFromLocal,
   } = useDigitalEngine(clockSpeed);
-  const running = status === SIMULATION_STATUS.RUNNING;
+  const isRunning = status === SIMULATION_STATUS.RUNNING;
   const { tick } = stats;
 
   const [selection, setSelection] = useState<Set<string>>(new Set());
@@ -596,7 +596,7 @@ function DigitalGateApp() {
 
       e.preventDefault();
 
-      // if (e.key === " " && running) pause();
+      // if (e.key === " " && isRunning) pause();
       // if (e.key === " ") start();
       if (meta && e.key.toLowerCase() === "k") setCmdOpen((v) => !v);
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) undo();
@@ -614,7 +614,7 @@ function DigitalGateApp() {
 
     return () => window.removeEventListener("keydown", h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deleteSelected, running]);
+  }, [deleteSelected, isRunning]);
 
   // Always include the Custom category so the empty-state hint is always shown.
   const liveGateCategories = useMemo(() => {
@@ -667,8 +667,8 @@ function DigitalGateApp() {
 
       {/* Header */}
       <TopBar
-        running={running}
-        setRunning={(r: boolean) => (r ? start() : pause())}
+        isRunning={isRunning}
+        setisRunning={(r: boolean) => (r ? start() : pause())}
         stepOnce={step}
         resetSim={reset}
         tick={tick}
@@ -687,6 +687,7 @@ function DigitalGateApp() {
         openCmd={() => setCmdOpen(true)}
         createCircuitFromGates={createCircuitFromGates}
         importCircuit={() => fileInputRef.current?.click()}
+        hasComponents={Object.keys(snapshot.components).length > 0}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -876,7 +877,7 @@ function DigitalGateApp() {
                       p1={p1}
                       p2={p2}
                       live={live}
-                      running={running}
+                      isRunning={isRunning}
                       style={wireStyle}
                       isSelected={selWires.has(w.id)}
                       onClick={(e: React.MouseEvent) => {
@@ -907,7 +908,7 @@ function DigitalGateApp() {
                         p1={p1}
                         p2={{ x: pendingWire.mx, y: pendingWire.my }}
                         live={false}
-                        running={false}
+                        isRunning={false}
                         style={wireStyle}
                         isPreview
                       />
@@ -1026,7 +1027,7 @@ function DigitalGateApp() {
 
       {/* Footer */}
       <BottomBar
-        running={running}
+        isRunning={isRunning}
         tick={tick}
         compCount={Object.keys(snapshot.components).length}
         wireCount={Object.keys(snapshot.wires).length}

@@ -24,8 +24,8 @@ import { THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 
 interface TopBarProps {
-  running: boolean;
-  setRunning: (r: boolean) => void;
+  isRunning: boolean;
+  setisRunning: (r: boolean) => void;
   stepOnce: () => void;
   resetSim: () => void;
   tick: number;
@@ -44,6 +44,7 @@ interface TopBarProps {
   openCmd: () => void;
   importCircuit: () => void;
   createCircuitFromGates: () => void;
+  hasComponents: boolean;
 }
 
 interface TBBtnProps {
@@ -72,8 +73,8 @@ function TBBtn({ onClick, icon, label, isDisabled }: TBBtnProps) {
 }
 
 function TopBar({
-  running,
-  setRunning,
+  isRunning,
+  setisRunning,
   stepOnce,
   resetSim,
   tick,
@@ -92,6 +93,7 @@ function TopBar({
   openCmd,
   createCircuitFromGates,
   importCircuit,
+  hasComponents,
 }: TopBarProps) {
   const intl = useIntl();
 
@@ -132,12 +134,12 @@ function TopBar({
       <TBBtn
         onClick={createCircuitFromGates}
         icon={<Package className="h-4 w-4" />}
-        label="Save current circuit as reusable gate"
+        label="Save current circuit as reusable"
       />
       <TBBtn
         onClick={importCircuit}
         icon={<Upload className="h-4 w-4" />}
-        label="Import circuit file as gate"
+        label="Import circuit from file"
       />
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
@@ -155,42 +157,49 @@ function TopBar({
       <div className="w-px h-6 bg-border mx-1" />
       <Button
         size="sm"
-        variant={running ? "secondary" : "default"}
-        onClick={() => setRunning(!running)}
+        variant={isRunning ? "secondary" : "default"}
+        onClick={() => setisRunning(!isRunning)}
+        disabled={!hasComponents}
         className="h-8 gap-1.5"
       >
-        {running ? (
+        {isRunning ? (
           <Pause className="h-3.5 w-3.5" />
         ) : (
           <Play className="h-3.5 w-3.5" />
         )}
-        {running
+        {isRunning
           ? intl.formatMessage({ id: "tFFMkF", defaultMessage: "Pause" })
           : intl.formatMessage({ id: "KiXNvz", defaultMessage: "Run" })}
       </Button>
       <TBBtn
-        onClick={() => setRunning(false)}
+        onClick={() => setisRunning(false)}
+        isDisabled={!isRunning || !hasComponents}
         icon={<Square className="h-4 w-4" />}
         label="Stop"
       />
       <TBBtn
         onClick={stepOnce}
+        isDisabled={!hasComponents}
         icon={<StepForward className="h-4 w-4" />}
         label="Step"
       />
       <TBBtn
         onClick={resetSim}
+        isDisabled={!hasComponents}
         icon={<RotateCcw className="h-4 w-4" />}
         label="Reset"
       />
-      <div className="flex items-center gap-2 ml-3 pl-3 border-l border-border">
+      <div
+        className={`flex items-center gap-2 ml-3 pl-3 border-l border-border ${!hasComponents ? "opacity-40 pointer-events-none" : ""}`}
+      >
         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
         <input
           type="range"
           min={1}
-          max={30}
+          max={25}
           value={clockSpeed}
           onChange={(e) => setClockSpeed(Number(e.target.value))}
+          disabled={!hasComponents}
           className="w-24 accent-primary"
         />
         <span className="text-xs text-muted-foreground font-mono tabular-nums w-12">
@@ -201,9 +210,32 @@ function TopBar({
           />
         </span>
       </div>
-      <div className="text-xs text-muted-foreground font-mono ml-3">
-        <FormattedMessage id="vCWikx" defaultMessage="Tick " />
+      <div className="text-xs text-muted-foreground font-mono ml-3 flex items-center">
+        <FormattedMessage id="p7+Jxw" defaultMessage="Tick" />
+        &nbsp;
         <span className="text-foreground tabular-nums">{tick}</span>
+        &nbsp; &nbsp;
+        {isRunning ? (
+          <div
+            className="sqaurewavebox"
+            style={
+              {
+                "--wave-duration": `${(1 / clockSpeed).toFixed(3)}s`,
+              } as React.CSSProperties
+            }
+          >
+            {Array.from({ length: 4 }).map(() => {
+              return (
+                <>
+                  <div className="bottomwave" />
+                  <div className="verticalwave" />
+                  <div className="topwave" />
+                  <div className="verticalwave" />
+                </>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
       <div className="ml-auto flex items-center gap-1">
         <button

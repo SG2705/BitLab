@@ -109,6 +109,11 @@ export function useDigitalEngine(
         setStatus(manager.getSimulationStatus());
         setCanUndo(project.canUndo());
         setCanRedo(project.canRedo());
+      } else if (
+        event.type === ENGINE_EVENT_TYPE.STARTED ||
+        event.type === ENGINE_EVENT_TYPE.PAUSED
+      ) {
+        setStatus(manager.getSimulationStatus());
       }
     });
 

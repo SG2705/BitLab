@@ -33,7 +33,7 @@ function ExplorerPanel({
       </div>
       {Object.keys(groups).length === 0 && (
         <div className="text-xs text-muted-foreground py-4 text-center">
-          <FormattedMessage id="HCR858" defaultMessage="Empty circuit." />
+          <FormattedMessage id="Tv1nZc" defaultMessage="Empty circuit" />
         </div>
       )}
       {Object.entries(groups).map(([cat, list]) => (

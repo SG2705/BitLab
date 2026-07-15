@@ -12,7 +12,7 @@ interface WirePathProps {
   p1: Point;
   p2: Point;
   live: boolean;
-  running: boolean;
+  isRunning: boolean;
   style: WireType;
   isSelected?: boolean;
   isPreview?: boolean;
@@ -41,7 +41,7 @@ function WirePath({
   p1,
   p2,
   live,
-  running,
+  isRunning,
   style,
   isSelected,
   isPreview,
@@ -59,7 +59,7 @@ function WirePath({
         strokeWidth={isSelected ? 3 : 2}
         fill="none"
         strokeDasharray={isPreview ? "5 5" : undefined}
-        className={cn(live && running && "wire-flow", live && "signal-glow")}
+        className={cn(live && isRunning && "wire-flow", live && "signal-glow")}
         style={{ opacity: isPreview ? 0.7 : 1 }}
       />
     </g>

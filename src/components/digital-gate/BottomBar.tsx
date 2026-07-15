@@ -5,13 +5,13 @@ import { VERSION } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface BottomBarProps {
-  running: boolean;
+  isRunning: boolean;
   tick: number;
   compCount: number;
   wireCount: number;
 }
 
-function BottomBar({ running, tick, compCount, wireCount }: BottomBarProps) {
+function BottomBar({ isRunning, tick, compCount, wireCount }: BottomBarProps) {
   const intl = useIntl();
 
   return (
@@ -20,10 +20,10 @@ function BottomBar({ running, tick, compCount, wireCount }: BottomBarProps) {
         <span
           className={cn(
             "h-1.5 w-1.5 rounded-full",
-            running ? "bg-signal-on" : "bg-muted-foreground/40",
+            isRunning ? "bg-signal-on" : "bg-muted-foreground/40",
           )}
         />
-        {running
+        {isRunning
           ? intl.formatMessage({ id: "nDyaq/", defaultMessage: "Running" })
           : intl.formatMessage({ id: "sNY4nx", defaultMessage: "Idle" })}
       </span>

@@ -132,6 +132,7 @@
     stroke-dashoffset: -20;
   }
 }
+
 @utility wire-flow {
   stroke-dasharray: 6 6;
   animation: dash-flow 0.6s linear infinite;
@@ -144,6 +145,52 @@
   }
   50% {
     opacity: 0.55;
+  }
+}
+/* ── Square wave animations ───────────────────────────────────────────────── */
+.sqaurewavebox {
+  width: 6rem;
+  padding: 0.25rem 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.topwave,
+.bottomwave,
+.verticalwave {
+  background: var(--signal-on);
+  animation: square-wave var(--wave-duration, 1s) linear infinite;
+}
+
+.topwave,
+.bottomwave {
+  height: 1px;
+  width: 1rem;
+  min-height: 1px;
+  min-width: 1rem;
+}
+
+.verticalwave {
+  height: 1rem;
+  width: 1px;
+  min-height: 1rem;
+  min-width: 1px;
+}
+
+.topwave {
+  margin-bottom: auto;
+}
+
+.bottomwave {
+  margin-top: auto;
+}
+
+@keyframes square-wave {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-4rem - 4px));
   }
 }
 

@@ -264,22 +264,12 @@ const DEFINITIONS: ComponentDefinition[] = [
     isClock: true,
     isInput: false,
     isOutput: false,
-    initialState: () => ({ on: false, acc: 0, period: 500 }),
+    initialState: () => ({ on: false }),
     evaluate: (_i, s) => ({ outputs: [!!s?.on], state: s }),
-    tick(state, dt) {
-      const period = (state?.period as number) ?? 500;
-      const acc = ((state?.acc as number) ?? 0) + dt;
+    tick(state) {
+      const on = !(state?.on as boolean);
 
-      if (acc >= period) {
-        const on = !(state?.on as boolean);
-
-        return {
-          outputs: [on],
-          state: { ...(state ?? {}), on, acc: acc - period },
-        };
-      }
-
-      return { outputs: [!!state?.on], state: { ...(state ?? {}), acc } };
+      return { outputs: [on], state: { on } };
     },
   },
 
