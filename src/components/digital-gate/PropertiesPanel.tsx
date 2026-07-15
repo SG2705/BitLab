@@ -26,13 +26,15 @@ function PropertiesPanel({
   onDuplicate,
 }: PropertiesPanelProps) {
   const intl = useIntl();
-  const gate = library.get(comp.type);
-
   const [labelValue, setLabelValue] = useState(comp.label ?? "");
 
   useEffect(() => {
     setLabelValue(comp.label ?? "");
   }, [comp.id, comp.label]);
+
+  if (!library.has(comp.type)) return null;
+
+  const gate = library.get(comp.type);
 
   return (
     <div className="p-3 border-b border-border">

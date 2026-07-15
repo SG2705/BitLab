@@ -22,9 +22,9 @@ function Minimap({ snapshot, view, size }: MinimapProps) {
   let maxY = 300;
 
   for (const c of comps) {
-    const d = library.get(c.type);
+    if (!library.has(c.type)) continue;
 
-    if (!d) continue;
+    const d = library.get(c.type);
 
     minX = Math.min(minX, c.x);
     minY = Math.min(minY, c.y);
@@ -50,9 +50,9 @@ function Minimap({ snapshot, view, size }: MinimapProps) {
     <div className="absolute bottom-3 right-3 glass-panel rounded-md p-1 shadow-lg pointer-events-none">
       <svg width={W} height={H}>
         {comps.map((c) => {
-          const d = library.get(c.type);
+          if (!library.has(c.type)) return null;
 
-          if (!d) return null;
+          const d = library.get(c.type);
 
           return (
             <rect

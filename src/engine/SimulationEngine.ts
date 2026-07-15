@@ -105,6 +105,9 @@ export class SimulationEngine {
 
     for (const id of Object.keys(this.components)) {
       const comp = this.components[id];
+
+      if (!defs.has(comp.type)) continue;
+
       const def = defs.get(comp.type);
       const initialState = def.initialState();
       const initialOutputs = def.evaluate(
@@ -197,6 +200,9 @@ export class SimulationEngine {
 
     for (const id of Object.keys(this.components)) {
       const comp = this.components[id];
+
+      if (!this.library.has(comp.type)) continue;
+
       const def = this.library.get(comp.type);
 
       if (!def.isClock || !def.tick) continue;

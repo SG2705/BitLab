@@ -73,6 +73,7 @@ export class SignalPropagator {
       const comp = components[compId];
 
       if (!comp) continue;
+      if (!this.library.has(comp.type)) continue;
 
       const def = this.library.get(comp.type);
       // Oscillation guard
@@ -163,6 +164,8 @@ export class SignalPropagator {
       const comp = components[compId];
 
       if (!comp) continue;
+
+      if (!this.library.has(comp.type)) continue;
 
       const def = this.library.get(comp.type);
 

@@ -160,6 +160,9 @@ function GateNode({
   onPinUp,
 }: GateNodeProps) {
   const intl = useIntl();
+
+  if (!library.has(comp.type)) return null;
+
   const def = library.get(comp.type);
 
   const active = comp.outputs.some(Boolean) || Boolean(comp.state?.on);
@@ -174,8 +177,6 @@ function GateNode({
   // custom circuits — show it prominently inside the gate body when set.
   const isCustomLabel =
     (def.isInput || def.isClock || def.isOutput) && Boolean(comp.label);
-
-  if (!def) return null;
 
   if (def.isAnnotation) {
     return (

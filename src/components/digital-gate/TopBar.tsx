@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { Fragment, memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import {
   Clock,
@@ -220,20 +220,19 @@ function TopBar({
             className="sqaurewavebox"
             style={
               {
-                "--wave-duration": `${(1 / clockSpeed).toFixed(3)}s`,
+                "--wave-duration": `${(2 / clockSpeed).toFixed(3)}s`,
               } as React.CSSProperties
             }
           >
-            {Array.from({ length: 4 }).map(() => {
-              return (
-                <>
-                  <div className="bottomwave" />
-                  <div className="verticalwave" />
-                  <div className="topwave" />
-                  <div className="verticalwave" />
-                </>
-              );
-            })}
+            {Array.from({ length: 4 }).map((_, i) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <Fragment key={i}>
+                <div className="bottomwave" />
+                <div className="verticalwave" />
+                <div className="topwave" />
+                <div className="verticalwave" />
+              </Fragment>
+            ))}
           </div>
         ) : null}
       </div>

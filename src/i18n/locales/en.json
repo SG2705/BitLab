@@ -29,9 +29,6 @@
   "1iDGfg": {
     "defaultMessage": "{count} components"
   },
-  "224+9R": {
-    "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
-  },
   "2I9fUV": {
     "defaultMessage": "Comparator 4"
   },
@@ -224,6 +221,9 @@
   "m0Naku": {
     "defaultMessage": "Half Adder"
   },
+  "m9VoMp": {
+    "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
+  },
   "n+hlL2": {
     "defaultMessage": "Register 4"
   },
@@ -290,11 +290,14 @@
   "wgnt2g": {
     "defaultMessage": "Palette"
   },
+  "xXqJUI": {
+    "defaultMessage": "Probe"
+  },
   "xissZQ": {
     "defaultMessage": "Remove this custom circuit"
   },
-  "xXqJUI": {
-    "defaultMessage": "Probe"
+  "xqZM36": {
+    "defaultMessage": "— no signal —"
   },
   "xu5aZu": {
     "defaultMessage": "Splitter"

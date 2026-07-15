@@ -174,6 +174,7 @@ export class CircuitManager {
     const comp = this.components[id];
 
     if (!comp) return;
+    if (!this.library.has(comp.type)) return;
 
     const def = this.library.get(comp.type);
     const newState = { ...(comp.state ?? {}), ...stateUpdate };
@@ -329,11 +330,13 @@ export class CircuitManager {
 
     // Restore components
     for (const [id, comp] of Object.entries(snapshot.components)) {
+      const inputCount = this.library.has(comp.type)
+        ? this.library.get(comp.type).inputs
+        : (comp.inputs?.length ?? 0);
+
       this.components[id] = {
         ...comp,
-        inputs:
-          comp.inputs ??
-          new Array(this.library.get(comp.type).inputs).fill(false),
+        inputs: comp.inputs ?? new Array(inputCount).fill(false),
       };
 
       this.graph.addNode(id);
@@ -365,7 +368,11 @@ export class CircuitManager {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   private buildInputs(compId: string): boolean[] {
-    const def = this.library.get(this.components[compId].type);
+    const { type } = this.components[compId];
+
+    if (!this.library.has(type)) return [];
+
+    const def = this.library.get(type);
     const inputs: boolean[] = new Array<boolean>(def.inputs).fill(false);
 
     for (let pin = 0; pin < def.inputs; pin += 1) {
