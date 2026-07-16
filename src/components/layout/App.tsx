@@ -13,7 +13,15 @@ import {
   Upload,
 } from "lucide-react";
 
-import { BitLabLogo, Input } from "@/components/ui";
+import {
+  BitLabLogo,
+  BusWirePath,
+  GateChip,
+  GateNode,
+  Input,
+  ToolBtn,
+  WirePath,
+} from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
 import { useDigitalEngine } from "@/hooks";
@@ -47,18 +55,13 @@ import {
 import { cn, fm, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
-import BusWirePath from "./BusWirePath";
 import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
 import ExplorerPanel from "./ExplorerPanel";
-import GateChip from "./GateChip";
-import GateNode from "./GateNode";
 import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
 import PropertiesPanel from "./PropertiesPanel";
-import ToolBtn from "./ToolBtn";
 import TopBar from "./TopBar";
-import WirePath from "./WirePath";
 
 const BUILT_IN_OPEN = Object.fromEntries(
   library.getCategories().map((c) => [c.name, true]),
