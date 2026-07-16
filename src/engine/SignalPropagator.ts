@@ -18,6 +18,8 @@
  *   • Feedback / oscillating loops are detected and halted after MAX_EVALS.
  */
 
+import { stateEqual } from "@/lib/utils";
+
 import { type ComponentLibrary } from "./ComponentLibrary";
 import { EventQueue } from "./EventQueue";
 import { type GraphManager } from "./GraphManager";
@@ -58,12 +60,36 @@ export class SignalPropagator {
     const evalCount = new Map<string, number>();
     const changed = new Set<string>();
 
-    // Snapshot outputs at the start of this pass so sequential gates read
-    // pre-clock-edge values regardless of the order they are evaluated.
-    // Combinational gates always read the live (updated) map.
-    const outputSnapshot = new Map<string, boolean[]>(
-      Object.entries(components).map(([id, c]) => [id, c.outputs.slice()]),
-    );
+    // Snapshot only outputs of components that feed sequential gates.
+    // This avoids O(all components) cloning when only a fraction of the
+    // circuit contains edge-triggered elements.
+    const outputSnapshot = new Map<string, boolean[]>();
+
+    for (const [id, c] of Object.entries(components)) {
+      if (!this.library.has(c.type)) continue;
+
+      const def = this.library.get(c.type);
+
+      // Snapshot components that are upstream of sequential/needsInputSnapshot
+      // gates. We identify these by checking if any downstream node is
+      // sequential. Also snapshot sequential gates themselves (they read their
+      // own prior state via chained flip-flop semantics).
+      if (def.isSequential || def.needsInputSnapshot) {
+        // Snapshot all upstream sources of this sequential gate
+        for (const upId of this.graph.getUpstream(id)) {
+          if (!outputSnapshot.has(upId)) {
+            const up = components[upId];
+
+            if (up) outputSnapshot.set(upId, up.outputs.slice());
+          }
+        }
+
+        // Also snapshot the sequential gate itself (for chained FF reads)
+        if (!outputSnapshot.has(id)) {
+          outputSnapshot.set(id, c.outputs.slice());
+        }
+      }
+    }
 
     // Seed: queue direct downstream of each seed component
     for (const seedId of seeds) {
@@ -146,8 +172,7 @@ export class SignalPropagator {
 
       // Detect state change (for output components like LED)
       const stateChanged =
-        result.state !== comp.state &&
-        JSON.stringify(result.state) !== JSON.stringify(comp.state);
+        result.state !== comp.state && !stateEqual(result.state, comp.state);
 
       if (outputChanged || stateChanged) {
         // Mutate in place — callers hold a reference to the same object
@@ -224,8 +249,7 @@ export class SignalPropagator {
         }
       }
 
-      const stateChanged =
-        JSON.stringify(result.state) !== JSON.stringify(comp.state);
+      const stateChanged = !stateEqual(result.state, comp.state);
 
       if (outputChanged || stateChanged) {
         components[compId] = {

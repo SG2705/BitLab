@@ -180,7 +180,6 @@ export class SimulationEngine {
     }
 
     if (ticked) {
-      this.emit({ type: ENGINE_EVENT_TYPE.TICK, payload: this.tick });
       this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
     }
 

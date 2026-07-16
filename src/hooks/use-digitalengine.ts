@@ -100,10 +100,7 @@ export function useDigitalEngine(
 
   useEffect(() => {
     const unsub = manager.on((event) => {
-      if (
-        event.type === ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED ||
-        event.type === ENGINE_EVENT_TYPE.TICK
-      ) {
+      if (event.type === ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED) {
         setSnapshot(manager.getSnapshot());
         setStats(manager.getSimulationStats());
         setStatus(manager.getSimulationStatus());
