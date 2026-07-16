@@ -22,6 +22,7 @@ import {
   GATE_TYPE_BUFFER,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
+  GATE_TYPE_BUS16,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CLOCK,
   GATE_TYPE_CMP4,
@@ -29,6 +30,9 @@ import {
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
   GATE_TYPE_COUNTER4,
+  GATE_TYPE_DEBUS4,
+  GATE_TYPE_DEBUS8,
+  GATE_TYPE_DEBUS16,
   GATE_TYPE_DECODER2,
   GATE_TYPE_DECODER3,
   GATE_TYPE_DEMUX2,
@@ -62,6 +66,7 @@ import {
   GATE_TYPE_UREG8,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
+  KEY_SEPARATOR,
 } from "@/lib/constants";
 import { fm } from "@/lib/utils";
 
@@ -993,6 +998,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     outputs: 4,
     width: 70,
     height: 80,
+    symbol: "⇒4",
+    isBusOutput: true,
     inputLabels: ["B0", "B1", "B2", "B3"],
     outputLabels: ["B0", "B1", "B2", "B3"],
     evaluate: (inputs) => ({
@@ -1008,8 +1015,146 @@ const DEFINITIONS: ComponentDefinition[] = [
     outputs: 8,
     width: 70,
     height: 110,
+    symbol: "⇒8",
+    isBusOutput: true,
     inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
     outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_BUS16,
+    label: fm("lb_bus16"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 16,
+    outputs: 16,
+    width: 70,
+    height: 200,
+    symbol: "⇒16",
+    isBusOutput: true,
+    inputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    outputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_DEBUS4,
+    label: fm("lb_debus4"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 4,
+    outputs: 4,
+    width: 70,
+    height: 80,
+    symbol: "⇐4",
+    isBusInput: true,
+    inputLabels: ["B0", "B1", "B2", "B3"],
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_DEBUS8,
+    label: fm("lb_debus8"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 8,
+    outputs: 8,
+    width: 70,
+    height: 110,
+    symbol: "⇐8",
+    isBusInput: true,
+    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_DEBUS16,
+    label: fm("lb_debus16"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 16,
+    outputs: 16,
+    width: 70,
+    height: 200,
+    symbol: "⇐16",
+    isBusInput: true,
+    inputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    outputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
     evaluate: (inputs) => ({
       outputs: inputs.slice(),
       state: null,
@@ -1314,7 +1459,7 @@ export class ComponentLibrary {
       if (wire.from.pin < 0 || wire.from.pin >= from.def.outputs) continue;
       if (wire.to.pin < 0 || wire.to.pin >= to.def.inputs) continue;
 
-      inputWires.set(`${wire.to.comp}:${wire.to.pin}`, {
+      inputWires.set(`${wire.to.comp}${KEY_SEPARATOR}${wire.to.pin}`, {
         fromComp: wire.from.comp,
         fromPin: wire.from.pin,
       });
@@ -1334,7 +1479,7 @@ export class ComponentLibrary {
       if (def.isSequential) continue;
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
-        const wire = inputWires.get(`${component.id}:${pin}`);
+        const wire = inputWires.get(`${component.id}${KEY_SEPARATOR}${pin}`);
 
         if (!wire || !executableIds.has(wire.fromComp)) continue;
 
@@ -1460,7 +1605,7 @@ export class ComponentLibrary {
         const sourceSignals = useSnapshot ? priorSignals : signals;
 
         for (let pin = 0; pin < target.def.inputs; pin += 1) {
-          const wire = inputWires.get(`${compId}:${pin}`);
+          const wire = inputWires.get(`${compId}${KEY_SEPARATOR}${pin}`);
 
           if (wire)
             inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? false;

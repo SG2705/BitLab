@@ -13,9 +13,9 @@
  * whenever the graph structure changes.
  */
 
-import type { ComponentId, Wire, WireId } from "./types";
+import { KEY_SEPARATOR } from "@/lib/constants";
 
-const KEY_SEPARATOR = ":";
+import type { ComponentId, Wire, WireId } from "./types";
 
 export class GraphManager {
   private downstream: Map<ComponentId, Set<ComponentId>> = new Map();

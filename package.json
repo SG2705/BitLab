@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "clean": "rm -rf dist node_modules/.cache",
     "i18n:extract": "formatjs extract 'src/**/*.{ts,tsx}' --out-file src/i18n/locales/en.json --id-interpolation-pattern '[sha512:contenthash:base64:6]'",
-    "i18n:compile": "formatjs compile src/i18n/locales/en.json --ast --out-file src/i18n/compiled/en.json"
+    "i18n:compile": "formatjs compile src/i18n/locales/en.json --ast --out-file src/i18n/compiled/en.json",
+    "test": "echo \"No tests configured\""
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -49,15 +50,12 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-formatjs": "^6.4.18",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jest": "^29.15.4",
-    "eslint-plugin-jest-dom": "^5.5.0",
     "eslint-plugin-jsdoc": "^50.8.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-simple-import-sort": "^13.0.0",
-    "eslint-plugin-testing-library": "^7.5.0",
     "globals": "^15.15.0",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",

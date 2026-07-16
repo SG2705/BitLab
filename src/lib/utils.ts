@@ -65,3 +65,25 @@ export const stateEqual = (
 
   return true;
 };
+
+/** Convert signals array to hex string (index 0 = LSB) */
+export const signalsToHex = (signals: boolean[]): string => {
+  let value = 0;
+
+  for (let i = 0; i < signals.length; i += 1) {
+    if (signals[i]) {
+      // eslint-disable-next-line no-bitwise
+      value |= 1 << i;
+    }
+  }
+
+  return `0x${value.toString(16).toUpperCase()}`;
+};
+
+/** Convert signals array to binary string (MSB first) */
+export const signalsToBinary = (signals: boolean[]): string =>
+  signals
+    .slice()
+    .reverse()
+    .map((s) => (s ? "1" : "0"))
+    .join("");

@@ -57,6 +57,10 @@ export const MESSAGES = defineMessages({
   lb_digit_bin: { id: "FJad6C", defaultMessage: "Digit→Bin" },
   lb_bus4: { id: "g8kf2o", defaultMessage: "Bus 4" },
   lb_bus8: { id: "MGhLtB", defaultMessage: "Bus 8" },
+  lb_bus16: { id: "TAplo/", defaultMessage: "Bus 16" },
+  lb_debus4: { id: "sK+e77", defaultMessage: "Debus 4" },
+  lb_debus8: { id: "DyaKi9", defaultMessage: "Debus 8" },
+  lb_debus16: { id: "o8W9TU", defaultMessage: "Debus 16" },
   lb_ureg4: { id: "XqpRRy", defaultMessage: "U-Reg 4" },
   lb_ureg8: { id: "sCV/Bb", defaultMessage: "U-Reg 8" },
 });
@@ -115,6 +119,10 @@ export const GATE_TYPE_COMMENT = "COMMENT";
 export const GATE_TYPE_DIGIT_BIN = "DIGIT_BIN";
 export const GATE_TYPE_BUS4 = "BUS4";
 export const GATE_TYPE_BUS8 = "BUS8";
+export const GATE_TYPE_BUS16 = "BUS16";
+export const GATE_TYPE_DEBUS4 = "DEBUS4";
+export const GATE_TYPE_DEBUS8 = "DEBUS8";
+export const GATE_TYPE_DEBUS16 = "DEBUS16";
 export const GATE_TYPE_UREG4 = "UREG4";
 export const GATE_TYPE_UREG8 = "UREG8";
 
@@ -157,6 +165,7 @@ export const PIN_KIND = {
 export const VERSION = 1;
 export const MAX_HISTORY = 100;
 export const SAVE_LOCAL_ON_ACTION = false;
+export const KEY_SEPARATOR = ":";
 export const CURR_CIR_KEY = "current-circuit-key";
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 4;
@@ -247,6 +256,10 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_DIGIT_BIN]: { en: "Digit→Bin", messageKey: "lb_digit_bin" },
   [GATE_TYPE_BUS4]: { en: "Bus 4", messageKey: "lb_bus4" },
   [GATE_TYPE_BUS8]: { en: "Bus 8", messageKey: "lb_bus8" },
+  [GATE_TYPE_BUS16]: { en: "Bus 16", messageKey: "lb_bus16" },
+  [GATE_TYPE_DEBUS4]: { en: "Debus 4", messageKey: "lb_debus4" },
+  [GATE_TYPE_DEBUS8]: { en: "Debus 8", messageKey: "lb_debus8" },
+  [GATE_TYPE_DEBUS16]: { en: "Debus 16", messageKey: "lb_debus16" },
   [GATE_TYPE_UREG4]: { en: "U-Reg 4", messageKey: "lb_ureg4" },
   [GATE_TYPE_UREG8]: { en: "U-Reg 8", messageKey: "lb_ureg8" },
 };

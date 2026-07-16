@@ -21,3 +21,18 @@ export interface LogEntry {
   kind: ConsoleTab;
   msg: string;
 }
+
+export interface BusWireGroup {
+  /** Unique ID: "bus:{fromComp}:{toComp}" */
+  id: string;
+  /** Source component ID */
+  fromComp: string;
+  /** Target component ID */
+  toComp: string;
+  /** Wire IDs in this group, ordered by pin index (0 = LSB) */
+  wireIds: string[];
+  /** Number of wires in the group */
+  width: number;
+  /** Per-wire signal values (index 0 = LSB) */
+  signals: boolean[];
+}

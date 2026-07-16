@@ -17,7 +17,7 @@ import { BitLabLogo, Input } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
 import { useDigitalEngine } from "@/hooks";
-import { pinPos } from "@/lib/circuit";
+import { busPortPos, computeBusWireGroups, pinPos } from "@/lib/circuit";
 import {
   BASE_LOG,
   CONSOLE_TAB,
@@ -47,6 +47,7 @@ import {
 import { cn, fm, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
+import BusWirePath from "./BusWirePath";
 import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
 import ExplorerPanel from "./ExplorerPanel";
@@ -124,6 +125,7 @@ function DigitalGateApp() {
     from: { comp: string; pin: number };
     mx: number;
     my: number;
+    isBus?: boolean;
   } | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const [panning, setPanning] = useState(false);
@@ -517,8 +519,12 @@ function DigitalGateApp() {
     e.preventDefault();
 
     const p = toWorld(e.clientX, e.clientY);
+    const isBus =
+      pin === -1 &&
+      library.has(comp.type) &&
+      library.get(comp.type).isBusOutput === true;
 
-    setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y });
+    setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y, isBus });
   };
 
   const finishWire = (
@@ -536,6 +542,65 @@ function DigitalGateApp() {
       return;
     }
 
+    // ── Bus wire variant ────────────────────────────────────────────────────
+    if (pendingWire.isBus) {
+      // Bus wire must connect to a bus input port
+      if (!library.has(comp.type)) {
+        setPendingWire(null);
+
+        return;
+      }
+
+      const targetDef = library.get(comp.type);
+
+      if (!targetDef.isBusInput) {
+        addLog(
+          CONSOLE_TAB.WARN,
+          "Bus wire can only connect to a bus input port",
+        );
+        setPendingWire(null);
+
+        return;
+      }
+
+      // Get source component def for output count
+      const srcComp = snapshot.components[pendingWire.from.comp];
+
+      if (!srcComp || !library.has(srcComp.type)) {
+        setPendingWire(null);
+
+        return;
+      }
+
+      let created = 0;
+      const sourceDef = library.get(srcComp.type);
+      const wireCount = Math.min(sourceDef.outputs, targetDef.inputs);
+
+      for (let i = 0; i < wireCount; i += 1) {
+        const wire = addWire(pendingWire.from.comp, i, comp.id, i);
+
+        if (wire) created += 1;
+      }
+
+      if (created > 0) addLog("log", `Bus connected: ${created} wires created`);
+      if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+
+      setPendingWire(null);
+
+      return;
+    }
+
+    // ── Non-bus wire attempting to connect to bus input port ─────────────────
+    if (pin === -1) {
+      if (library.has(comp.type) && library.get(comp.type).isBusInput)
+        addLog(CONSOLE_TAB.WARN, "Use a bus wire to connect to this port");
+
+      setPendingWire(null);
+
+      return;
+    }
+
+    // ── Regular wire ────────────────────────────────────────────────────────
     const wire = addWire(
       pendingWire.from.comp,
       pendingWire.from.pin,
@@ -810,6 +875,21 @@ function DigitalGateApp() {
       .filter((c) => c.gates.length);
   }, [search, liveGateCategories]);
 
+  const busWireGroups = useMemo(
+    () => computeBusWireGroups(snapshot),
+    [snapshot],
+  );
+
+  const busWireIdSet = useMemo(() => {
+    const s = new Set<string>();
+
+    for (const group of busWireGroups) {
+      for (const id of group.wireIds) s.add(id);
+    }
+
+    return s;
+  }, [busWireGroups]);
+
   const selectedComp = useMemo(
     () =>
       selection.size === 1
@@ -1030,6 +1110,7 @@ function DigitalGateApp() {
                   const b = snapshot.components[w.to.comp];
 
                   if (!a || !b) return null;
+                  if (busWireIdSet.has(w.id)) return null;
 
                   const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                   const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
@@ -1059,11 +1140,71 @@ function DigitalGateApp() {
                     />
                   );
                 })}
+                {/* Bus wire groups */}
+                {busWireGroups.map((group) => {
+                  const sourceComp = snapshot.components[group.fromComp];
+                  const targetComp = snapshot.components[group.toComp];
+
+                  if (!sourceComp || !targetComp) return null;
+
+                  const p1 = busPortPos(sourceComp, PIN_KIND.OUT);
+                  const p2 = busPortPos(targetComp, PIN_KIND.IN);
+                  const groupSelected = group.wireIds.some((id) =>
+                    selWires.has(id),
+                  );
+
+                  return (
+                    <BusWirePath
+                      key={group.id}
+                      p1={p1}
+                      p2={p2}
+                      width={group.width}
+                      signals={group.signals}
+                      style={wireStyle}
+                      isSelected={groupSelected}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+
+                        setSelWires((s) => {
+                          const n = new Set(s);
+
+                          for (const id of group.wireIds) n.add(id);
+
+                          return n;
+                        });
+                      }}
+                    />
+                  );
+                })}
                 {pendingWire &&
                   (() => {
                     const src = snapshot.components[pendingWire.from.comp];
 
                     if (!src) return null;
+
+                    if (pendingWire.isBus) {
+                      const p1 = busPortPos(src, PIN_KIND.OUT);
+                      const def = library.has(src.type)
+                        ? library.get(src.type)
+                        : null;
+                      const width = def ? def.outputs : 4;
+                      const previewSignals: boolean[] = [];
+
+                      for (let idx = 0; idx < width; idx += 1)
+                        previewSignals.push(false);
+
+                      return (
+                        <BusWirePath
+                          p1={p1}
+                          p2={{ x: pendingWire.mx, y: pendingWire.my }}
+                          width={width}
+                          signals={previewSignals}
+                          style={wireStyle}
+                          isSelected={false}
+                          isPreview
+                        />
+                      );
+                    }
 
                     const p1 = pinPos(src, PIN_KIND.OUT, pendingWire.from.pin);
 

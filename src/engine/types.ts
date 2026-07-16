@@ -85,6 +85,10 @@ export interface ComponentDefinition {
   isOutput: boolean;
   /** True → purely a canvas annotation; no pins, no simulation role */
   isAnnotation?: boolean;
+  /** True → all output pins collapse to a single bus port in the UI */
+  isBusOutput?: boolean;
+  /** True → all input pins collapse to a single bus input port in the UI */
+  isBusInput?: boolean;
   initialState: () => Record<string, unknown> | null;
   /**
    * Pure combinational / sequential evaluation.

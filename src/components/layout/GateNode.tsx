@@ -415,95 +415,144 @@ function GateNode({
           {(comp.state?.digit as number) ?? 0}
         </text>
       )}
-      {Array.from({ length: def.inputs }).map((_, i) => {
-        const y = (def.height / (def.inputs + 1)) * (i + 1);
-        const pinLabel = def.inputLabels?.[i];
+      {def.isBusInput ? (
+        <g key="gate-node-bus-in">
+          <rect
+            x={-8 - 6}
+            y={def.height / 2 - 6}
+            width={12}
+            height={12}
+            rx={2}
+            ry={2}
+            fill="var(--color-background)"
+            stroke={
+              comp.inputs.some(Boolean)
+                ? "var(--color-primary)"
+                : "var(--color-border)"
+            }
+            strokeWidth={1.5}
+            onMouseUp={(e) => onPinUp(e, -1, PIN_KIND.IN)}
+            style={{ cursor: "crosshair" }}
+            className="hover:stroke-primary"
+          />
+        </g>
+      ) : (
+        Array.from({ length: def.inputs }).map((_, i) => {
+          const y = (def.height / (def.inputs + 1)) * (i + 1);
+          const pinLabel = def.inputLabels?.[i];
 
-        return (
-          // eslint-disable-next-line react/no-array-index-key
-          <g key={`gate-node-in-${i}`}>
-            <line
-              x1={-8}
-              y1={y}
-              x2={0}
-              y2={y}
-              stroke="var(--color-wire)"
-              strokeWidth={1.5}
-            />
-            <circle
-              cx={-8}
-              cy={y}
-              r={5}
-              fill="var(--color-background)"
-              stroke="var(--color-wire)"
-              strokeWidth={1.5}
-              onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
-              onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
-              style={{ cursor: "crosshair" }}
-              className="hover:stroke-primary"
-            />
-            {pinLabel && (
-              <text
-                x={4}
-                y={y}
-                textAnchor="start"
-                dominantBaseline="middle"
-                fill="var(--color-muted-foreground)"
-                fontSize={7}
-                fontFamily="var(--font-mono)"
-                pointerEvents="none"
-              >
-                {pinLabel}
-              </text>
+          return (
+            // eslint-disable-next-line react/no-array-index-key
+            <g key={`gate-node-in-${i}`}>
+              <line
+                x1={-8}
+                y1={y}
+                x2={0}
+                y2={y}
+                stroke="var(--color-wire)"
+                strokeWidth={1.5}
+              />
+              <circle
+                cx={-8}
+                cy={y}
+                r={5}
+                fill="var(--color-background)"
+                stroke="var(--color-wire)"
+                strokeWidth={1.5}
+                onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
+                onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
+                style={{ cursor: "crosshair" }}
+                className="hover:stroke-primary"
+              />
+              {pinLabel && (
+                <text
+                  x={4}
+                  y={y}
+                  textAnchor="start"
+                  dominantBaseline="middle"
+                  fill="var(--color-muted-foreground)"
+                  fontSize={7}
+                  fontFamily="var(--font-mono)"
+                  pointerEvents="none"
+                >
+                  {pinLabel}
+                </text>
+              )}
+            </g>
+          );
+        })
+      )}
+      {def.isBusOutput ? (
+        <g key="gate-node-bus-out">
+          <rect
+            x={def.width + 8 - 6}
+            y={def.height / 2 - 6}
+            width={12}
+            height={12}
+            rx={2}
+            ry={2}
+            fill="var(--color-background)"
+            stroke={
+              comp.outputs.some(Boolean)
+                ? "var(--color-primary)"
+                : "var(--color-border)"
+            }
+            strokeWidth={1.5}
+            onMouseDown={(e) => onPinDown(e, -1, PIN_KIND.OUT)}
+            style={{ cursor: "crosshair" }}
+            className={cn(
+              "hover:stroke-primary",
+              comp.outputs.some(Boolean) && "signal-glow",
             )}
-          </g>
-        );
-      })}
-      {Array.from({ length: def.outputs }).map((_, i) => {
-        const y = (def.height / (def.outputs + 1)) * (i + 1);
-        const on = Boolean(comp.outputs[i]);
-        const pinLabel = def.outputLabels?.[i];
+          />
+        </g>
+      ) : (
+        Array.from({ length: def.outputs }).map((_, i) => {
+          const y = (def.height / (def.outputs + 1)) * (i + 1);
+          const on = Boolean(comp.outputs[i]);
+          const pinLabel = def.outputLabels?.[i];
 
-        return (
-          // eslint-disable-next-line react/no-array-index-key
-          <g key={`gate-node-out-${i}`}>
-            <line
-              x1={def.width}
-              y1={y}
-              x2={def.width + 8}
-              y2={y}
-              stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
-              strokeWidth={1.5}
-            />
-            <circle
-              cx={def.width + 8}
-              cy={y}
-              r={5}
-              fill={on ? "var(--color-signal-on)" : "var(--color-background)"}
-              stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
-              strokeWidth={1.5}
-              onMouseDown={(e) => onPinDown(e, i, PIN_KIND.OUT)}
-              onMouseUp={(e) => onPinUp(e, i, PIN_KIND.OUT)}
-              style={{ cursor: "crosshair" }}
-              className={cn("hover:stroke-primary", on && "signal-glow")}
-            />
-            {pinLabel && (
-              <text
-                x={def.width - 4}
-                y={y}
-                textAnchor="end"
-                dominantBaseline="middle"
-                fill="var(--color-muted-foreground)"
-                fontSize={7}
-                fontFamily="var(--font-mono)"
-                pointerEvents="none"
-              >
-                {pinLabel}
-              </text>
-            )}
-          </g>
-        );
-      })}
+          return (
+            // eslint-disable-next-line react/no-array-index-key
+            <g key={`gate-node-out-${i}`}>
+              <line
+                x1={def.width}
+                y1={y}
+                x2={def.width + 8}
+                y2={y}
+                stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
+                strokeWidth={1.5}
+              />
+              <circle
+                cx={def.width + 8}
+                cy={y}
+                r={5}
+                fill={on ? "var(--color-signal-on)" : "var(--color-background)"}
+                stroke={on ? "var(--color-signal-on)" : "var(--color-wire)"}
+                strokeWidth={1.5}
+                onMouseDown={(e) => onPinDown(e, i, PIN_KIND.OUT)}
+                onMouseUp={(e) => onPinUp(e, i, PIN_KIND.OUT)}
+                style={{ cursor: "crosshair" }}
+                className={cn("hover:stroke-primary", on && "signal-glow")}
+              />
+              {pinLabel && (
+                <text
+                  x={def.width - 4}
+                  y={y}
+                  textAnchor="end"
+                  dominantBaseline="middle"
+                  fill="var(--color-muted-foreground)"
+                  fontSize={7}
+                  fontFamily="var(--font-mono)"
+                  pointerEvents="none"
+                >
+                  {pinLabel}
+                </text>
+              )}
+            </g>
+          );
+        })
+      )}
     </g>
   );
 }
