@@ -219,12 +219,12 @@ function BusWirePath({
 
           {/* 0x hex value (center) */}
           <text
-            x={22}
+            x={8}
             y={32}
             fontSize={11}
             fontFamily="monospace"
             fill="var(--color-text, #ccc)"
-            textAnchor="middle"
+            textAnchor="start"
           >
             {hexValue}
           </text>
