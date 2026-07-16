@@ -233,6 +233,25 @@ export class SimulationEngine {
         this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
       }
     }
+
+    // Sample probes and other samplesEveryTick components regardless of
+    // signal changes so they record a continuous waveform.
+    for (const id of Object.keys(this.components)) {
+      const comp = this.components[id];
+
+      if (!this.library.has(comp.type)) continue;
+
+      const def = this.library.get(comp.type);
+
+      if (!def.samplesEveryTick) continue;
+
+      const result = def.evaluate(comp.inputs, comp.state, { tick: this.tick });
+
+      this.components[id] = {
+        ...comp,
+        state: result.state ?? comp.state,
+      };
+    }
   }
 
   // ── Triggered propagation (for user inputs) ────────────────────────────────

@@ -85,6 +85,8 @@ export interface ComponentDefinition {
   isOutput: boolean;
   /** True → purely a canvas annotation; no pins, no simulation role */
   isAnnotation?: boolean;
+  /** True → evaluate is called every tick to record samples (e.g. Probe) */
+  samplesEveryTick?: boolean;
   /** True → all output pins collapse to a single bus port in the UI */
   isBusOutput?: boolean;
   /** True → all input pins collapse to a single bus input port in the UI */

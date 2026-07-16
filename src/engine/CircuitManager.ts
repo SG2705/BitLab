@@ -243,14 +243,22 @@ export class CircuitManager {
       // Re-evaluate the target with updated inputs so outputs reflect the change
       if (this.library.has(target.type)) {
         const def = this.library.get(target.type);
-        const result = def.evaluate(inputs, target.state);
 
-        this.components[wire.to.comp] = {
-          ...target,
-          inputs,
-          outputs: result.outputs,
-          state: result.state ?? target.state,
-        };
+        // Only re-evaluate components that have outputs to propagate.
+        // Output-only sinks (like Probe) are handled by triggerPropagation
+        // which passes the correct tick context.
+        if (def.outputs > 0) {
+          const result = def.evaluate(inputs, target.state);
+
+          this.components[wire.to.comp] = {
+            ...target,
+            inputs,
+            outputs: result.outputs,
+            state: result.state ?? target.state,
+          };
+        } else {
+          this.components[wire.to.comp] = { ...target, inputs };
+        }
       } else {
         this.components[wire.to.comp] = { ...target, inputs };
       }

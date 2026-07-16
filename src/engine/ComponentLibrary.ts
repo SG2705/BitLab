@@ -431,6 +431,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     // A probe records the signal that has settled in the current pass. It is
     // stateful history, not edge-triggered storage.
     isSequential: false,
+    samplesEveryTick: true,
     isClock: false,
     isInput: false,
     isOutput: false,
