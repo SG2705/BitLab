@@ -52,7 +52,7 @@ import {
   GATE_TYPE_UREG8,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
-} from "@/lib/constants";
+} from "@/engine/constants";
 
 /**
  * Digital gate & symbol icons — 24x24, currentColor stroke, no fill by default.

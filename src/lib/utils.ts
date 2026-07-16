@@ -3,12 +3,8 @@ import { createIntl, createIntlCache, type IntlShape } from "react-intl";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import {
-  GRID,
-  MESSAGES,
-  type Messages,
-  PIN_COUNT_HEIGHT,
-} from "@/lib/constants";
+import { PIN_COUNT_HEIGHT } from "@/engine";
+import { GRID, MESSAGES, type Messages } from "@/lib/constants";
 import { type ConsoleTab, type LogEntry } from "@/lib/types";
 
 export const cn = (...inputs: ClassValue[]) => {

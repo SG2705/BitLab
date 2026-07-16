@@ -8,9 +8,9 @@ import { type ComponentInstance, library } from "@/engine";
 import {
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
-  GATE_TYPE_LABELS,
   GATE_TYPE_TOGGLE,
-} from "@/lib/constants";
+} from "@/engine/constants";
+import { GATE_TYPE_LABELS } from "@/lib/constants";
 import { cn, fm } from "@/lib/utils";
 
 interface PropertiesPanelProps {

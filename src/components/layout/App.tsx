@@ -24,6 +24,14 @@ import {
 } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
+import {
+  GATE_CATEGORY_CUSTOM,
+  GATE_TYPE_BUTTON,
+  GATE_TYPE_CONST,
+  GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_TOGGLE,
+  SIMULATION_STATUS,
+} from "@/engine/constants";
 import { useDigitalEngine } from "@/hooks";
 import { busPortPos, computeBusWireGroups, pinPos } from "@/lib/circuit";
 import {
@@ -31,15 +39,9 @@ import {
   CONSOLE_TAB,
   CUSTOM_CIR_KEYS,
   DEFAULT_CLOCK,
-  GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
-  GATE_TYPE_BUTTON,
-  GATE_TYPE_CONST,
-  GATE_TYPE_DIGIT_BIN,
-  GATE_TYPE_TOGGLE,
   PIN_KIND,
   SAVE_LOCAL_ON_ACTION,
-  SIMULATION_STATUS,
   THEME,
   TOOL,
   WIRE_TYPE,

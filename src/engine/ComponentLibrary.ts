@@ -8,6 +8,8 @@
  */
 import { v4 as uuidv4 } from "uuid";
 
+import { fm, getHeightForPinCount } from "@/lib/utils";
+
 import {
   DEFAULT_PROBE_SAMPLES,
   GATE_CATEGORY_ARITHMETIC,
@@ -78,9 +80,7 @@ import {
   PINC9,
   PINC11,
   PINC16,
-} from "@/lib/constants";
-import { fm, getHeightForPinCount } from "@/lib/utils";
-
+} from "./constants";
 import type {
   CircuitSnapshot,
   ComponentDefinition,

@@ -1,10 +1,7 @@
 // Core types for the BitLab simulation engine.
 // No UI or framework dependencies.
 
-import {
-  type ENGINE_EVENT_TYPE,
-  type SIMULATION_STATUS,
-} from "@/lib/constants";
+import { type ENGINE_EVENT_TYPE, type SIMULATION_STATUS } from "./constants";
 
 export type SignalValue = boolean;
 export type ComponentId = string;

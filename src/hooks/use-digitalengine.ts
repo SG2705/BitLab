@@ -19,12 +19,8 @@ import type {
   Wire,
 } from "@/engine";
 import { createEngine } from "@/engine";
-import {
-  DEFAULT_CLOCK,
-  EMPTY_SNAPSHOT,
-  ENGINE_EVENT_TYPE,
-  SIMULATION_STATUS,
-} from "@/lib/constants";
+import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/engine/constants";
+import { DEFAULT_CLOCK, EMPTY_SNAPSHOT } from "@/lib/constants";
 
 export interface DigitalEngineControls {
   // ── Read-only state ──────────────────────────────────────────────────────

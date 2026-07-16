@@ -16,12 +16,11 @@
 
 import { v4 as uuidv4 } from "uuid";
 
-import { ENGINE_EVENT_TYPE } from "@/lib/constants";
-
 import {
   type ComponentLibrary,
   library as defaultComponentLibrary,
 } from "./ComponentLibrary";
+import { ENGINE_EVENT_TYPE } from "./constants";
 import { GraphManager } from "./GraphManager";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";

@@ -12,8 +12,8 @@ import {
   GATE_TYPE_LED,
   GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
-  PIN_KIND,
-} from "@/lib/constants";
+} from "@/engine/constants";
+import { PIN_KIND } from "@/lib/constants";
 import { type PinKind } from "@/lib/types";
 import { cn } from "@/lib/utils";
 

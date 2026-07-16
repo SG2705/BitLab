@@ -13,13 +13,12 @@
  * pattern defined in types.ts.
  */
 
+import { type ComponentLibrary } from "./ComponentLibrary";
 import {
   ENGINE_EVENT_TYPE,
   SIMULATION_STATUS,
   TICKS_PER_CYCLE,
-} from "@/lib/constants";
-
-import { type ComponentLibrary } from "./ComponentLibrary";
+} from "./constants";
 import { type GraphManager } from "./GraphManager";
 import { type SignalPropagator } from "./SignalPropagator";
 import type {

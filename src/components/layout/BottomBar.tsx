@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
-import { VERSION } from "@/lib/constants";
+import { VERSION } from "@/engine/constants";
 import { cn } from "@/lib/utils";
 
 interface BottomBarProps {

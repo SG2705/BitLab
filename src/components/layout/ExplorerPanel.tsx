@@ -54,7 +54,7 @@ function ExplorerPanel({
           </div>
           <div className="space-y-0.5">
             {list.map((c) => {
-              const IconComponent = GATE_ICON[c.type as GateIcon];
+              const IconComponent = GATE_ICON[c.type as unknown as GateIcon];
 
               return (
                 <button

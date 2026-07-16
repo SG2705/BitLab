@@ -13,9 +13,8 @@
  *   • Cloud sync (stub interface provided)
  */
 
-import { CURR_CIR_KEY, MAX_HISTORY, VERSION } from "@/lib/constants";
-
 import type { CircuitManager } from "./CircuitManager";
+import { CURR_CIR_KEY, MAX_HISTORY, VERSION } from "./constants";
 import type { CircuitSnapshot } from "./types";
 
 export interface SerializedProject {

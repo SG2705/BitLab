@@ -7,7 +7,8 @@
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { KEY_SEPARATOR, PIN_KIND } from "@/lib/constants";
+import { KEY_SEPARATOR } from "@/engine/constants";
+import { PIN_KIND } from "@/lib/constants";
 import { type BusWireGroup, type PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";

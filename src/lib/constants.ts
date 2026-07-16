@@ -1,8 +1,68 @@
 import { defineMessages } from "react-intl";
 
-import { type CircuitSnapshot } from "@/engine";
+// Also import them for use as computed property keys in this file
+import {
+  GATE_CATEGORY_ARITHMETIC,
+  GATE_CATEGORY_CUSTOM,
+  GATE_CATEGORY_INPUT,
+  GATE_CATEGORY_LOGIC,
+  GATE_CATEGORY_OUTPUT,
+  GATE_CATEGORY_SEQUENTIAL,
+  GATE_CATEGORY_UTILITY,
+  GATE_TYPE_AND,
+  GATE_TYPE_AND3,
+  GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS4,
+  GATE_TYPE_BUS8,
+  GATE_TYPE_BUS16,
+  GATE_TYPE_BUTTON,
+  GATE_TYPE_CLOCK,
+  GATE_TYPE_CMP4,
+  GATE_TYPE_COMMENT,
+  GATE_TYPE_COMPARATOR,
+  GATE_TYPE_CONST,
+  GATE_TYPE_COUNTER4,
+  GATE_TYPE_DEBUS4,
+  GATE_TYPE_DEBUS8,
+  GATE_TYPE_DEBUS16,
+  GATE_TYPE_DECODER2,
+  GATE_TYPE_DECODER3,
+  GATE_TYPE_DEMUX2,
+  GATE_TYPE_DFF,
+  GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_DISPLAY7,
+  GATE_TYPE_DLATCH,
+  GATE_TYPE_ENCODER4,
+  GATE_TYPE_FULL_ADDER,
+  GATE_TYPE_FULL_SUB,
+  GATE_TYPE_HALF_ADDER,
+  GATE_TYPE_HALF_SUB,
+  GATE_TYPE_JKFF,
+  GATE_TYPE_LED,
+  GATE_TYPE_MUX2,
+  GATE_TYPE_MUX4,
+  GATE_TYPE_MUX8,
+  GATE_TYPE_NAND,
+  GATE_TYPE_NOR,
+  GATE_TYPE_NOT,
+  GATE_TYPE_OR,
+  GATE_TYPE_OR3,
+  GATE_TYPE_PROBE,
+  GATE_TYPE_REG4,
+  GATE_TYPE_SHREG4,
+  GATE_TYPE_SPLITTER,
+  GATE_TYPE_SR_LATCH,
+  GATE_TYPE_TIFF,
+  GATE_TYPE_TOGGLE,
+  GATE_TYPE_UREG4,
+  GATE_TYPE_UREG8,
+  GATE_TYPE_XNOR,
+  GATE_TYPE_XOR,
+} from "@/engine/constants";
+import { type CircuitSnapshot } from "@/engine/types";
 
-// Localization
+// ── Localization ─────────────────────────────────────────────────────────────
+
 export const MESSAGES = defineMessages({
   lb_custom: { id: "Sjo1P4", defaultMessage: "Custom" },
   lb_logic_gates: { id: "M+am2n", defaultMessage: "Logic Gates" },
@@ -37,10 +97,7 @@ export const MESSAGES = defineMessages({
   lb_dmux_1_2: { id: "oX0iuy", defaultMessage: "Demux 1:2" },
   lb_dcode_2_4: { id: "UVS4sK", defaultMessage: "Decoder 2:4" },
   lb_ecode_4_2: { id: "/VTiBR", defaultMessage: "Encoder 4:2" },
-  lb_comparator: {
-    id: "VAZneg",
-    defaultMessage: "Comparator",
-  },
+  lb_comparator: { id: "VAZneg", defaultMessage: "Comparator" },
   lb_dlatch: { id: "DPeP5H", defaultMessage: "D Latch" },
   lb_reg4: { id: "n+hlL2", defaultMessage: "Register 4" },
   lb_counter4: { id: "+ObDCx", defaultMessage: "Counter 4" },
@@ -67,117 +124,16 @@ export const MESSAGES = defineMessages({
 
 export type Messages = keyof typeof MESSAGES;
 
-// Gates
-export const GATE_CATEGORY_LOGIC = "gate_category-logic";
-export const GATE_CATEGORY_INPUT = "gate_category-input";
-export const GATE_CATEGORY_OUTPUT = "gate_category-output";
-export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
-export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
-export const GATE_CATEGORY_CUSTOM = "gate_category-custom";
-export const GATE_CATEGORY_UTILITY = "gate_category-utility";
+// ── UI-only Constants ────────────────────────────────────────────────────────
 
-export const GATE_TYPE_AND = "AND";
-export const GATE_TYPE_OR = "OR";
-export const GATE_TYPE_XOR = "XOR";
-export const GATE_TYPE_XNOR = "XNOR";
-export const GATE_TYPE_NAND = "NAND";
-export const GATE_TYPE_NOR = "NOR";
-export const GATE_TYPE_NOT = "NOT";
-export const GATE_TYPE_BUFFER = "BUFFER";
-export const GATE_TYPE_AND3 = "AND3";
-export const GATE_TYPE_OR3 = "OR3";
-export const GATE_TYPE_TOGGLE = "TOGGLE";
-export const GATE_TYPE_BUTTON = "BUTTON";
-export const GATE_TYPE_CONST = "CONST";
-export const GATE_TYPE_CLOCK = "CLOCK";
-export const GATE_TYPE_LED = "LED";
-export const GATE_TYPE_DISPLAY7 = "DISPLAY7";
-export const GATE_TYPE_SR_LATCH = "SR_LATCH";
-export const GATE_TYPE_DFF = "DFF";
-export const GATE_TYPE_JKFF = "JKFF";
-export const GATE_TYPE_TIFF = "TIFF";
-export const GATE_TYPE_HALF_ADDER = "HALF_ADDER";
-export const GATE_TYPE_FULL_ADDER = "FULL_ADDER";
-export const GATE_TYPE_MUX2 = "MUX2";
-export const GATE_TYPE_MUX4 = "MUX4";
-export const GATE_TYPE_DEMUX2 = "DEMUX2";
-export const GATE_TYPE_DECODER2 = "DECODER2";
-export const GATE_TYPE_ENCODER4 = "ENCODER4";
-export const GATE_TYPE_COMPARATOR = "COMPARATOR";
-export const GATE_TYPE_DLATCH = "DLATCH";
-export const GATE_TYPE_REG4 = "REG4";
-export const GATE_TYPE_COUNTER4 = "COUNTER4";
-export const GATE_TYPE_SHREG4 = "SHREG4";
-export const GATE_TYPE_DECODER3 = "DECODER3";
-export const GATE_TYPE_MUX8 = "MUX8";
-export const GATE_TYPE_HALF_SUB = "HALF_SUB";
-export const GATE_TYPE_FULL_SUB = "FULL_SUB";
-export const GATE_TYPE_CMP4 = "CMP4";
-export const GATE_TYPE_PROBE = "PROBE";
-export const GATE_TYPE_SPLITTER = "SPLITTER";
-export const GATE_TYPE_COMMENT = "COMMENT";
-export const GATE_TYPE_DIGIT_BIN = "DIGIT_BIN";
-export const GATE_TYPE_BUS4 = "BUS4";
-export const GATE_TYPE_BUS8 = "BUS8";
-export const GATE_TYPE_BUS16 = "BUS16";
-export const GATE_TYPE_DEBUS4 = "DEBUS4";
-export const GATE_TYPE_DEBUS8 = "DEBUS8";
-export const GATE_TYPE_DEBUS16 = "DEBUS16";
-export const GATE_TYPE_UREG4 = "UREG4";
-export const GATE_TYPE_UREG8 = "UREG8";
-
-// Wires
-export const WIRE_TYPE = {
-  BEZIER: "bezier",
-  ORTHO: "ortho",
-};
-
-// Engine
-export const ENGINE_EVENT_TYPE = {
-  SNAPSHOT_CHANGED: "snapshot-changed",
-  SIGNAL_CHANGED: "signal-changed",
-  COMPONENT_ADDED: "component-added",
-  COMPONENT_REMOVED: "component-removed",
-  WIRE_ADDED: "wire-added",
-  WIRE_REMOVED: "wire-removed",
-  TICK: "tick",
-  STARTED: "started",
-  PAUSED: "paused",
-  RESET: "reset",
-  OSCILLATION: "oscillation",
-  ERROR: "error",
-};
-
-export const SIMULATION_STATUS = {
-  IDLE: "idle",
-  RUNNING: "running",
-  PAUSED: "paused",
-};
-
-// Circuit
-
-export const PIN_KIND = {
-  IN: "in",
-  OUT: "out",
-};
-
-// Project
-export const VERSION = 1;
-export const MAX_HISTORY = 100;
+export const WIRE_TYPE = { BEZIER: "bezier", ORTHO: "ortho" };
+export const PIN_KIND = { IN: "in", OUT: "out" };
 export const SAVE_LOCAL_ON_ACTION = false;
-export const KEY_SEPARATOR = ":";
-export const CURR_CIR_KEY = "current-circuit-key";
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 4;
-export const TICKS_PER_CYCLE = 2;
-export const DEFAULT_PROBE_SAMPLES = 16;
 export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
 
-// App
-export const THEME = {
-  DARK: "dark",
-  LIGHT: "light",
-};
+export const THEME = { DARK: "dark", LIGHT: "light" };
 export const CONSOLE_TAB = {
   LOG: "log",
   ERROR: "err",
@@ -191,43 +147,10 @@ export const BASE_LOG = {
   msg: "BitLab ready. Drag components from the toolbox to get started.",
 };
 export const GRID = 20;
+export const TOOL = { SELECT: "select", PAN: "pan" };
 
-export const PINC0 = 0;
-export const PINC1 = 1;
-export const PINC2 = 2;
-export const PINC3 = 3;
-export const PINC4 = 4;
-export const PINC5 = 5;
-export const PINC6 = 6;
-export const PINC8 = 8;
-export const PINC9 = 9;
-export const PINC11 = 11;
-export const PINC16 = 16;
+// ── Labels ───────────────────────────────────────────────────────────────────
 
-/**
- * Standardized component height based on max(inputs, outputs).
- * Used to derive consistent gate heights from pin count.
- */
-export const PIN_COUNT_HEIGHT: Record<number, number> = {
-  [PINC0]: 35,
-  [PINC1]: 50,
-  [PINC2]: 65,
-  [PINC3]: 70,
-  [PINC4]: 85,
-  [PINC5]: 95,
-  [PINC6]: 90,
-  [PINC8]: 115,
-  [PINC9]: 130,
-  [PINC11]: 160,
-  [PINC16]: 200,
-};
-
-export const TOOL = {
-  SELECT: "select",
-  PAN: "pan",
-};
-
-// Labels
 export const GATE_CATEGORY_LABELS: Record<
   string,
   { en: string; messageKey: Messages }

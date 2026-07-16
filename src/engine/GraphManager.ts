@@ -13,8 +13,7 @@
  * whenever the graph structure changes.
  */
 
-import { KEY_SEPARATOR } from "@/lib/constants";
-
+import { KEY_SEPARATOR } from "./constants";
 import type { ComponentId, Wire, WireId } from "./types";
 
 export class GraphManager {
