@@ -53,7 +53,7 @@ function SevenSegDisplay({ value }: { value: number }) {
   const pattern = SEG7[value & 0xf] ?? SEG7[0];
 
   return (
-    <g transform="translate(20, 13)">
+    <g transform="translate(25, 10)">
       {SEG_RECTS.map(([x, y, w, h], i) => (
         <rect
           // eslint-disable-next-line react/no-array-index-key

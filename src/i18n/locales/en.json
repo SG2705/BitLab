@@ -77,6 +77,9 @@
   "DYWVqY": {
     "defaultMessage": "Mux 4:1"
   },
+  "DyaKi9": {
+    "defaultMessage": "Debus 8"
+  },
   "FJad6C": {
     "defaultMessage": "Digit→Bin"
   },
@@ -91,6 +94,9 @@
   },
   "Gab3IF": {
     "defaultMessage": "Digit (0-9)"
+  },
+  "Gb5Mf2": {
+    "defaultMessage": "/{busWidth}"
   },
   "GkBxYy": {
     "defaultMessage": "Start designing"
@@ -128,6 +134,9 @@
   "M+am2n": {
     "defaultMessage": "Logic Gates"
   },
+  "MGhLtB": {
+    "defaultMessage": "Bus 8"
+  },
   "MXPwVk": {
     "defaultMessage": "X"
   },
@@ -158,6 +167,9 @@
   "Sjo1P4": {
     "defaultMessage": "Custom"
   },
+  "TAplo/": {
+    "defaultMessage": "Bus 16"
+  },
   "Tv1nZc": {
     "defaultMessage": "Empty circuit"
   },
@@ -175,6 +187,9 @@
   },
   "Xco1sn": {
     "defaultMessage": "Drag a component from the toolbox onto the canvas"
+  },
+  "XqpRRy": {
+    "defaultMessage": "U-Reg 4"
   },
   "a3I/Dc": {
     "defaultMessage": "SR Latch"
@@ -200,6 +215,9 @@
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
+  "g8kf2o": {
+    "defaultMessage": "Bus 4"
+  },
   "hxKJOS": {
     "defaultMessage": "T Flip-Flop"
   },
@@ -214,6 +232,9 @@
   },
   "k5fiSA": {
     "defaultMessage": "Buffer"
+  },
+  "kR4Dpg": {
+    "defaultMessage": "{num}"
   },
   "kRdz1D": {
     "defaultMessage": "Type a command..."
@@ -244,6 +265,9 @@
   },
   "nDyaq/": {
     "defaultMessage": "Running"
+  },
+  "o8W9TU": {
+    "defaultMessage": "Debus 16"
   },
   "oNcdXR": {
     "defaultMessage": "Full Sub"
@@ -277,6 +301,12 @@
   },
   "rS8jJE": {
     "defaultMessage": "XNOR"
+  },
+  "sCV/Bb": {
+    "defaultMessage": "U-Reg 8"
+  },
+  "sK+e77": {
+    "defaultMessage": "Debus 4"
   },
   "sNY4nx": {
     "defaultMessage": "Idle"

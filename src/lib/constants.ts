@@ -190,6 +190,37 @@ export const BASE_LOG = {
   msg: "BitLab ready. Drag components from the toolbox to get started.",
 };
 export const GRID = 20;
+
+export const PINC0 = 0;
+export const PINC1 = 1;
+export const PINC2 = 2;
+export const PINC3 = 3;
+export const PINC4 = 4;
+export const PINC5 = 5;
+export const PINC6 = 6;
+export const PINC8 = 8;
+export const PINC9 = 9;
+export const PINC11 = 11;
+export const PINC16 = 16;
+
+/**
+ * Standardized component height based on max(inputs, outputs).
+ * Used to derive consistent gate heights from pin count.
+ */
+export const PIN_COUNT_HEIGHT: Record<number, number> = {
+  [PINC0]: 35,
+  [PINC1]: 50,
+  [PINC2]: 65,
+  [PINC3]: 70,
+  [PINC4]: 85,
+  [PINC5]: 95,
+  [PINC6]: 90,
+  [PINC8]: 115,
+  [PINC9]: 130,
+  [PINC11]: 160,
+  [PINC16]: 200,
+};
+
 export const TOOL = {
   SELECT: "select",
   PAN: "pan",

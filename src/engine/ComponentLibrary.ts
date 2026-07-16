@@ -67,8 +67,19 @@ import {
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
   KEY_SEPARATOR,
+  PINC0,
+  PINC1,
+  PINC2,
+  PINC3,
+  PINC4,
+  PINC5,
+  PINC6,
+  PINC8,
+  PINC9,
+  PINC11,
+  PINC16,
 } from "@/lib/constants";
-import { fm } from "@/lib/utils";
+import { fm, getHeightForPinCount } from "@/lib/utils";
 
 import type {
   CircuitSnapshot,
@@ -89,6 +100,17 @@ const b = (v: unknown): boolean => Boolean(v);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+const H_OVERRIDES = [GATE_TYPE_PROBE];
+
+const hw = (c: ComponentDefinition): ComponentDefinition => {
+  return {
+    ...c,
+    height: H_OVERRIDES.includes(c.type)
+      ? c.height
+      : getHeightForPinCount(Math.max(c.inputs, c.outputs)),
+  };
+};
+
 type CbFields = Omit<
   ComponentDefinition,
   "isSequential" | "isClock" | "isInput" | "isOutput" | "initialState"
@@ -96,16 +118,15 @@ type CbFields = Omit<
   evaluate: (inputs: SignalValue[], state: null) => EvaluateResult;
 };
 
-function cb(fields: CbFields): ComponentDefinition {
-  return {
+const cb = (fields: CbFields): ComponentDefinition =>
+  hw({
     ...fields,
     isSequential: false,
     isClock: false,
     isInput: false,
     isOutput: false,
     initialState: () => null,
-  };
-}
+  });
 
 // ── Definition table ──────────────────────────────────────────────────────────
 
@@ -115,9 +136,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_AND,
     label: fm("lb_and"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "&",
     inputLabels: ["A", "B"],
@@ -128,9 +149,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_OR,
     label: fm("lb_or"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "≥1",
     inputLabels: ["A", "B"],
@@ -141,9 +162,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_XOR,
     label: fm("lb_xor"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "=1",
     inputLabels: ["A", "B"],
@@ -157,9 +178,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_XNOR,
     label: fm("lb_xnor"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "=",
     inputLabels: ["A", "B"],
@@ -173,9 +194,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_NAND,
     label: fm("lb_nand"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "&̄",
     inputLabels: ["A", "B"],
@@ -186,9 +207,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_NOR,
     label: fm("lb_nor"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 2,
-    outputs: 1,
-    width: 70,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 80,
     height: 60,
     symbol: "≥1̄",
     inputLabels: ["A", "B"],
@@ -199,9 +220,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_NOT,
     label: fm("lb_not"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 1,
-    outputs: 1,
-    width: 60,
+    inputs: PINC1,
+    outputs: PINC1,
+    width: 80,
     height: 50,
     symbol: "!",
     inputLabels: ["A"],
@@ -212,9 +233,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_BUFFER,
     label: fm("lb_buffer"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 1,
-    outputs: 1,
-    width: 60,
+    inputs: PINC1,
+    outputs: PINC1,
+    width: 80,
     height: 50,
     symbol: "1",
     inputLabels: ["A"],
@@ -225,9 +246,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_AND3,
     label: fm("lb_and_3"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 3,
-    outputs: 1,
-    width: 70,
+    inputs: PINC3,
+    outputs: PINC1,
+    width: 80,
     height: 70,
     symbol: "&3",
     inputLabels: ["A", "B", "C"],
@@ -238,9 +259,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_OR3,
     label: fm("lb_or_3"),
     category: GATE_CATEGORY_LOGIC,
-    inputs: 3,
-    outputs: 1,
-    width: 70,
+    inputs: PINC3,
+    outputs: PINC1,
+    width: 80,
     height: 70,
     symbol: "≥1·3",
     inputLabels: ["A", "B", "C"],
@@ -249,13 +270,13 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
 
   // ── Inputs ───────────────────────────────────────────────────────────────────
-  {
+  hw({
     type: GATE_TYPE_TOGGLE,
     label: fm("lb_toggle"),
     category: GATE_CATEGORY_INPUT,
-    inputs: 0,
-    outputs: 1,
-    width: 60,
+    inputs: PINC0,
+    outputs: PINC1,
+    width: 50,
     height: 50,
     symbol: "T",
     isSequential: false,
@@ -264,14 +285,14 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ on: false }),
     evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_BUTTON,
     label: fm("lb_button"),
     category: GATE_CATEGORY_INPUT,
-    inputs: 0,
-    outputs: 1,
-    width: 60,
+    inputs: PINC0,
+    outputs: PINC1,
+    width: 50,
     height: 50,
     symbol: "B",
     isSequential: false,
@@ -280,14 +301,14 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ on: false }),
     evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_CONST,
     label: fm("lb_const"),
     category: GATE_CATEGORY_INPUT,
-    inputs: 0,
-    outputs: 1,
-    width: 60,
+    inputs: PINC0,
+    outputs: PINC1,
+    width: 50,
     height: 40,
     symbol: "1",
     isSequential: false,
@@ -296,14 +317,14 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ on: true }),
     evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_CLOCK,
     label: fm("lb_clock"),
     category: GATE_CATEGORY_INPUT,
-    inputs: 0,
-    outputs: 1,
-    width: 60,
+    inputs: PINC0,
+    outputs: PINC1,
+    width: 50,
     height: 50,
     symbol: "⏲",
     isSequential: false,
@@ -317,18 +338,18 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [on], state: { on } };
     },
-  },
+  }),
 
   // ── Digit→Binary input ───────────────────────────────────────────────────────
-  {
+  hw({
     type: GATE_TYPE_DIGIT_BIN,
     label: fm("lb_digit_bin"),
     category: GATE_CATEGORY_INPUT,
-    inputs: 0,
-    outputs: 8,
+    inputs: PINC0,
+    outputs: PINC4,
     width: 80,
-    height: 120,
-    outputLabels: ["B7", "B6", "B5", "B4", "B3", "B2", "B1", "B0"],
+    height: 80,
+    outputLabels: ["B3", "B2", "B1", "B0"],
     isSequential: false,
     isClock: false,
     isInput: true,
@@ -336,7 +357,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     initialState: () => ({ digit: 0 }),
     evaluate: (_i, s) => {
       const digit = s?.digit as number | null | undefined;
-      const zero: boolean[] = Array<boolean>(8).fill(false);
+      const zero: boolean[] = Array<boolean>(4).fill(false);
 
       if (
         typeof digit !== "number" ||
@@ -348,21 +369,21 @@ const DEFINITIONS: ComponentDefinition[] = [
       }
 
       return {
-        outputs: Array.from({ length: 8 }, (_, bit) =>
-          Boolean((digit >> (7 - bit)) & 1),
+        outputs: Array.from({ length: 4 }, (_, bit) =>
+          Boolean((digit >> (3 - bit)) & 1),
         ),
         state: s,
       };
     },
-  },
+  }),
 
   // ── Outputs ──────────────────────────────────────────────────────────────────
-  {
+  hw({
     type: GATE_TYPE_LED,
     label: fm("lb_led"),
     category: GATE_CATEGORY_OUTPUT,
-    inputs: 1,
-    outputs: 0,
+    inputs: PINC1,
+    outputs: PINC0,
     width: 50,
     height: 50,
     symbol: "◉",
@@ -372,14 +393,14 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: true,
     initialState: () => ({ on: false }),
     evaluate: (i) => ({ outputs: [], state: { on: b(i[0]) } }),
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_DISPLAY7,
     label: fm("lb_7_seg"),
     category: GATE_CATEGORY_OUTPUT,
-    inputs: 4,
-    outputs: 0,
-    width: 70,
+    inputs: PINC4,
+    outputs: PINC0,
+    width: 80,
     height: 90,
     symbol: "7",
     isSequential: false,
@@ -397,13 +418,13 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [], state: { value } };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_PROBE,
     label: fm("lb_probe"),
     category: GATE_CATEGORY_OUTPUT,
-    inputs: 1,
-    outputs: 0,
+    inputs: PINC1,
+    outputs: PINC0,
     width: 120,
     height: 70,
     inputLabels: ["IN"],
@@ -436,15 +457,15 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [], state: { history } };
     },
-  },
+  }),
 
   // ── Sequential ────────────────────────────────────────────────────────────────
-  {
+  hw({
     type: GATE_TYPE_SR_LATCH,
     label: fm("lb_sr_latch"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "SR",
@@ -472,13 +493,13 @@ const DEFINITIONS: ComponentDefinition[] = [
       // S=1 R=1 is an invalid state; hold
       return { outputs: [q, !q], state: { q } };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_DFF,
     label: fm("lb_d_flip_flop"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "D",
@@ -500,13 +521,13 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_JKFF,
     label: fm("lb_jk_flip_flop"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 3,
-    outputs: 2,
+    inputs: PINC3,
+    outputs: PINC2,
     width: 80,
     height: 80,
     symbol: "JK",
@@ -536,13 +557,13 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_TIFF,
     label: fm("lb_t_flip_flop"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "T",
@@ -563,14 +584,14 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [q, !q], state: { q, prevClk: clk } };
     },
-  },
+  }),
 
-  {
+  hw({
     type: GATE_TYPE_DLATCH,
     label: fm("lb_dlatch"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "DL",
@@ -590,13 +611,13 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs: [q, !q], state: { q } };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_REG4,
     label: fm("lb_reg4"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 5,
-    outputs: 4,
+    inputs: PINC5,
+    outputs: PINC4,
     width: 80,
     height: 100,
     symbol: "REG",
@@ -629,13 +650,13 @@ const DEFINITIONS: ComponentDefinition[] = [
         state: { q, prevClk: clk },
       };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_COUNTER4,
     label: fm("lb_counter4"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 2,
-    outputs: 4,
+    inputs: PINC2,
+    outputs: PINC4,
     width: 80,
     height: 90,
     symbol: "CTR",
@@ -666,13 +687,13 @@ const DEFINITIONS: ComponentDefinition[] = [
         state: { count, prevClk: clk },
       };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_SHREG4,
     label: fm("lb_shreg4"),
     category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: 3,
-    outputs: 4,
+    inputs: PINC3,
+    outputs: PINC4,
     width: 80,
     height: 90,
     symbol: "SHR",
@@ -703,15 +724,15 @@ const DEFINITIONS: ComponentDefinition[] = [
         state: { bits, prevClk: clk },
       };
     },
-  },
+  }),
 
   // ── Arithmetic ────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_HALF_ADDER,
     label: fm("lb_halfadder"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 60,
     symbol: "½+",
@@ -726,8 +747,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_FULL_ADDER,
     label: fm("lb_adder"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 3,
-    outputs: 2,
+    inputs: PINC3,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "Σ",
@@ -743,8 +764,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_MUX2,
     label: fm("lb_mux_2_1"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 3,
-    outputs: 1,
+    inputs: PINC3,
+    outputs: PINC1,
     width: 80,
     height: 70,
     symbol: "M",
@@ -756,8 +777,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_MUX4,
     label: fm("lb_mux_4_1"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 6,
-    outputs: 1,
+    inputs: PINC6,
+    outputs: PINC1,
     width: 80,
     height: 90,
     symbol: "M4",
@@ -773,8 +794,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DEMUX2,
     label: fm("lb_dmux_1_2"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 60,
     symbol: "DM",
@@ -790,8 +811,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DECODER2,
     label: fm("lb_dcode_2_4"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 4,
+    inputs: PINC2,
+    outputs: PINC4,
     width: 80,
     height: 80,
     symbol: "DEC",
@@ -810,8 +831,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_ENCODER4,
     label: fm("lb_ecode_4_2"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 4,
-    outputs: 2,
+    inputs: PINC4,
+    outputs: PINC2,
     width: 80,
     height: 80,
     symbol: "ENC",
@@ -835,8 +856,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_COMPARATOR,
     label: fm("lb_comparator"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 3,
+    inputs: PINC2,
+    outputs: PINC3,
     width: 80,
     height: 70,
     symbol: "CMP",
@@ -853,8 +874,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DECODER3,
     label: fm("lb_decoder3"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 3,
-    outputs: 8,
+    inputs: PINC3,
+    outputs: PINC8,
     width: 80,
     height: 120,
     symbol: "3:8",
@@ -873,8 +894,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_MUX8,
     label: fm("lb_mux8"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 11,
-    outputs: 1,
+    inputs: PINC11,
+    outputs: PINC1,
     width: 80,
     height: 160,
     symbol: "M8",
@@ -902,8 +923,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_HALF_SUB,
     label: fm("lb_half_sub"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 2,
+    inputs: PINC2,
+    outputs: PINC2,
     width: 80,
     height: 60,
     symbol: "½−",
@@ -918,8 +939,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_FULL_SUB,
     label: fm("lb_full_sub"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 3,
-    outputs: 2,
+    inputs: PINC3,
+    outputs: PINC2,
     width: 80,
     height: 70,
     symbol: "Σ−",
@@ -939,8 +960,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_CMP4,
     label: fm("lb_cmp4"),
     category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 8,
-    outputs: 3,
+    inputs: PINC8,
+    outputs: PINC3,
     width: 80,
     height: 120,
     symbol: "≥≤",
@@ -966,9 +987,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_SPLITTER,
     label: fm("lb_splitter"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 1,
-    outputs: 4,
-    width: 60,
+    inputs: PINC1,
+    outputs: PINC4,
+    width: 80,
     height: 80,
     symbol: "1:4",
     inputLabels: ["IN"],
@@ -994,9 +1015,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_BUS4,
     label: fm("lb_bus4"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 4,
-    outputs: 4,
-    width: 70,
+    inputs: PINC4,
+    outputs: PINC4,
+    width: 80,
     height: 80,
     symbol: "⇒4",
     isBusOutput: true,
@@ -1011,9 +1032,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_BUS8,
     label: fm("lb_bus8"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 8,
-    outputs: 8,
-    width: 70,
+    inputs: PINC8,
+    outputs: PINC8,
+    width: 80,
     height: 110,
     symbol: "⇒8",
     isBusOutput: true,
@@ -1028,9 +1049,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_BUS16,
     label: fm("lb_bus16"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 16,
-    outputs: 16,
-    width: 70,
+    inputs: PINC16,
+    outputs: PINC16,
+    width: 80,
     height: 200,
     symbol: "⇒16",
     isBusOutput: true,
@@ -1079,9 +1100,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DEBUS4,
     label: fm("lb_debus4"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 4,
-    outputs: 4,
-    width: 70,
+    inputs: PINC4,
+    outputs: PINC4,
+    width: 80,
     height: 80,
     symbol: "⇐4",
     isBusInput: true,
@@ -1096,9 +1117,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DEBUS8,
     label: fm("lb_debus8"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 8,
-    outputs: 8,
-    width: 70,
+    inputs: PINC8,
+    outputs: PINC8,
+    width: 80,
     height: 110,
     symbol: "⇐8",
     isBusInput: true,
@@ -1113,9 +1134,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     type: GATE_TYPE_DEBUS16,
     label: fm("lb_debus16"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 16,
-    outputs: 16,
-    width: 70,
+    inputs: PINC16,
+    outputs: PINC16,
+    width: 80,
     height: 200,
     symbol: "⇐16",
     isBusInput: true,
@@ -1160,12 +1181,12 @@ const DEFINITIONS: ComponentDefinition[] = [
       state: null,
     }),
   }),
-  {
+  hw({
     type: GATE_TYPE_UREG4,
     label: fm("lb_ureg4"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 5,
-    outputs: 4,
+    inputs: PINC5,
+    outputs: PINC4,
     width: 80,
     height: 90,
     inputLabels: ["D0", "D1", "D2", "D3", "WE"],
@@ -1195,13 +1216,13 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs, state };
     },
-  },
-  {
+  }),
+  hw({
     type: GATE_TYPE_UREG8,
     label: fm("lb_ureg8"),
     category: GATE_CATEGORY_UTILITY,
-    inputs: 9,
-    outputs: 8,
+    inputs: PINC9,
+    outputs: PINC8,
     width: 80,
     height: 130,
     inputLabels: ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "WE"],
@@ -1231,7 +1252,7 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return { outputs, state };
     },
-  },
+  }),
 ];
 
 // ── Registry class ────────────────────────────────────────────────────────────
@@ -1428,7 +1449,7 @@ export class ComponentLibrary {
     if (hasInternalClocks) {
       inputPorts.push({
         compId: "__CLK__",
-        pin: 0,
+        pin: PINC0,
         label: "CLK",
       });
     }

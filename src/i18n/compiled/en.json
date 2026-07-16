@@ -203,6 +203,12 @@
       "value": "Mux 4:1"
     }
   ],
+  "DyaKi9": [
+    {
+      "type": 0,
+      "value": "Debus 8"
+    }
+  ],
   "FJad6C": [
     {
       "type": 0,
@@ -231,6 +237,16 @@
     {
       "type": 0,
       "value": "Digit (0-9)"
+    }
+  ],
+  "Gb5Mf2": [
+    {
+      "type": 0,
+      "value": "/"
+    },
+    {
+      "type": 1,
+      "value": "busWidth"
     }
   ],
   "GkBxYy": [
@@ -305,6 +321,12 @@
       "value": "Logic Gates"
     }
   ],
+  "MGhLtB": [
+    {
+      "type": 0,
+      "value": "Bus 8"
+    }
+  ],
   "MXPwVk": [
     {
       "type": 0,
@@ -365,6 +387,12 @@
       "value": "Custom"
     }
   ],
+  "TAplo/": [
+    {
+      "type": 0,
+      "value": "Bus 16"
+    }
+  ],
   "Tv1nZc": [
     {
       "type": 0,
@@ -399,6 +427,12 @@
     {
       "type": 0,
       "value": "Drag a component from the toolbox onto the canvas"
+    }
+  ],
+  "XqpRRy": [
+    {
+      "type": 0,
+      "value": "U-Reg 4"
     }
   ],
   "a3I/Dc": [
@@ -453,6 +487,12 @@
       "value": " wires"
     }
   ],
+  "g8kf2o": [
+    {
+      "type": 0,
+      "value": "Bus 4"
+    }
+  ],
   "hxKJOS": [
     {
       "type": 0,
@@ -481,6 +521,12 @@
     {
       "type": 0,
       "value": "Buffer"
+    }
+  ],
+  "kR4Dpg": [
+    {
+      "type": 1,
+      "value": "num"
     }
   ],
   "kRdz1D": [
@@ -541,6 +587,12 @@
     {
       "type": 0,
       "value": "Running"
+    }
+  ],
+  "o8W9TU": [
+    {
+      "type": 0,
+      "value": "Debus 16"
     }
   ],
   "oNcdXR": [
@@ -615,6 +667,18 @@
     {
       "type": 0,
       "value": "XNOR"
+    }
+  ],
+  "sCV/Bb": [
+    {
+      "type": 0,
+      "value": "U-Reg 8"
+    }
+  ],
+  "sK+e77": [
+    {
+      "type": 0,
+      "value": "Debus 4"
     }
   ],
   "sNY4nx": [

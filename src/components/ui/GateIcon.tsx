@@ -6,6 +6,9 @@ import {
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS4,
+  GATE_TYPE_BUS8,
+  GATE_TYPE_BUS16,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CLOCK,
   GATE_TYPE_CMP4,
@@ -13,10 +16,14 @@ import {
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
   GATE_TYPE_COUNTER4,
+  GATE_TYPE_DEBUS4,
+  GATE_TYPE_DEBUS8,
+  GATE_TYPE_DEBUS16,
   GATE_TYPE_DECODER2,
   GATE_TYPE_DECODER3,
   GATE_TYPE_DEMUX2,
   GATE_TYPE_DFF,
+  GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_DLATCH,
   GATE_TYPE_ENCODER4,
@@ -41,6 +48,8 @@ import {
   GATE_TYPE_SR_LATCH,
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
+  GATE_TYPE_UREG4,
+  GATE_TYPE_UREG8,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/lib/constants";
@@ -718,6 +727,161 @@ export function ProbeIcon(p: IconProps) {
   );
 }
 
+/* ---------- Bus / debus ---------- */
+
+/**
+ * Bus4Icon
+ */
+export function Bus4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M6 12h1M10 12h1M14 12h1M18 12h1" />
+    </Svg>
+  );
+}
+
+/**
+ * Bus8Icon
+ */
+export function Bus8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M5 12h1.5M8 12h1.5M11 12h1.5M14 12h1.5M17 12h1.5" />
+      <text
+        x="12"
+        y="11"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * Bus16Icon
+ */
+export function Bus16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M4 12h1.5M6.5 12h1.5M9 12h1.5M11.5 12h1.5M14 12h1.5M16.5 12h1.5M19 12h1.5" />
+    </Svg>
+  );
+}
+
+/**
+ * Debus4Icon
+ */
+export function Debus4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M6 12h1M10 12h1M14 12h1M18 12h1" />
+      <path d="M6 12v2M10 12v2M14 12v2M18 12v2" />
+    </Svg>
+  );
+}
+
+/**
+ * Debus8Icon
+ */
+export function Debus8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M5 12h1.5M8 12h1.5M11 12h1.5M14 12h1.5M17 12h1.5" />
+      <path d="M5 12v2M8 12v2M11 12v2M14 12v2M17 12v2" />
+    </Svg>
+  );
+}
+
+/**
+ * Debus16Icon
+ */
+export function Debus16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M4 12h1.5M6.5 12h1.5M9 12h1.5M11.5 12h1.5M14 12h1.5M16.5 12h1.5M19 12h1.5" />
+      <path d="M4 12v2M6.5 12v2M9 12v2M11.5 12v2M14 12v2M16.5 12v2M19 12v2" />
+    </Svg>
+  );
+}
+
+/* ---------- Universal registers ---------- */
+
+/**
+ * UReg4Icon
+ */
+export function UReg4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" />
+      <path d="M7 6v12M12 6v12M17 6v12" />
+    </Svg>
+  );
+}
+
+/**
+ * UReg8Icon
+ */
+export function UReg8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" />
+      <path d="M6 6v12M9 6v12M12 6v12M15 6v12M18 6v12" />
+    </Svg>
+  );
+}
+
+/* ---------- BCD / digit display ---------- */
+
+/**
+ * DigitToBinIcon
+ */
+export function DigitToBinIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="11"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage
+          id="kR4Dpg"
+          defaultMessage="{num}"
+          values={{ num: "4→1" }}
+        />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage
+          id="kR4Dpg"
+          defaultMessage="{num}"
+          values={{ num: "0-9" }}
+        />
+      </text>
+    </Svg>
+  );
+}
+
 /* ---------- Registry (label -> component) ---------- */
 
 const GATE_ICON = {
@@ -761,6 +925,15 @@ const GATE_ICON = {
   [GATE_TYPE_PROBE]: ProbeIcon,
   [GATE_TYPE_SPLITTER]: SplitterIcon,
   [GATE_TYPE_COMMENT]: CommentIcon,
+  [GATE_TYPE_DIGIT_BIN]: DigitToBinIcon,
+  [GATE_TYPE_BUS4]: Bus4Icon,
+  [GATE_TYPE_BUS8]: Bus8Icon,
+  [GATE_TYPE_BUS16]: Bus16Icon,
+  [GATE_TYPE_DEBUS4]: Debus4Icon,
+  [GATE_TYPE_DEBUS8]: Debus8Icon,
+  [GATE_TYPE_DEBUS16]: Debus16Icon,
+  [GATE_TYPE_UREG4]: UReg4Icon,
+  [GATE_TYPE_UREG8]: UReg8Icon,
 } as const;
 
 export type GateIcon = keyof typeof GATE_ICON;
