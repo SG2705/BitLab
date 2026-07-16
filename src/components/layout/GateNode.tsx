@@ -219,6 +219,8 @@ interface GateNodeProps {
   isSelected: boolean;
   onMouseDown: (e: React.MouseEvent) => void;
   onClickBody: () => void;
+  onPointerDownBody?: (e: React.PointerEvent) => void;
+  onPointerUpBody?: (e: React.PointerEvent) => void;
   onPinDown: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
   onPinUp: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
 }
@@ -228,6 +230,8 @@ function GateNode({
   isSelected,
   onMouseDown,
   onClickBody,
+  onPointerDownBody,
+  onPointerUpBody,
   onPinDown,
   onPinUp,
 }: GateNodeProps) {
@@ -328,6 +332,10 @@ function GateNode({
         stroke={active ? "var(--color-signal-on)" : "var(--color-border)"}
         strokeWidth={1.5}
         onClick={onClickBody}
+        onPointerDown={onPointerDownBody}
+        onPointerUp={onPointerUpBody}
+        onPointerLeave={onPointerUpBody}
+        onPointerCancel={onPointerUpBody}
         style={{ cursor: isIO ? "pointer" : "grab" }}
         className={cn(active && "signal-glow")}
       />
@@ -499,5 +507,10 @@ function GateNode({
     </g>
   );
 }
+
+GateNode.defaultProps = {
+  onPointerDownBody: undefined,
+  onPointerUpBody: undefined,
+};
 
 export default memo(GateNode);

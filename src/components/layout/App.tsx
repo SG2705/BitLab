@@ -25,6 +25,7 @@ import {
   DEFAULT_CLOCK,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_LABELS,
+  GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_TOGGLE,
@@ -934,6 +935,32 @@ function DigitalGateApp() {
                     comp={c}
                     isSelected={selection.has(c.id)}
                     onClickBody={() => handleCompClick(c)}
+                    onPointerDownBody={
+                      c.type === GATE_TYPE_BUTTON
+                        ? (e: React.PointerEvent) => {
+                            e.stopPropagation();
+
+                            (e.target as Element).setPointerCapture(
+                              e.pointerId,
+                            );
+
+                            setInput(c.id, { on: true });
+                          }
+                        : undefined
+                    }
+                    onPointerUpBody={
+                      c.type === GATE_TYPE_BUTTON
+                        ? (e: React.PointerEvent) => {
+                            e.stopPropagation();
+
+                            (e.target as Element).releasePointerCapture(
+                              e.pointerId,
+                            );
+
+                            setInput(c.id, { on: false });
+                          }
+                        : undefined
+                    }
                     onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
                     onPinDown={(
                       e: React.MouseEvent,
