@@ -220,7 +220,7 @@ function TopBar({
             className="sqaurewavebox"
             style={
               {
-                "--wave-duration": `${(2 / clockSpeed).toFixed(3)}s`,
+                "--wave-duration": `${(4 / clockSpeed).toFixed(3)}s`,
               } as React.CSSProperties
             }
           >
