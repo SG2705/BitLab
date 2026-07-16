@@ -1173,6 +1173,13 @@ export class ComponentLibrary {
 
     if (sourceComps.length === 0 && sinkComps.length === 0) return null;
 
+    // Separate clock components from regular input sources. All internal
+    // clocks are consolidated into a single external "CLK" input port so the
+    // clock signal is driven externally rather than by the internal tick().
+    const clockComps = sourceComps.filter(({ def }) => def.isClock);
+    const nonClockSourceComps = sourceComps.filter(({ def }) => !def.isClock);
+    const hasInternalClocks = clockComps.length > 0;
+
     const sourceIds = new Set(sourceComps.map(({ component }) => component.id));
     const sinkIds = new Set(sinkComps.map(({ component }) => component.id));
     const executable = knownComps.filter(
@@ -1195,7 +1202,7 @@ export class ComponentLibrary {
       return pinCount === 1 ? base : `${base}.${pinLabel ?? `P${pin}`}`;
     };
 
-    const inputPorts = sourceComps.flatMap(
+    const inputPorts = nonClockSourceComps.flatMap(
       ({ component, def }, componentIndex) =>
         Array.from({ length: def.outputs }, (_, pin) => ({
           compId: component.id,
@@ -1209,6 +1216,18 @@ export class ComponentLibrary {
           ),
         })),
     );
+
+    // If the sub-circuit contains clock components, append a single "CLK"
+    // input port. During evaluation, this port's signal is broadcast to all
+    // internal clock component outputs.
+    if (hasInternalClocks) {
+      inputPorts.push({
+        compId: "__CLK__",
+        pin: 0,
+        label: "CLK",
+      });
+    }
+
     const outputPorts = sinkComps.flatMap(
       ({ component, def }, componentIndex) =>
         Array.from({ length: def.inputs }, (_, pin) => ({
@@ -1298,9 +1317,9 @@ export class ComponentLibrary {
     const numOutputs = outputPorts.length;
     const safeName = name.replace(/\W+/g, "_").toUpperCase();
     const type = `CUSTOM_${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
-    const hasSequentialInternals = executable.some(
-      ({ def }) => def.isSequential || def.needsInputSnapshot,
-    );
+    const hasSequentialInternals =
+      hasInternalClocks ||
+      executable.some(({ def }) => def.isSequential || def.needsInputSnapshot);
     const createInitialStates = (): Record<
       string,
       Record<string, unknown> | null
@@ -1347,6 +1366,23 @@ export class ComponentLibrary {
       }
 
       inputPorts.forEach((port, index) => {
+        if (port.compId === "__CLK__") {
+          // Broadcast the external CLK signal to all internal clock components
+          const clkVal = Boolean(externalInputs[index]);
+          const clkPrior = Boolean(
+            snapshotInputs?.[index] ?? externalInputs[index],
+          );
+
+          for (const { component, def: clkDef } of clockComps) {
+            for (let p = 0; p < clkDef.outputs; p += 1) {
+              signals[component.id][p] = clkVal;
+              priorSignals[component.id][p] = clkPrior;
+            }
+          }
+
+          return;
+        }
+
         signals[port.compId][port.pin] = Boolean(externalInputs[index]);
         priorSignals[port.compId][port.pin] = Boolean(
           snapshotInputs?.[index] ?? externalInputs[index],
