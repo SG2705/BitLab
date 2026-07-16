@@ -28,6 +28,11 @@ export class GraphManager {
   // "compId:pinIndex" → Wire (only one wire may feed each input pin)
   private inputWires: Map<string, Wire> = new Map();
 
+  // Per-node wire index: compId → Set of wireIds touching that node (4a)
+  private nodeWires: Map<ComponentId, Set<WireId>> = new Map();
+  // Edge reference count: "from:to" → number of wires connecting the pair (4b)
+  private edgeCount: Map<string, number> = new Map();
+
   // Cached topological sort; null means stale
   private cachedOrder: ComponentId[] | null = null;
   private cachedRanks: Map<ComponentId, number> | null = null;
@@ -37,20 +42,22 @@ export class GraphManager {
   addNode(id: ComponentId): void {
     if (!this.downstream.has(id)) this.downstream.set(id, new Set());
     if (!this.upstream.has(id)) this.upstream.set(id, new Set());
+    if (!this.nodeWires.has(id)) this.nodeWires.set(id, new Set());
 
     this.invalidate();
   }
 
   removeNode(id: ComponentId): void {
-    // Remove every wire touching this node first
-    const toRemove = Array.from(this.wires.values()).filter(
-      (w) => w.from.comp === id || w.to.comp === id,
-    );
+    // Remove every wire touching this node using the per-node index
+    const wireIds = this.nodeWires.get(id);
 
-    for (const w of toRemove) this.removeWire(w.id);
+    if (wireIds) {
+      for (const wid of Array.from(wireIds)) this.removeWire(wid);
+    }
 
     this.downstream.delete(id);
     this.upstream.delete(id);
+    this.nodeWires.delete(id);
     this.invalidate();
   }
 
@@ -61,9 +68,17 @@ export class GraphManager {
 
     const { from, to } = wire;
     const outKey = `${from.comp}${KEY_SEPARATOR}${from.pin}`;
+    const edgeKey = `${from.comp}${KEY_SEPARATOR}${to.comp}`;
 
     this.downstream.get(from.comp)?.add(to.comp);
     this.upstream.get(to.comp)?.add(from.comp);
+
+    // Update edge reference count
+    this.edgeCount.set(edgeKey, (this.edgeCount.get(edgeKey) ?? 0) + 1);
+
+    // Update per-node wire index
+    this.nodeWires.get(from.comp)?.add(wire.id);
+    this.nodeWires.get(to.comp)?.add(wire.id);
 
     if (!this.outputWires.has(outKey)) this.outputWires.set(outKey, []);
 
@@ -80,6 +95,7 @@ export class GraphManager {
 
     const { from, to } = wire;
     const outKey = `${from.comp}${KEY_SEPARATOR}${from.pin}`;
+    const edgeKey = `${from.comp}${KEY_SEPARATOR}${to.comp}`;
     const outList = this.outputWires.get(outKey);
 
     if (outList) {
@@ -92,14 +108,19 @@ export class GraphManager {
     this.inputWires.delete(`${to.comp}${KEY_SEPARATOR}${to.pin}`);
     this.wires.delete(wireId);
 
-    // Rebuild adjacency only if no other wire still links the same pair
-    const stillConnected = Array.from(this.wires.values()).some(
-      (w) => w.from.comp === from.comp && w.to.comp === to.comp,
-    );
+    // Update per-node wire index
+    this.nodeWires.get(from.comp)?.delete(wireId);
+    this.nodeWires.get(to.comp)?.delete(wireId);
 
-    if (!stillConnected) {
+    // Decrement edge count; remove adjacency when no wires remain for this pair
+    const count = (this.edgeCount.get(edgeKey) ?? 1) - 1;
+
+    if (count <= 0) {
+      this.edgeCount.delete(edgeKey);
       this.downstream.get(from.comp)?.delete(to.comp);
       this.upstream.get(to.comp)?.delete(from.comp);
+    } else {
+      this.edgeCount.set(edgeKey, count);
     }
 
     this.invalidate();
