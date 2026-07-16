@@ -1165,6 +1165,7 @@ function DigitalGateApp() {
                       signals={group.signals}
                       style={wireStyle}
                       isSelected={groupSelected}
+                      isRunning={isRunning}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 

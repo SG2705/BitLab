@@ -3,7 +3,7 @@ import { FormattedMessage } from "react-intl";
 
 import { WIRE_TYPE } from "@/lib/constants";
 import { type WireType } from "@/lib/types";
-import { signalsToBinary, signalsToHex } from "@/lib/utils";
+import { cn, signalsToBinary, signalsToHex } from "@/lib/utils";
 
 interface Point {
   x: number;
@@ -17,6 +17,7 @@ interface BusWirePathProps {
   signals: boolean[];
   style: WireType;
   isSelected: boolean;
+  isRunning?: boolean;
   isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
@@ -39,6 +40,7 @@ function midpoint(p1: Point, p2: Point): Point {
 }
 
 BusWirePath.defaultProps = {
+  isRunning: false,
   isPreview: undefined,
   onClick: undefined,
 };
@@ -50,6 +52,7 @@ function BusWirePath({
   signals,
   style,
   isSelected,
+  isRunning,
   isPreview,
   onClick,
 }: BusWirePathProps) {
@@ -64,7 +67,7 @@ function BusWirePath({
   const badgeWidth = Math.max(120, busWidth * 12 + 60);
   const badgeHeight = 40;
   const badgeX = mid.x - badgeWidth / 2;
-  const badgeY = mid.y - badgeHeight - 4;
+  const badgeY = mid.y - badgeHeight - badgeHeight / 2;
 
   // Per-bit state box dimensions
   const boxSize = 8;
@@ -162,17 +165,22 @@ function BusWirePath({
       {/* N parallel thin lines inside */}
       {Array.from({ length: busWidth }, (_, i) => {
         const offset = -totalSpan / 2 + i * 2;
+        const live = Boolean(signals[i]);
 
         return (
           <path
             key={i}
             d={d}
-            stroke="var(--color-wire)"
+            stroke={live ? "var(--color-signal-on)" : "var(--color-wire)"}
             strokeWidth={1.5}
             fill="none"
             strokeDasharray={isPreview ? "8 6" : undefined}
+            className={cn(
+              live && isRunning && "wire-flow",
+              live && "signal-glow",
+            )}
             style={{
-              opacity: isPreview ? 0.5 : 0.6,
+              opacity: isPreview ? 0.5 : 1,
               transform: `translateY(${offset}px)`,
             }}
           />

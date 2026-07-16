@@ -428,7 +428,7 @@ function GateNode({
             stroke={
               comp.inputs.some(Boolean)
                 ? "var(--color-primary)"
-                : "var(--color-border)"
+                : "var(--color-accent)"
             }
             strokeWidth={1.5}
             onMouseUp={(e) => onPinUp(e, -1, PIN_KIND.IN)}
@@ -495,7 +495,7 @@ function GateNode({
             stroke={
               comp.outputs.some(Boolean)
                 ? "var(--color-primary)"
-                : "var(--color-border)"
+                : "var(--color-accent)"
             }
             strokeWidth={1.5}
             onMouseDown={(e) => onPinDown(e, -1, PIN_KIND.OUT)}
