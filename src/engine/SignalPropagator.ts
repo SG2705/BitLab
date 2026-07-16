@@ -18,12 +18,11 @@
  *   • Feedback / oscillating loops are detected and halted after MAX_EVALS.
  */
 
-import { stateEqual } from "@/lib/utils";
-
 import { type ComponentLibrary } from "./ComponentLibrary";
 import { EventQueue } from "./EventQueue";
 import { type GraphManager } from "./GraphManager";
 import type { ComponentInstance, SignalValue } from "./types";
+import { stateEqual } from "./utils";
 
 const MAX_EVALS_PER_COMPONENT = 64;
 

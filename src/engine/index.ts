@@ -5,8 +5,6 @@
  * The engine has zero UI framework dependencies.
  */
 
-export * from "./constants";
-
 export type {
   SignalValue,
   ComponentId,

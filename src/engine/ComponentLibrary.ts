@@ -8,7 +8,7 @@
  */
 import { v4 as uuidv4 } from "uuid";
 
-import { fm, getHeightForPinCount } from "@/lib/utils";
+import { fm } from "@/lib/utils";
 
 import {
   DEFAULT_PROBE_SAMPLES,
@@ -87,6 +87,7 @@ import type {
   EvaluateResult,
   SignalValue,
 } from "./types";
+import { getHeightForPinCount } from "./utils";
 
 export interface CustomGateMeta {
   type: string;
