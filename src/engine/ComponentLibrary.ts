@@ -57,7 +57,6 @@ import {
   GATE_TYPE_SR_LATCH,
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
-  GATE_TYPE_TRIBUF,
   GATE_TYPE_UREG4,
   GATE_TYPE_UREG8,
   GATE_TYPE_XNOR,
@@ -401,7 +400,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 120,
     height: 70,
     inputLabels: ["IN"],
-    isSequential: true,
+    // A probe records the signal that has settled in the current pass. It is
+    // stateful history, not edge-triggered storage.
+    isSequential: false,
     isClock: false,
     isInput: false,
     isOutput: false,
@@ -440,7 +441,10 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "SR",
-    isSequential: true,
+    // An SR latch is stateful but level-sensitive: it must observe inputs
+    // settled during this propagation pass, rather than the pre-pass snapshot
+    // reserved for edge-triggered storage.
+    isSequential: false,
     isClock: false,
     isInput: false,
     isOutput: false,
@@ -563,7 +567,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "DL",
-    isSequential: true,
+    // A D latch is transparent while E is high, so it must read live inputs.
+    // Only edge-triggered storage uses the pre-pass input snapshot.
+    isSequential: false,
     isClock: false,
     isInput: false,
     isOutput: false,
@@ -948,20 +954,6 @@ const DEFINITIONS: ComponentDefinition[] = [
       return { outputs: [a < bv, a === bv, a > bv], state: null };
     },
   }),
-  cb({
-    type: GATE_TYPE_TRIBUF,
-    label: fm("lb_tribuf"),
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: 2,
-    outputs: 1,
-    width: 60,
-    height: 50,
-    symbol: "Z",
-    inputLabels: ["A", "EN"],
-    outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [b(i[1]) && b(i[0])], state: null }),
-  }),
-
   // ── Utility ──────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_SPLITTER,

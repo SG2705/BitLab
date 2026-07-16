@@ -41,7 +41,6 @@ import {
   GATE_TYPE_SR_LATCH,
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
-  GATE_TYPE_TRIBUF,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/lib/constants";
@@ -670,19 +669,6 @@ export function ComparatorIcon(p: IconProps) {
 /* ---------- Misc ---------- */
 
 /**
- * TriStateIcon
- */
-export function TriStateIcon(p: IconProps) {
-  return (
-    <Svg {...p}>
-      <path d="M5 5v14l14-7z" />
-      <path d="M12 5v-3" />
-      <path d="M2 12h3M19 12h3" />
-    </Svg>
-  );
-}
-
-/**
  * UtilityIcon
  */
 export function UtilityIcon(p: IconProps) {
@@ -772,7 +758,6 @@ const GATE_ICON = {
   [GATE_TYPE_FULL_SUB]: FullSubIcon,
   [GATE_TYPE_CMP4]: Comparator4Icon,
   [GATE_TYPE_COMPARATOR]: ComparatorIcon,
-  [GATE_TYPE_TRIBUF]: TriStateIcon,
   [GATE_TYPE_PROBE]: ProbeIcon,
   [GATE_TYPE_SPLITTER]: SplitterIcon,
   [GATE_TYPE_COMMENT]: CommentIcon,

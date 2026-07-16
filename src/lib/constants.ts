@@ -50,7 +50,6 @@ export const MESSAGES = defineMessages({
   lb_half_sub: { id: "X/SJAt", defaultMessage: "Half Sub" },
   lb_full_sub: { id: "oNcdXR", defaultMessage: "Full Sub" },
   lb_cmp4: { id: "2I9fUV", defaultMessage: "Comparator 4" },
-  lb_tribuf: { id: "/Hbmdf", defaultMessage: "Tri-State" },
   lb_utility: { id: "jE808X", defaultMessage: "Utility" },
   lb_splitter: { id: "xu5aZu", defaultMessage: "Splitter" },
   lb_comment: { id: "LgbKvU", defaultMessage: "Comment" },
@@ -110,7 +109,6 @@ export const GATE_TYPE_MUX8 = "MUX8";
 export const GATE_TYPE_HALF_SUB = "HALF_SUB";
 export const GATE_TYPE_FULL_SUB = "FULL_SUB";
 export const GATE_TYPE_CMP4 = "CMP4";
-export const GATE_TYPE_TRIBUF = "TRIBUF";
 export const GATE_TYPE_PROBE = "PROBE";
 export const GATE_TYPE_SPLITTER = "SPLITTER";
 export const GATE_TYPE_COMMENT = "COMMENT";
@@ -243,7 +241,6 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_HALF_SUB]: { en: "Half Sub", messageKey: "lb_half_sub" },
   [GATE_TYPE_FULL_SUB]: { en: "Full Sub", messageKey: "lb_full_sub" },
   [GATE_TYPE_CMP4]: { en: "Comparator 4", messageKey: "lb_cmp4" },
-  [GATE_TYPE_TRIBUF]: { en: "Tri-State", messageKey: "lb_tribuf" },
   [GATE_TYPE_PROBE]: { en: "Probe", messageKey: "lb_probe" },
   [GATE_TYPE_SPLITTER]: { en: "Splitter", messageKey: "lb_splitter" },
   [GATE_TYPE_COMMENT]: { en: "Comment", messageKey: "lb_comment" },

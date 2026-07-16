@@ -21,7 +21,7 @@ A digital logic circuit designer built on an infinite canvas. Place components, 
 | Inputs      | Toggle, Button, Constant, Clock, Digit→Binary                                                                                                                |
 | Outputs     | LED, 7-Segment Display, Signal Probe                                                                                                                         |
 | Sequential  | SR Latch, D Latch, D Flip-Flop, JK Flip-Flop, T Flip-Flop, Register 4, Counter 4, Shift Register 4                                                           |
-| Arithmetic  | Half Adder, Full Adder, Half Sub, Full Sub, Comparator, Comparator 4, MUX 2:1, MUX 4:1, MUX 8:1, Demux 1:2, Decoder 2:4, Decoder 3:8, Encoder 4:2, Tri-State |
+| Arithmetic  | Half Adder, Full Adder, Half Sub, Full Sub, Comparator, Comparator 4, MUX 2:1, MUX 4:1, MUX 8:1, Demux 1:2, Decoder 2:4, Decoder 3:8, Encoder 4:2 |
 | Utility     | Splitter, Comment                                                                                                                                            |
 | Custom      | Any sub-circuit saved as a reusable gate                                                                                                                     |
 
