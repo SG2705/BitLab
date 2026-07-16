@@ -71,6 +71,12 @@ export interface ComponentDefinition {
   outputLabels?: string[];
   /** True → only updates on a clock edge; False → updates on any input change */
   isSequential: boolean;
+  /**
+   * Request pre-propagation pin values in evaluate()'s context while this
+   * component itself continues to receive live inputs. Used by composite
+   * components that contain edge-triggered storage and combinational logic.
+   */
+  needsInputSnapshot?: boolean;
   /** True → this component drives the simulation clock (has a tick() method) */
   isClock: boolean;
   /** True → this component is a user-driven input (Toggle, Button, Constant) */
@@ -87,7 +93,7 @@ export interface ComponentDefinition {
   evaluate: (
     inputs: SignalValue[],
     state: Record<string, unknown> | null,
-    context?: { tick: number },
+    context?: { tick: number; snapshotInputs?: SignalValue[] },
   ) => EvaluateResult;
   /**
    * Time-based advancement for clock/timer components.

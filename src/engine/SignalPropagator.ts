@@ -95,29 +95,41 @@ export class SignalPropagator {
         break;
       }
 
-      // Sequential gates read from the pre-pass snapshot so that chained
-      // flip-flops see each other's outputs from before this clock edge
-      // (non-blocking assignment semantics). Combinational gates read the
-      // live map so their paths settle within the same pass.
-      const useSnapshot = def.isSequential;
-
-      // Build current input signals by reading connected source outputs
-      const inputs: SignalValue[] = new Array<boolean>(def.inputs).fill(false);
+      // Edge-triggered gates read the pre-pass snapshot so chained
+      // flip-flops observe each other's prior outputs (non-blocking
+      // assignment semantics). Composite gates can receive both views: live
+      // inputs for their combinational paths and snapshotInputs for their
+      // internal edge-triggered storage.
+      const needsSnapshot = def.isSequential || def.needsInputSnapshot;
+      const liveInputs: SignalValue[] = new Array<boolean>(def.inputs).fill(
+        false,
+      );
+      const snapshotInputs = needsSnapshot
+        ? new Array<boolean>(def.inputs).fill(false)
+        : undefined;
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
         const wire = this.graph.getInputWire(compId, pin);
 
         if (wire) {
-          const srcOutputs = useSnapshot
-            ? outputSnapshot.get(wire.from.comp)
-            : components[wire.from.comp]?.outputs;
+          const liveOutputs = components[wire.from.comp]?.outputs;
+          const priorOutputs = outputSnapshot.get(wire.from.comp);
 
-          if (srcOutputs) inputs[pin] = srcOutputs[wire.from.pin] ?? false;
+          if (liveOutputs)
+            liveInputs[pin] = liveOutputs[wire.from.pin] ?? false;
+          if (snapshotInputs && priorOutputs)
+            snapshotInputs[pin] = priorOutputs[wire.from.pin] ?? false;
         }
       }
 
       // Evaluate
-      const result = def.evaluate(inputs, comp.state, { tick });
+      const inputs = def.isSequential
+        ? (snapshotInputs ?? liveInputs)
+        : liveInputs;
+      const result = def.evaluate(inputs, comp.state, {
+        tick,
+        snapshotInputs,
+      });
 
       totalEvals += 1;
 

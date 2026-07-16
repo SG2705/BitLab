@@ -6,6 +6,7 @@
  * The evaluate() function is a pure function of (inputs, state) → (outputs, state).
  * The tick() function (clock-only) is a pure function of (state, dt) → (outputs, state).
  */
+import { v4 as uuidv4 } from "uuid";
 
 import {
   DEFAULT_PROBE_SAMPLES,
@@ -1141,79 +1142,302 @@ export class ComponentLibrary {
   }
 
   /**
-   * Analyse `circuit`, derive inputs/outputs, build a black-box
-   * ComponentDefinition that evaluates the sub-circuit, and register it.
+   * Compile `circuit` into a reusable black-box component.
    *
-   * Returns the new type string on success, or null when the circuit has
-   * neither input components (Toggle/Button/Const/Clock) nor output
-   * components (LED/Display7).
+   * Each source output becomes an input port and each output-sink input
+   * becomes an output port. This preserves multi-bit sources and displays,
+   * unlike the former one-pin-per-component representation.
    */
   registerCustomCircuit(name: string, circuit: CircuitSnapshot): string | null {
-    const comps = Object.values(circuit.components);
+    const knownComps = Object.values(circuit.components)
+      .flatMap((component) => {
+        if (!this.has(component.type)) return [];
 
-    const inputComps = comps
-      .filter((c) => {
-        if (!this.has(c.type)) return false;
-
-        const def = this.get(c.type);
-
-        return def.isInput || def.isClock;
+        return [{ component, def: this.get(component.type) }];
       })
-      .sort((p, q) => p.y - q.y || p.x - q.x);
+      .sort(
+        (left, right) =>
+          left.component.y - right.component.y ||
+          left.component.x - right.component.x,
+      );
+    const compById = new Map(
+      knownComps.map(({ component, def }) => [
+        component.id,
+        { component, def },
+      ]),
+    );
+    const sourceComps = knownComps.filter(
+      ({ def }) => def.isInput || def.isClock,
+    );
+    const sinkComps = knownComps.filter(({ def }) => def.isOutput);
 
-    const outputComps = comps
-      .filter((c) => {
-        if (!this.has(c.type)) return false;
+    if (sourceComps.length === 0 && sinkComps.length === 0) return null;
 
-        return this.get(c.type).isOutput;
-      })
-      .sort((p, q) => p.y - q.y || p.x - q.x);
+    const sourceIds = new Set(sourceComps.map(({ component }) => component.id));
+    const sinkIds = new Set(sinkComps.map(({ component }) => component.id));
+    const executable = knownComps.filter(
+      ({ component }) =>
+        !sourceIds.has(component.id) && !sinkIds.has(component.id),
+    );
+    const executableIds = new Set(
+      executable.map(({ component }) => component.id),
+    );
 
-    if (inputComps.length === 0 && outputComps.length === 0) return null;
+    const portLabel = (
+      label: string | undefined,
+      pinLabel: string | undefined,
+      pin: number,
+      pinCount: number,
+      fallback: string,
+    ) => {
+      const base = label || fallback;
 
-    const inputIds = inputComps.map((c) => c.id);
-    const outputIds = outputComps.map((c) => c.id);
-    const inputLabels = inputComps.map((c, i) => c.label || `IN${i}`);
-    const outputLabels = outputComps.map((c, i) => c.label || `OUT${i}`);
+      return pinCount === 1 ? base : `${base}.${pinLabel ?? `P${pin}`}`;
+    };
 
-    // Wires indexed by target component
-    const inWires: Record<
-      string,
-      { fromComp: string; fromPin: number; toPin: number }[]
-    > = {};
+    const inputPorts = sourceComps.flatMap(
+      ({ component, def }, componentIndex) =>
+        Array.from({ length: def.outputs }, (_, pin) => ({
+          compId: component.id,
+          pin,
+          label: portLabel(
+            component.label,
+            def.outputLabels?.[pin],
+            pin,
+            def.outputs,
+            `IN${componentIndex}`,
+          ),
+        })),
+    );
+    const outputPorts = sinkComps.flatMap(
+      ({ component, def }, componentIndex) =>
+        Array.from({ length: def.inputs }, (_, pin) => ({
+          compId: component.id,
+          pin,
+          label: portLabel(
+            component.label,
+            def.inputLabels?.[pin],
+            pin,
+            def.inputs,
+            `OUT${componentIndex}`,
+          ),
+        })),
+    );
+    const inputLabels = inputPorts.map((port) => port.label);
+    const outputLabels = outputPorts.map((port) => port.label);
+    const inputWires = new Map<string, { fromComp: string; fromPin: number }>();
 
-    for (const w of Object.values(circuit.wires)) {
-      if (!inWires[w.to.comp]) inWires[w.to.comp] = [];
+    for (const wire of Object.values(circuit.wires)) {
+      const from = compById.get(wire.from.comp);
+      const to = compById.get(wire.to.comp);
 
-      inWires[w.to.comp].push({
-        fromComp: w.from.comp,
-        fromPin: w.from.pin,
-        toPin: w.to.pin,
+      if (!from || !to) continue;
+      if (wire.from.pin < 0 || wire.from.pin >= from.def.outputs) continue;
+      if (wire.to.pin < 0 || wire.to.pin >= to.def.inputs) continue;
+
+      inputWires.set(`${wire.to.comp}:${wire.to.pin}`, {
+        fromComp: wire.from.comp,
+        fromPin: wire.from.pin,
       });
     }
 
-    // Middle components (not input/output) — evaluated during propagation
-    const middleIds = comps
-      .filter((c) => !inputIds.includes(c.id) && !outputIds.includes(c.id))
-      .map((c) => c.id);
+    // Edge-triggered components are source nodes in this order: they read the
+    // previous signal snapshot, then their new outputs feed the live
+    // combinational paths below.
+    const downstream = new Map<string, Set<string>>(
+      executable.map(({ component }) => [component.id, new Set()]),
+    );
+    const inDegree = new Map<string, number>(
+      executable.map(({ component }) => [component.id, 0]),
+    );
 
-    // Snapshot of initial component states for reset
-    const initialCompStates: Record<string, Record<string, unknown> | null> =
-      {};
+    for (const { component, def } of executable) {
+      if (def.isSequential) continue;
 
-    for (const c of comps) {
-      if (!this.has(c.type)) continue;
+      for (let pin = 0; pin < def.inputs; pin += 1) {
+        const wire = inputWires.get(`${component.id}:${pin}`);
 
-      initialCompStates[c.id] = this.get(c.type).initialState();
+        if (!wire || !executableIds.has(wire.fromComp)) continue;
+
+        const targets = downstream.get(wire.fromComp);
+
+        if (targets?.has(component.id)) continue;
+
+        targets?.add(component.id);
+        inDegree.set(component.id, (inDegree.get(component.id) ?? 0) + 1);
+      }
     }
 
-    const numInputs = inputIds.length;
-    const numOutputs = outputIds.length;
-    const safeName = name.replace(/\W+/g, "_").toUpperCase();
-    const type = `CUSTOM_${safeName}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const queue = executable
+      .filter(({ component }) => (inDegree.get(component.id) ?? 0) === 0)
+      .map(({ component }) => component.id);
+    const executionOrder: string[] = [];
 
-    const libHas = this.has.bind(this);
-    const libGet = this.get.bind(this);
+    for (let index = 0; index < queue.length; index += 1) {
+      const id = queue[index];
+
+      executionOrder.push(id);
+
+      for (const target of downstream.get(id) ?? []) {
+        const nextDegree = (inDegree.get(target) ?? 0) - 1;
+
+        inDegree.set(target, nextDegree);
+        if (nextDegree === 0) queue.push(target);
+      }
+    }
+
+    const cyclicIds = new Set(
+      executable
+        .map(({ component }) => component.id)
+        .filter((id) => !executionOrder.includes(id)),
+    );
+    const cyclicOrder = executable
+      .map(({ component }) => component.id)
+      .filter((id) => cyclicIds.has(id));
+    const numInputs = inputPorts.length;
+    const numOutputs = outputPorts.length;
+    const safeName = name.replace(/\W+/g, "_").toUpperCase();
+    const type = `CUSTOM_${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
+    const hasSequentialInternals = executable.some(
+      ({ def }) => def.isSequential || def.needsInputSnapshot,
+    );
+    const createInitialStates = (): Record<
+      string,
+      Record<string, unknown> | null
+    > =>
+      Object.fromEntries(
+        executable.map(({ component, def }) => [
+          component.id,
+          def.initialState(),
+        ]),
+      );
+    const createInitialOutputs = (): Record<string, boolean[]> =>
+      Object.fromEntries(
+        executable.map(({ component, def }) => [
+          component.id,
+          new Array<boolean>(def.outputs).fill(false),
+        ]),
+      );
+
+    const evaluateCompiled = (
+      externalInputs: SignalValue[],
+      state: Record<string, unknown> | null,
+      snapshotInputs: SignalValue[] | undefined,
+      tick: number,
+    ): EvaluateResult => {
+      const saved = state as {
+        compStates?: Record<string, Record<string, unknown> | null>;
+        compOutputs?: Record<string, boolean[]>;
+      } | null;
+      const compStates = {
+        ...createInitialStates(),
+        ...(saved?.compStates ?? {}),
+      };
+      const savedOutputs = saved?.compOutputs ?? {};
+      const signals: Record<string, boolean[]> = {};
+      const priorSignals: Record<string, boolean[]> = {};
+
+      for (const { component, def } of knownComps) {
+        const prior = savedOutputs[component.id];
+        const outputs =
+          prior?.slice() ?? new Array<boolean>(def.outputs).fill(false);
+
+        signals[component.id] = outputs;
+        priorSignals[component.id] = outputs.slice();
+      }
+
+      inputPorts.forEach((port, index) => {
+        signals[port.compId][port.pin] = Boolean(externalInputs[index]);
+        priorSignals[port.compId][port.pin] = Boolean(
+          snapshotInputs?.[index] ?? externalInputs[index],
+        );
+      });
+
+      const readInputs = (compId: string, useSnapshot: boolean): boolean[] => {
+        const target = compById.get(compId);
+
+        if (!target) return [];
+
+        const inputs = new Array<boolean>(target.def.inputs).fill(false);
+        const sourceSignals = useSnapshot ? priorSignals : signals;
+
+        for (let pin = 0; pin < target.def.inputs; pin += 1) {
+          const wire = inputWires.get(`${compId}:${pin}`);
+
+          if (wire)
+            inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? false;
+        }
+
+        return inputs;
+      };
+
+      const evaluateComponent = (id: string): boolean => {
+        const entry = compById.get(id);
+
+        if (!entry) return false;
+
+        const liveInputs = readInputs(id, false);
+        const priorInputs = readInputs(id, true);
+        const inputs = entry.def.isSequential ? priorInputs : liveInputs;
+        const previousOutputs = signals[id];
+        const result = entry.def.evaluate(inputs, compStates[id], {
+          tick,
+          snapshotInputs: priorInputs,
+        });
+
+        signals[id] = result.outputs;
+        compStates[id] = result.state;
+
+        return (
+          previousOutputs.length !== result.outputs.length ||
+          previousOutputs.some((value, pin) => value !== result.outputs[pin])
+        );
+      };
+
+      for (const id of executionOrder) evaluateComponent(id);
+
+      // Combinational cycles are not part of the topological plan. Resolve
+      // them event-by-event, with the same per-component guard as the main
+      // propagator, instead of relying on a fixed number of whole-circuit
+      // passes.
+      if (cyclicOrder.length > 0) {
+        const pending = [...cyclicOrder];
+        const queued = new Set(cyclicOrder);
+        const evaluations = new Map<string, number>();
+
+        for (let index = 0; index < pending.length; index += 1) {
+          const id = pending[index];
+
+          queued.delete(id);
+
+          const count = (evaluations.get(id) ?? 0) + 1;
+
+          evaluations.set(id, count);
+          if (count > 64) continue;
+
+          if (!evaluateComponent(id)) continue;
+
+          for (const target of downstream.get(id) ?? []) {
+            if (!cyclicIds.has(target) || queued.has(target)) continue;
+
+            queued.add(target);
+            pending.push(target);
+          }
+        }
+      }
+
+      const outputs = outputPorts.map(
+        (port) => readInputs(port.compId, false)[port.pin] ?? false,
+      );
+      const compOutputs = Object.fromEntries(
+        executable.map(({ component }) => [
+          component.id,
+          signals[component.id].slice(),
+        ]),
+      );
+
+      return { outputs, state: { compStates, compOutputs } };
+    };
 
     const def: ComponentDefinition = {
       type,
@@ -1224,95 +1448,36 @@ export class ComponentLibrary {
       width: 90,
       height: Math.max(60, Math.max(numInputs, numOutputs) * 22 + 20),
       symbol: name.slice(0, 4),
+      // A composite receives live signals so its combinational outputs settle
+      // in the current pass. It separately consumes snapshotInputs for any
+      // internal edge-triggered components.
       isSequential: false,
+      needsInputSnapshot: hasSequentialInternals,
       isClock: false,
       isInput: false,
       isOutput: false,
       inputLabels,
       outputLabels,
-      initialState: () => ({
-        compStates: { ...initialCompStates },
-      }),
-      evaluate(externalInputs, state) {
-        const compStates: Record<string, Record<string, unknown> | null> = {
-          ...((state?.compStates as Record<
-            string,
-            Record<string, unknown> | null
-          >) ?? initialCompStates),
+      initialState: () => {
+        const blankState = {
+          compStates: createInitialStates(),
+          compOutputs: createInitialOutputs(),
         };
 
-        // Current output signals for every sub-component
-        const signals: Record<string, boolean[]> = {};
-
-        for (const c of comps) {
-          if (!libHas(c.type)) continue;
-
-          signals[c.id] = new Array<boolean>(libGet(c.type).outputs).fill(
-            false,
-          );
-        }
-
-        // Drive input components from external inputs
-        inputIds.forEach((id, i) => {
-          signals[id] = [Boolean(externalInputs[i])];
-          compStates[id] = { on: Boolean(externalInputs[i]) };
-        });
-
-        // Propagate through middle components (10 passes handles most cycles)
-        for (let pass = 0; pass < 10; pass += 1) {
-          for (const id of middleIds) {
-            const c = circuit.components[id];
-
-            if (!c || !libHas(c.type)) continue;
-
-            const cdef = libGet(c.type);
-            const ins = new Array<boolean>(cdef.inputs).fill(false);
-
-            for (const w of inWires[id] ?? []) {
-              if (w.toPin < ins.length)
-                ins[w.toPin] = signals[w.fromComp]?.[w.fromPin] ?? false;
-            }
-
-            const result = cdef.evaluate(ins, compStates[id]);
-
-            signals[id] = result.outputs;
-            compStates[id] = result.state;
-          }
-        }
-
-        // Drive output components (LEDs) so their state.on is updated
-        for (const id of outputIds) {
-          const c = circuit.components[id];
-
-          if (!c || !libHas(c.type)) continue;
-
-          const cdef = libGet(c.type);
-          const ins = new Array<boolean>(cdef.inputs).fill(false);
-
-          for (const w of inWires[id] ?? []) {
-            if (w.toPin < ins.length)
-              ins[w.toPin] = signals[w.fromComp]?.[w.fromPin] ?? false;
-          }
-
-          const result = cdef.evaluate(ins, compStates[id]);
-
-          signals[id] = result.outputs;
-          compStates[id] = result.state;
-        }
-
-        // Read a boolean signal from each output component's state.
-        // LED stores { on: boolean }; Display7 stores { value: number }.
-        const outputs = outputIds.map((id) => {
-          const st = compStates[id];
-
-          if (st == null) return false;
-          if ("on" in st) return Boolean(st.on);
-          if ("value" in st) return (st.value as number) !== 0;
-
-          return false;
-        });
-
-        return { outputs, state: { compStates } };
+        return evaluateCompiled(
+          new Array<boolean>(numInputs).fill(false),
+          blankState,
+          undefined,
+          0,
+        ).state;
+      },
+      evaluate(externalInputs, state, context) {
+        return evaluateCompiled(
+          externalInputs,
+          state,
+          context?.snapshotInputs,
+          context?.tick ?? 0,
+        );
       },
     };
 

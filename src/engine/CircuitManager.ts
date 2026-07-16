@@ -35,10 +35,6 @@ import type {
   Wire,
 } from "./types";
 
-function uid(): string {
-  return uuidv4();
-}
-
 export interface AddComponentOptions {
   x?: number;
   y?: number;
@@ -79,7 +75,7 @@ export class CircuitManager {
     type: string,
     opts: AddComponentOptions = {},
   ): ComponentInstance {
-    const cid = uid();
+    const cid = uuidv4();
     const def = this.library.get(type);
     const initialState = def.initialState();
     const { outputs } = def.evaluate(
@@ -199,7 +195,7 @@ export class CircuitManager {
 
     if (existing) return null;
 
-    const id = uid();
+    const id = uuidv4();
     const wire: Wire = {
       id,
       from: { comp: fromComp, pin: fromPin },
