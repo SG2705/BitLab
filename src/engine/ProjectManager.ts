@@ -25,12 +25,6 @@ export interface SerializedProject {
   circuit: CircuitSnapshot;
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj)) as T;
-}
-
 /** Migrate older project formats to the current schema */
 const migrate = (project: SerializedProject): SerializedProject => {
   if (project.version === VERSION) return project;
@@ -63,7 +57,7 @@ export class ProjectManager {
     // Truncate redo branch
 
     this.history = this.history.slice(0, this.historyIndex + 1);
-    this.history.push(deepClone(snap));
+    this.history.push(structuredClone(snap));
 
     if (this.history.length > MAX_HISTORY) this.history.shift();
 
@@ -74,7 +68,7 @@ export class ProjectManager {
     if (!this.canUndo()) return false;
 
     this.historyIndex -= 1;
-    this.manager.loadSnapshot(deepClone(this.history[this.historyIndex]));
+    this.manager.loadSnapshot(structuredClone(this.history[this.historyIndex]));
 
     return true;
   }
@@ -85,7 +79,7 @@ export class ProjectManager {
     }
 
     this.historyIndex += 1;
-    this.manager.loadSnapshot(deepClone(this.history[this.historyIndex]));
+    this.manager.loadSnapshot(structuredClone(this.history[this.historyIndex]));
 
     return true;
   }

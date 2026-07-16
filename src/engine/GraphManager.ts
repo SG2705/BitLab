@@ -160,11 +160,12 @@ export class GraphManager {
     }
 
     const result: ComponentId[] = [];
+    let head = 0;
 
-    while (queue.length > 0) {
-      const node = queue.shift();
+    while (head < queue.length) {
+      const node = queue[head];
 
-      if (!node) continue;
+      head += 1;
 
       result.push(node);
 
