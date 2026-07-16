@@ -19,6 +19,8 @@ import {
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS4,
+  GATE_TYPE_BUS8,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CLOCK,
   GATE_TYPE_CMP4,
@@ -56,6 +58,8 @@ import {
   GATE_TYPE_TIFF,
   GATE_TYPE_TOGGLE,
   GATE_TYPE_TRIBUF,
+  GATE_TYPE_UREG4,
+  GATE_TYPE_UREG8,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/lib/constants";
@@ -987,6 +991,108 @@ const DEFINITIONS: ComponentDefinition[] = [
     isAnnotation: true,
     evaluate: () => ({ outputs: [], state: null }),
   }),
+  cb({
+    type: GATE_TYPE_BUS4,
+    label: fm("lb_bus4"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 4,
+    outputs: 4,
+    width: 70,
+    height: 80,
+    inputLabels: ["B0", "B1", "B2", "B3"],
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  cb({
+    type: GATE_TYPE_BUS8,
+    label: fm("lb_bus8"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 8,
+    outputs: 8,
+    width: 70,
+    height: 110,
+    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    evaluate: (inputs) => ({
+      outputs: inputs.slice(),
+      state: null,
+    }),
+  }),
+  {
+    type: GATE_TYPE_UREG4,
+    label: fm("lb_ureg4"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 5,
+    outputs: 4,
+    width: 80,
+    height: 90,
+    inputLabels: ["D0", "D1", "D2", "D3", "WE"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
+    isSequential: false,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    initialState: () => ({ val: 0 }),
+    evaluate: (inputs, state) => {
+      const we = Boolean(inputs[4]);
+
+      if (we) {
+        const data = inputs.slice(0, 4);
+        const val = data.reduce(
+          (acc: number, bit, i) => (bit ? acc | (1 << i) : acc),
+          0,
+        );
+
+        return { outputs: data.slice(), state: { val } };
+      }
+
+      const val = (state?.val as number) ?? 0;
+      const outputs = Array.from({ length: 4 }, (_, i) =>
+        Boolean((val >> i) & 1),
+      );
+
+      return { outputs, state };
+    },
+  },
+  {
+    type: GATE_TYPE_UREG8,
+    label: fm("lb_ureg8"),
+    category: GATE_CATEGORY_UTILITY,
+    inputs: 9,
+    outputs: 8,
+    width: 80,
+    height: 130,
+    inputLabels: ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "WE"],
+    outputLabels: ["Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"],
+    isSequential: false,
+    isClock: false,
+    isInput: false,
+    isOutput: false,
+    initialState: () => ({ val: 0 }),
+    evaluate: (inputs, state) => {
+      const we = Boolean(inputs[8]);
+
+      if (we) {
+        const data = inputs.slice(0, 8);
+        const val = data.reduce(
+          (acc: number, bit, i) => (bit ? acc | (1 << i) : acc),
+          0,
+        );
+
+        return { outputs: data.slice(), state: { val } };
+      }
+
+      const val = (state?.val as number) ?? 0;
+      const outputs = Array.from({ length: 8 }, (_, i) =>
+        Boolean((val >> i) & 1),
+      );
+
+      return { outputs, state };
+    },
+  },
 ];
 
 // ── Registry class ────────────────────────────────────────────────────────────

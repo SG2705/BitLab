@@ -56,6 +56,10 @@ export const MESSAGES = defineMessages({
   lb_comment: { id: "LgbKvU", defaultMessage: "Comment" },
   lb_probe: { id: "xXqJUI", defaultMessage: "Probe" },
   lb_digit_bin: { id: "FJad6C", defaultMessage: "Digit→Bin" },
+  lb_bus4: { id: "g8kf2o", defaultMessage: "Bus 4" },
+  lb_bus8: { id: "MGhLtB", defaultMessage: "Bus 8" },
+  lb_ureg4: { id: "XqpRRy", defaultMessage: "U-Reg 4" },
+  lb_ureg8: { id: "sCV/Bb", defaultMessage: "U-Reg 8" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -111,6 +115,10 @@ export const GATE_TYPE_PROBE = "PROBE";
 export const GATE_TYPE_SPLITTER = "SPLITTER";
 export const GATE_TYPE_COMMENT = "COMMENT";
 export const GATE_TYPE_DIGIT_BIN = "DIGIT_BIN";
+export const GATE_TYPE_BUS4 = "BUS4";
+export const GATE_TYPE_BUS8 = "BUS8";
+export const GATE_TYPE_UREG4 = "UREG4";
+export const GATE_TYPE_UREG8 = "UREG8";
 
 // Wires
 export const WIRE_TYPE = {
@@ -240,4 +248,8 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_SPLITTER]: { en: "Splitter", messageKey: "lb_splitter" },
   [GATE_TYPE_COMMENT]: { en: "Comment", messageKey: "lb_comment" },
   [GATE_TYPE_DIGIT_BIN]: { en: "Digit→Bin", messageKey: "lb_digit_bin" },
+  [GATE_TYPE_BUS4]: { en: "Bus 4", messageKey: "lb_bus4" },
+  [GATE_TYPE_BUS8]: { en: "Bus 8", messageKey: "lb_bus8" },
+  [GATE_TYPE_UREG4]: { en: "U-Reg 4", messageKey: "lb_ureg4" },
+  [GATE_TYPE_UREG8]: { en: "U-Reg 8", messageKey: "lb_ureg8" },
 };
