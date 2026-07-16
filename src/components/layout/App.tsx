@@ -151,6 +151,27 @@ function DigitalGateApp() {
     moved: boolean;
   } | null>(null);
 
+  const handleLoadProject = useCallback(() => {
+    loadProjectFromLocal();
+
+    // After loading, check if any canvas components have broken custom gate types
+    setTimeout(() => {
+      const current = snapshot;
+
+      for (const comp of Object.values(current.components)) {
+        if (
+          library.isCustom(comp.type) &&
+          !library.hasValidDependencies(comp.type)
+        ) {
+          addLog(
+            CONSOLE_TAB.ERROR,
+            `Component "${comp.label ?? comp.type}" on canvas has missing dependencies and will not simulate correctly.`,
+          );
+        }
+      }
+    }, 0);
+  }, [loadProjectFromLocal, snapshot, addLog]);
+
   useEffect(() => {
     const el = canvasRef.current;
 
@@ -173,20 +194,118 @@ function DigitalGateApp() {
       if (!raw) return;
 
       const saved = JSON.parse(raw) as {
+        type?: string;
         name: string;
         circuit: CircuitSnapshot;
       }[];
 
       let anyRegistered = false;
 
-      for (const { name, circuit } of saved) {
-        if (library.registerCustomCircuit(name, circuit)) anyRegistered = true;
+      // First pass: register all gates, tracking name → assigned type for
+      // backward-compat migration when stored data lacks a stable type field.
+      const nameToType = new Map<string, string>();
+
+      for (const entry of saved) {
+        const assigned = library.registerCustomCircuit(
+          entry.name,
+          entry.circuit,
+          entry.type,
+        );
+
+        if (assigned) {
+          anyRegistered = true;
+          nameToType.set(entry.name, assigned);
+        }
       }
 
-      if (anyRegistered) setCustomBump((v) => v + 1);
+      // After all gates are loaded, check for broken dependencies.
+      // If any are found, attempt to remap stale type references from older
+      // sessions (where type IDs were not persisted) by matching the name
+      // prefix (CUSTOM_{NAME}_*).
+      if (anyRegistered) {
+        // Build a lookup: normalized name prefix → current registered type
+        const prefixToType = new Map<string, string>();
+
+        for (const [name, assignedType] of nameToType) {
+          const prefix = `CUSTOM_${name.replace(/\W+/g, "_").toUpperCase()}_`;
+
+          prefixToType.set(prefix, assignedType);
+        }
+
+        let remapped = false;
+
+        for (const meta of library.getCustomGates()) {
+          if (library.hasValidDependencies(meta.type)) continue;
+
+          // Try to remap broken references in this gate's circuit
+          const remappedCircuit = {
+            ...meta.circuit,
+            components: { ...meta.circuit.components },
+          };
+          let fixed = false;
+
+          for (const [id, comp] of Object.entries(remappedCircuit.components)) {
+            if (library.has(comp.type)) continue;
+            if (!comp.type.startsWith("CUSTOM_")) continue;
+
+            // Find matching prefix
+            for (const [prefix, newType] of prefixToType) {
+              if (comp.type.startsWith(prefix) || comp.type === newType) {
+                remappedCircuit.components[id] = { ...comp, type: newType };
+                fixed = true;
+
+                break;
+              }
+            }
+          }
+
+          if (fixed) {
+            // Re-register with the corrected circuit
+            library.unregister(meta.type, true);
+            library.registerCustomCircuit(
+              meta.name,
+              remappedCircuit,
+              meta.type,
+            );
+            remapped = true;
+          }
+        }
+
+        // Final validation pass
+        for (const def of library.getAll()) {
+          if (
+            library.isCustom(def.type) &&
+            !library.hasValidDependencies(def.type)
+          ) {
+            addLog(
+              CONSOLE_TAB.ERROR,
+              `Custom gate "${def.label}" has missing dependencies. Re-import the required sub-circuit.`,
+            );
+          }
+        }
+
+        // If we remapped any references, persist the corrected data
+        if (remapped) {
+          const gates = library.getCustomGates();
+
+          localStorage.setItem(
+            CUSTOM_CIR_KEYS,
+            JSON.stringify(
+              gates.map((m) => ({
+                type: m.type,
+                name: m.name,
+                circuit: m.circuit,
+              })),
+            ),
+          );
+        }
+
+        setCustomBump((v) => v + 1);
+      }
     } catch {
       // corrupt or missing storage — ignore
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -212,6 +331,18 @@ function DigitalGateApp() {
     const type = e.dataTransfer.getData("text/gate") || dragType;
 
     if (!type || !library.has(type)) return;
+
+    // Block dropping custom gates with missing dependencies
+    if (library.isCustom(type) && !library.hasValidDependencies(type)) {
+      addLog(
+        CONSOLE_TAB.ERROR,
+        `Cannot add "${library.get(type).label}": missing dependency. Re-import the required sub-circuit first.`,
+      );
+
+      setDragType(null);
+
+      return;
+    }
 
     const def = library.get(type);
     const { x, y } = toWorld(e.clientX, e.clientY);
@@ -457,7 +588,11 @@ function DigitalGateApp() {
       localStorage.setItem(
         CUSTOM_CIR_KEYS,
         JSON.stringify(
-          gates.map((m) => ({ name: m.name, circuit: m.circuit })),
+          gates.map((m) => ({
+            type: m.type,
+            name: m.name,
+            circuit: m.circuit,
+          })),
         ),
       );
     } catch {
@@ -532,6 +667,14 @@ function DigitalGateApp() {
             return;
           }
 
+          // Warn if the imported gate has unresolved dependencies
+          if (!library.hasValidDependencies(type)) {
+            addLog(
+              CONSOLE_TAB.WARN,
+              `"${name}" references sub-circuits not yet imported. Import those first or it will not function correctly.`,
+            );
+          }
+
           setOpenCats((o) => ({ ...o, [GATE_CATEGORY_CUSTOM]: true }));
           setCustomBump((v) => v + 1);
 
@@ -552,7 +695,13 @@ function DigitalGateApp() {
   };
 
   const removeCustomCircuit = (type: string) => {
-    library.unregister(type);
+    const error = library.unregister(type);
+
+    if (error) {
+      addLog(CONSOLE_TAB.ERROR, error);
+
+      return;
+    }
 
     setCustomBump((v) => v + 1);
     saveCustomCircuitToLocal();
@@ -696,7 +845,7 @@ function DigitalGateApp() {
         theme={theme}
         setTheme={setTheme}
         saveProjectToLocal={saveProjectToLocal}
-        loadProjectFromLocal={loadProjectFromLocal}
+        loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
         newProject={newProject}
         openCmd={() => setCmdOpen(true)}
@@ -1098,6 +1247,15 @@ function DigitalGateApp() {
                 label: `Add ${library.has(g) ? library.get(g).label : g}`,
                 action: () => {
                   if (!library.has(g)) return;
+
+                  if (library.isCustom(g) && !library.hasValidDependencies(g)) {
+                    addLog(
+                      CONSOLE_TAB.ERROR,
+                      `Cannot add "${library.get(g).label}": missing dependency.`,
+                    );
+
+                    return;
+                  }
 
                   const cx = (size.w / 2 - view.x) / view.k;
                   const cy = (size.h / 2 - view.y) / view.k;

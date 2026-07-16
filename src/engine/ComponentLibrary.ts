@@ -73,6 +73,7 @@ import type {
 } from "./types";
 
 export interface CustomGateMeta {
+  type: string;
   name: string;
   inputLabels: string[];
   outputLabels: string[];
@@ -1134,11 +1135,66 @@ export class ComponentLibrary {
     this.typeMap.set(def.type, def);
   }
 
-  /** Remove a previously registered component (custom gates only). */
-  unregister(type: string): void {
+  /**
+   * Returns a list of custom gate type strings that depend on the given type
+   * (i.e. their internal circuit contains a component of this type).
+   */
+  getDependents(type: string): string[] {
+    const dependents: string[] = [];
+
+    for (const [depType, meta] of this.customMeta) {
+      if (depType === type) continue;
+
+      const usesType = Object.values(meta.circuit.components).some(
+        (c) => c.type === type,
+      );
+
+      if (usesType) dependents.push(depType);
+    }
+
+    return dependents;
+  }
+
+  /**
+   * Returns true if all custom gate dependencies of the given type are
+   * currently registered in the library. Returns false if any component in
+   * the gate's circuit references an unknown custom type.
+   */
+  hasValidDependencies(type: string): boolean {
+    const meta = this.customMeta.get(type);
+
+    if (!meta) return true;
+
+    for (const comp of Object.values(meta.circuit.components)) {
+      if (!this.has(comp.type)) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Remove a previously registered component (custom gates only).
+   * Returns an error message if the type has dependents, null on success.
+   * Pass force=true to bypass the dependency check (used during remapping).
+   */
+  unregister(type: string, force = false): string | null {
+    if (!force) {
+      const dependents = this.getDependents(type);
+
+      if (dependents.length > 0) {
+        const names = dependents
+          .map((t) => this.customMeta.get(t)?.name ?? t)
+          .join(", ");
+
+        return `Cannot delete: used by ${names}`;
+      }
+    }
+
     this.typeMap.delete(type);
     this.customTypes.delete(type);
     this.customMeta.delete(type);
+
+    return null;
   }
 
   /**
@@ -1148,7 +1204,11 @@ export class ComponentLibrary {
    * becomes an output port. This preserves multi-bit sources and displays,
    * unlike the former one-pin-per-component representation.
    */
-  registerCustomCircuit(name: string, circuit: CircuitSnapshot): string | null {
+  registerCustomCircuit(
+    name: string,
+    circuit: CircuitSnapshot,
+    existingType?: string,
+  ): string | null {
     const knownComps = Object.values(circuit.components)
       .flatMap((component) => {
         if (!this.has(component.type)) return [];
@@ -1316,7 +1376,9 @@ export class ComponentLibrary {
     const numInputs = inputPorts.length;
     const numOutputs = outputPorts.length;
     const safeName = name.replace(/\W+/g, "_").toUpperCase();
-    const type = `CUSTOM_${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
+    const type =
+      existingType ??
+      `CUSTOM_${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
     const hasSequentialInternals =
       hasInternalClocks ||
       executable.some(({ def }) => def.isSequential || def.needsInputSnapshot);
@@ -1519,7 +1581,13 @@ export class ComponentLibrary {
 
     this.typeMap.set(type, def);
     this.customTypes.add(type);
-    this.customMeta.set(type, { name, inputLabels, outputLabels, circuit });
+    this.customMeta.set(type, {
+      type,
+      name,
+      inputLabels,
+      outputLabels,
+      circuit,
+    });
 
     return type;
   }
