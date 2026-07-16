@@ -169,6 +169,7 @@ export const KEY_SEPARATOR = ":";
 export const CURR_CIR_KEY = "current-circuit-key";
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 4;
+export const TICKS_PER_CYCLE = 2;
 export const DEFAULT_PROBE_SAMPLES = 16;
 export const EMPTY_SNAPSHOT: CircuitSnapshot = { components: {}, wires: {} };
 

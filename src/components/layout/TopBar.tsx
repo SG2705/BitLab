@@ -196,7 +196,7 @@ function TopBar({
         <input
           type="range"
           min={1}
-          max={25}
+          max={10}
           value={clockSpeed}
           onChange={(e) => setClockSpeed(Number(e.target.value))}
           disabled={!hasComponents}
@@ -220,7 +220,7 @@ function TopBar({
             className="sqaurewavebox"
             style={
               {
-                "--wave-duration": `${(4 / clockSpeed).toFixed(3)}s`,
+                "--wave-duration": `${(2 / clockSpeed).toFixed(3)}s`,
               } as React.CSSProperties
             }
           >

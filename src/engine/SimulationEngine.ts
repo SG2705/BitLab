@@ -13,7 +13,11 @@
  * pattern defined in types.ts.
  */
 
-import { ENGINE_EVENT_TYPE, SIMULATION_STATUS } from "@/lib/constants";
+import {
+  ENGINE_EVENT_TYPE,
+  SIMULATION_STATUS,
+  TICKS_PER_CYCLE,
+} from "@/lib/constants";
 
 import { type ComponentLibrary } from "./ComponentLibrary";
 import { type GraphManager } from "./GraphManager";
@@ -89,7 +93,7 @@ export class SimulationEngine {
    * Advances all clocks by one tick period then propagates.
    */
   step(): void {
-    const dt = 1000 / Math.max(1, this.clockHz);
+    const dt = 1000 / Math.max(1, this.clockHz * TICKS_PER_CYCLE);
 
     this.doTick(dt);
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
@@ -163,7 +167,7 @@ export class SimulationEngine {
 
     this.lastTime = now;
 
-    const interval = 1000 / this.clockHz;
+    const interval = 1000 / (this.clockHz * TICKS_PER_CYCLE);
 
     this.accumulator += elapsed;
 
