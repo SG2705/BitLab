@@ -54,7 +54,7 @@ import {
   type Tool,
   type WireType,
 } from "@/lib/types";
-import { cn, fm, initializeLogger, snap } from "@/lib/utils";
+import { cn, fm, getGateLabel, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
 import CommandPalette from "./CommandPalette";
@@ -286,7 +286,7 @@ function DigitalGateApp() {
           ) {
             addLog(
               CONSOLE_TAB.ERROR,
-              `Custom gate "${def.label}" has missing dependencies. Re-import the required sub-circuit.`,
+              `Custom gate "${getGateLabel(def.type, def.label)}" has missing dependencies. Re-import the required sub-circuit.`,
             );
           }
         }
@@ -343,7 +343,7 @@ function DigitalGateApp() {
     if (library.isCustom(type) && !library.hasValidDependencies(type)) {
       addLog(
         CONSOLE_TAB.ERROR,
-        `Cannot add "${library.get(type).label}": missing dependency. Re-import the required sub-circuit first.`,
+        `Cannot add "${getGateLabel(type, library.get(type).label)}": missing dependency. Re-import the required sub-circuit first.`,
       );
 
       setDragType(null);
@@ -357,7 +357,10 @@ function DigitalGateApp() {
     const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
     const comp = addComponent(type, nx, ny);
 
-    addLog(CONSOLE_TAB.LOG, `Added ${def.label} (${comp.id})`);
+    addLog(
+      CONSOLE_TAB.LOG,
+      `Added ${getGateLabel(def.type, def.label)} (${comp.id})`,
+    );
 
     if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
 
@@ -873,7 +876,9 @@ function DigitalGateApp() {
         gates: c.gates.filter(
           (g) =>
             (library.has(g) &&
-              library.get(g).label.toLowerCase().includes(q)) ||
+              getGateLabel(g, library.get(g).label)
+                .toLowerCase()
+                .includes(q)) ||
             g.toLowerCase().includes(q),
         ),
       }))
@@ -1391,14 +1396,14 @@ function DigitalGateApp() {
             { label: "New project", action: newProject },
             ...liveGateCategories.flatMap((cat) =>
               cat.gates.map((g) => ({
-                label: `Add ${library.has(g) ? library.get(g).label : g}`,
+                label: `Add ${library.has(g) ? getGateLabel(g, library.get(g).label) : g}`,
                 action: () => {
                   if (!library.has(g)) return;
 
                   if (library.isCustom(g) && !library.hasValidDependencies(g)) {
                     addLog(
                       CONSOLE_TAB.ERROR,
-                      `Cannot add "${library.get(g).label}": missing dependency.`,
+                      `Cannot add "${getGateLabel(g, library.get(g).label)}": missing dependency.`,
                     );
 
                     return;

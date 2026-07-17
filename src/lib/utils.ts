@@ -3,7 +3,12 @@ import { createIntl, createIntlCache, type IntlShape } from "react-intl";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { GRID, MESSAGES, type Messages } from "@/lib/constants";
+import {
+  GATE_TYPE_LABELS,
+  GRID,
+  MESSAGES,
+  type Messages,
+} from "@/lib/constants";
 import { type ConsoleTab, type LogEntry } from "@/lib/types";
 
 export const cn = (...inputs: ClassValue[]) => {
@@ -18,6 +23,20 @@ export const fm = (
   intl: IntlShape = defaultIntl,
   values?: Record<string, string | number | undefined>,
 ) => intl.formatMessage(MESSAGES[key], values);
+
+/**
+ * Resolve a gate's display label via the i18n GATE_TYPE_LABELS map,
+ * falling back to the raw def.label for custom gates without a message key.
+ */
+export const getGateLabel = (
+  type: string,
+  fallback: string,
+  intl?: IntlShape,
+): string => {
+  const entry = GATE_TYPE_LABELS[type];
+
+  return entry ? fm(entry.messageKey, intl) : fallback;
+};
 
 export const initializeLogger = (
   setter: (value: SetStateAction<LogEntry[]>) => void,

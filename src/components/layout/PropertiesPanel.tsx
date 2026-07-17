@@ -10,8 +10,8 @@ import {
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
-import { GATE_TYPE_LABELS } from "@/lib/constants";
-import { cn, fm } from "@/lib/utils";
+import {} from "@/lib/constants";
+import { cn, getGateLabel } from "@/lib/utils";
 
 interface PropertiesPanelProps {
   comp: ComponentInstance;
@@ -49,9 +49,7 @@ function PropertiesPanel({
             <FormattedMessage id="+U6ozc" defaultMessage="Type" />
           </div>
           <div className="text-sm font-mono text-primary">
-            {GATE_TYPE_LABELS[gate.type]
-              ? fm(GATE_TYPE_LABELS[gate.type].messageKey)
-              : gate.label}
+            {getGateLabel(gate.type, gate.label, intl)}
           </div>
         </div>
         <div>

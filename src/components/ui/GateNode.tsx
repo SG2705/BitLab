@@ -15,7 +15,7 @@ import {
 } from "@/engine/constants";
 import { PIN_KIND } from "@/lib/constants";
 import { type PinKind } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, getGateLabel } from "@/lib/utils";
 
 // [a, b, c, d, e, f, g] segment patterns for hex digits 0-F
 const SEG7: boolean[][] = [
@@ -240,6 +240,7 @@ function GateNode({
   if (!library.has(comp.type)) return null;
 
   const def = library.get(comp.type);
+  const resolvedLabel = getGateLabel(def.type, def.label, intl);
 
   const active = comp.outputs.some(Boolean) || Boolean(comp.state?.on);
   const isIO = [
@@ -364,7 +365,7 @@ function GateNode({
             fontFamily="var(--font-mono)"
             pointerEvents="none"
           >
-            {def.symbol ?? def.label}
+            {def.symbol ?? resolvedLabel}
           </text>
         ))}
       <text
@@ -375,7 +376,7 @@ function GateNode({
         fontSize={9}
         pointerEvents="none"
       >
-        {isCustomLabel ? comp.label : (comp.label ?? def.label)}
+        {isCustomLabel ? comp.label : (comp.label ?? resolvedLabel)}
       </text>
       {comp.type === GATE_TYPE_LED && (
         <circle

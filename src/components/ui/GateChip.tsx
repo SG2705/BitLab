@@ -3,7 +3,7 @@ import { Package } from "lucide-react";
 
 import { GATE_ICON, type GateIcon } from "@/components/ui";
 import { library } from "@/engine";
-import { cn } from "@/lib/utils";
+import { cn, getGateLabel } from "@/lib/utils";
 
 interface GateChipProps {
   type: string;
@@ -27,6 +27,7 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
   if (!def) return null;
 
   const IconComponent = GATE_ICON[def.type as GateIcon];
+  const resolvedLabel = getGateLabel(def.type, def.label, intl);
 
   return (
     <div
@@ -42,8 +43,19 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
           : "border-border hover:border-primary/60",
       )}
       title={
-        // eslint-disable-next-line formatjs/no-literal-string-in-jsx
-        isCustom ? `${def.label} · ${def.inputs}→${def.outputs}` : def.label
+        isCustom
+          ? intl.formatMessage(
+              {
+                id: "yjnzeu",
+                defaultMessage: "{resolvedLabel} · {ipc}→{opc}",
+              },
+              {
+                resolvedLabel,
+                ipc: def.inputs,
+                opc: def.outputs,
+              },
+            )
+          : resolvedLabel
       }
     >
       {isCustom && onRemove && (
@@ -53,7 +65,7 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
             e.stopPropagation();
 
             // eslint-disable-next-line no-alert
-            if (window.confirm(`Remove custom gate "${def.label}"?`))
+            if (window.confirm(`Remove custom gate "${resolvedLabel}"?`))
               onRemove();
           }}
           className="absolute -top-1 -right-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] leading-none shadow"
@@ -79,17 +91,17 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
             pointerEvents="none"
           />
         ) : (
-          (def.symbol ?? def.label.slice(0, 4))
+          (def.symbol ?? resolvedLabel.slice(0, 4))
         )}
       </div>
       <div className="text-[10px] text-muted-foreground group-hover:text-foreground truncate w-full text-center">
         {isCustom ? (
           <>
             <Package className="inline h-2.5 w-2.5 -mt-0.5 mr-0.5" />
-            {def.label}
+            {resolvedLabel}
           </>
         ) : (
-          def.label
+          resolvedLabel
         )}
       </div>
     </div>
