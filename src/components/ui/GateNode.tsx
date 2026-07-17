@@ -376,7 +376,9 @@ function GateNode({
         fontSize={9}
         pointerEvents="none"
       >
-        {isCustomLabel ? resolveLabel(comp.label, intl) : (resolveLabel(comp.label, intl) || resolvedLabel)}
+        {isCustomLabel
+          ? resolveLabel(comp.label, intl)
+          : resolveLabel(comp.label, intl) || resolvedLabel}
       </text>
       {comp.type === GATE_TYPE_LED && (
         <circle
