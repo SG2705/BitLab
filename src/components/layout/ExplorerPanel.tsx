@@ -79,8 +79,7 @@ function ExplorerPanel({
                     )}
                   </span>
                   <span className="truncate">
-                    {c.label ??
-                      getGateLabel(c.type, GATES[c.type]?.label ?? c.type)}
+                    {getGateLabel(c.type, GATES[c.type]?.label ?? c.type)}
                   </span>
                 </button>
               );
