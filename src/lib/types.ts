@@ -1,5 +1,6 @@
 import {
   type CONSOLE_TAB,
+  type PIN_DIR,
   type PIN_KIND,
   type THEME,
   type TOOL,
@@ -13,6 +14,8 @@ export type ConsoleTab = (typeof CONSOLE_TAB)[keyof typeof CONSOLE_TAB];
 export type WireType = (typeof WIRE_TYPE)[keyof typeof WIRE_TYPE];
 
 export type PinKind = (typeof PIN_KIND)[keyof typeof PIN_KIND];
+
+export type PinDir = (typeof PIN_DIR)[keyof typeof PIN_DIR];
 
 export type Tool = (typeof TOOL)[keyof typeof TOOL];
 

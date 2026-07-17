@@ -23,6 +23,8 @@ export interface ComponentInstance {
   x: number;
   y: number;
   label?: string;
+  /** Clockwise rotation in 90° steps */
+  rotation?: 0 | 90 | 180 | 270;
   /** Internal component state (flip-flop storage, clock accumulator, etc.) */
   state: Record<string, unknown> | null;
   /** Current output signal values — index matches output pin index */

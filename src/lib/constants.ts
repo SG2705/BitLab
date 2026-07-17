@@ -128,6 +128,12 @@ export type Messages = keyof typeof MESSAGES;
 
 export const WIRE_TYPE = { BEZIER: "bezier", ORTHO: "ortho" };
 export const PIN_KIND = { IN: "in", OUT: "out" };
+export const PIN_DIR = {
+  LEFT: "left",
+  RIGHT: "right",
+  UP: "up",
+  DOWN: "down",
+};
 export const SAVE_LOCAL_ON_ACTION = false;
 export const CUSTOM_CIR_KEYS = "custom-circuit-keys";
 export const DEFAULT_CLOCK = 4;

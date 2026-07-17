@@ -8,8 +8,8 @@
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
 import { KEY_SEPARATOR } from "@/engine/constants";
-import { PIN_KIND } from "@/lib/constants";
-import { type BusWireGroup, type PinKind } from "@/lib/types";
+import { PIN_DIR, PIN_KIND } from "@/lib/constants";
+import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";
 export type { ComponentInstance as CircuitComp };
@@ -24,8 +24,30 @@ export function busPortPos(
   if (!library.has(comp.type)) return { x: comp.x, y: comp.y };
 
   const def = library.get(comp.type);
-  const y = comp.y + def.height / 2;
-  const x = kind === PIN_KIND.OUT ? comp.x + def.width + 12 : comp.x - 12;
+  const r = comp.rotation ?? 0;
+  const rw = r === 90 || r === 270 ? def.height : def.width;
+  const rh = r === 90 || r === 270 ? def.width : def.height;
+
+  // Bus port sits 12px away from the edge, centered
+  // Same edge logic as regular pins: IN edge and OUT edge depend on rotation
+  const isOutput = kind === PIN_KIND.OUT;
+
+  let x: number;
+  let y: number;
+
+  if (r === 0) {
+    x = isOutput ? comp.x + rw + 12 : comp.x - 12;
+    y = comp.y + rh / 2;
+  } else if (r === 90) {
+    x = comp.x + rw / 2;
+    y = isOutput ? comp.y + rh + 12 : comp.y - 12;
+  } else if (r === 180) {
+    x = isOutput ? comp.x - 12 : comp.x + rw + 12;
+    y = comp.y + rh / 2;
+  } else {
+    x = comp.x + rw / 2;
+    y = isOutput ? comp.y - 12 : comp.y + rh + 12;
+  }
 
   return { x, y };
 }
@@ -39,12 +61,86 @@ export function pinPos(
   if (!library.has(comp.type)) return { x: comp.x, y: comp.y };
 
   const def = library.get(comp.type);
+  const r = comp.rotation ?? 0;
   const count = kind === PIN_KIND.IN ? def.inputs : def.outputs;
-  const spacing = def.height / (count + 1);
-  const y = comp.y + spacing * (idx + 1);
-  const x = kind === PIN_KIND.IN ? comp.x : comp.x + def.width;
+
+  // At 90°/270° the component is rendered with swapped dimensions
+  const rw = r === 90 || r === 270 ? def.height : def.width;
+  const rh = r === 90 || r === 270 ? def.width : def.height;
+
+  // Determine which edge pins sit on and spacing axis
+  // 0°:   IN=left,   OUT=right  — vertical spacing (top to bottom)
+  // 90°:  IN=top,    OUT=bottom — horizontal spacing (left to right)
+  // 180°: IN=right,  OUT=left   — vertical spacing (top to bottom)
+  // 270°: IN=bottom, OUT=top    — horizontal spacing (left to right)
+  const isVertical = r === 0 || r === 180;
+  const spacing = (isVertical ? rh : rw) / (count + 1);
+
+  let x: number;
+  let y: number;
+
+  if (isVertical) {
+    // Pins spaced along the height (vertical), positioned on left/right edge
+    const pinY = comp.y + spacing * (idx + 1);
+    const isLeftEdge =
+      (r === 0 && kind === PIN_KIND.IN) || (r === 180 && kind === PIN_KIND.OUT);
+
+    x = isLeftEdge ? comp.x : comp.x + rw;
+    y = pinY;
+  } else {
+    // Pins spaced along the width (horizontal), positioned on top/bottom edge
+    const pinX = comp.x + spacing * (idx + 1);
+    const isTopEdge =
+      (r === 90 && kind === PIN_KIND.IN) ||
+      (r === 270 && kind === PIN_KIND.OUT);
+
+    x = pinX;
+    y = isTopEdge ? comp.y : comp.y + rh;
+  }
 
   return { x, y };
+}
+
+/**
+ * Returns the rendered width and height of a component accounting for rotation.
+ * At 90°/270°, width and height are swapped.
+ */
+export function getRotatedSize(
+  comp: ComponentInstance,
+  def: { width: number; height: number },
+): { w: number; h: number } {
+  const r = comp.rotation ?? 0;
+
+  if (r === 90 || r === 270) return { w: def.height, h: def.width };
+
+  return { w: def.width, h: def.height };
+}
+
+/**
+ * Returns the outward direction a pin faces based on component rotation and pin kind.
+ * Used by WirePath to determine wire routing shape (L vs Z).
+ */
+export function pinDirection(comp: ComponentInstance, kind: PinKind): PinDir {
+  const r = comp.rotation ?? 0;
+  const isOutput = kind === PIN_KIND.OUT;
+
+  // Output pin direction by rotation:
+  // 0° → right, 90° → down, 180° → left, 270° → up
+  // Input pin direction is the opposite edge:
+  // 0° → left, 90° → up, 180° → right, 270° → down
+  if (isOutput) {
+    if (r === 0) return PIN_DIR.RIGHT;
+    if (r === 90) return PIN_DIR.DOWN;
+    if (r === 180) return PIN_DIR.LEFT;
+
+    return PIN_DIR.UP;
+  }
+
+  if (r === 0) return PIN_DIR.LEFT;
+  if (r === 90) return PIN_DIR.UP;
+  if (r === 180) return PIN_DIR.RIGHT;
+
+  return PIN_DIR.DOWN;
 }
 
 // Dynamic proxy — always reflects the live library, including custom gates.

@@ -33,7 +33,13 @@ import {
   SIMULATION_STATUS,
 } from "@/engine/constants";
 import { useDigitalEngine } from "@/hooks";
-import { busPortPos, computeBusWireGroups, pinPos } from "@/lib/circuit";
+import {
+  busPortPos,
+  computeBusWireGroups,
+  getRotatedSize,
+  pinDirection,
+  pinPos,
+} from "@/lib/circuit";
 import {
   BASE_LOG,
   CONSOLE_TAB,
@@ -485,13 +491,9 @@ function DigitalGateApp() {
         if (!library.has(c.type)) continue;
 
         const def = library.get(c.type);
+        const sz = getRotatedSize(c, def);
 
-        if (
-          c.x + def.width >= x &&
-          c.x <= x + w &&
-          c.y + def.height >= y &&
-          c.y <= y + h
-        )
+        if (c.x + sz.w >= x && c.x <= x + w && c.y + sz.h >= y && c.y <= y + h)
           sel.add(c.id);
       }
 
@@ -805,8 +807,10 @@ function DigitalGateApp() {
 
       minX = Math.min(minX, c.x);
       minY = Math.min(minY, c.y);
-      maxX = Math.max(maxX, c.x + d.width);
-      maxY = Math.max(maxY, c.y + d.height);
+      const sz = getRotatedSize(c, d);
+
+      maxX = Math.max(maxX, c.x + sz.w);
+      maxY = Math.max(maxY, c.y + sz.h);
     }
 
     const w = maxX - minX + 100;
@@ -1129,6 +1133,8 @@ function DigitalGateApp() {
                   const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                   const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
                   const live = Boolean(a.outputs[w.from.pin]);
+                  const d1 = pinDirection(a, PIN_KIND.OUT);
+                  const d2 = pinDirection(b, PIN_KIND.IN);
 
                   return (
                     <WirePath
@@ -1138,6 +1144,8 @@ function DigitalGateApp() {
                       live={live}
                       isRunning={isRunning}
                       style={wireStyle}
+                      dir1={d1}
+                      dir2={d2}
                       isSelected={selWires.has(w.id)}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
