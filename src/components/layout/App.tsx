@@ -507,6 +507,9 @@ function DigitalGateApp() {
   const startCompDrag = (e: React.MouseEvent, c: ComponentInstance) => {
     e.stopPropagation();
 
+    // Deselect all wires
+    setSelWires(new Set());
+
     if (!e.shiftKey && !selection.has(c.id)) setSelection(new Set([c.id]));
     else if (e.shiftKey) setSelection(new Set([...selection, c.id]));
 
@@ -1150,14 +1153,9 @@ function DigitalGateApp() {
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 
-                        setSelWires((s) => {
-                          const n = new Set(s);
-
-                          if (n.has(w.id)) n.delete(w.id);
-                          else n.add(w.id);
-
-                          return n;
-                        });
+                        // Deselect all components and other wires; select only this wire
+                        setSelection(new Set());
+                        setSelWires(new Set([w.id]));
                       }}
                     />
                   );
@@ -1188,13 +1186,9 @@ function DigitalGateApp() {
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 
-                        setSelWires((s) => {
-                          const n = new Set(s);
-
-                          for (const id of group.wireIds) n.add(id);
-
-                          return n;
-                        });
+                        // Deselect all components and other wires; select only this bus group
+                        setSelection(new Set());
+                        setSelWires(new Set(group.wireIds));
                       }}
                     />
                   );
