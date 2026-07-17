@@ -1327,6 +1327,10 @@ export class ComponentLibrary {
    * Returns true if all custom gate dependencies of the given type are
    * currently registered in the library. Returns false if any component in
    * the gate's circuit references an unknown custom type.
+   *
+   * Only checks custom gate types (CUSTOM_*) since built-in types are always
+   * available. Also skips the gate's own type to avoid false positives when
+   * an instance of the gate itself was on the canvas at save time.
    */
   hasValidDependencies(type: string): boolean {
     const meta = this.customMeta.get(type);
@@ -1334,6 +1338,12 @@ export class ComponentLibrary {
     if (!meta) return true;
 
     for (const comp of Object.values(meta.circuit.components)) {
+      // Only custom types can be missing — built-in types are always registered
+      if (!comp.type.startsWith("CUSTOM_")) continue;
+
+      // Skip self-references (the gate's own type on the canvas at save time)
+      if (comp.type === type) continue;
+
       if (!this.has(comp.type)) return false;
     }
 

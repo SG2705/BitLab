@@ -301,8 +301,7 @@ function GateNode({
           fontStyle="italic"
           pointerEvents="none"
         >
-          {comp.label ||
-            intl.formatMessage({ id: "qBo9Vt", defaultMessage: "// comment" })}
+          {intl.formatMessage({ id: "qBo9Vt", defaultMessage: "// comment" })}
         </text>
       </g>
     );
@@ -376,7 +375,7 @@ function GateNode({
         fontSize={9}
         pointerEvents="none"
       >
-        {isCustomLabel ? comp.label : (comp.label ?? resolvedLabel)}
+        {isCustomLabel ? comp.label : (resolvedLabel ?? comp.label)}
       </text>
       {comp.type === GATE_TYPE_LED && (
         <circle

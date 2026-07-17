@@ -685,7 +685,11 @@ function DigitalGateApp() {
 
     if (!name) return;
 
-    const type = library.registerCustomCircuit(name.trim(), snapshot);
+    // Deep-copy the snapshot so the stored circuit is immune to later canvas edits
+    const type = library.registerCustomCircuit(
+      name.trim(),
+      structuredClone(snapshot),
+    );
 
     if (!type) {
       addLog(
