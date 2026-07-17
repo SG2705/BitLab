@@ -6,7 +6,7 @@ import { GATE_ICON, type GateIcon } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { GATES } from "@/lib/circuit";
 import { GATE_CATEGORY_LABELS } from "@/lib/constants";
-import { cn, fm, getGateLabel } from "@/lib/utils";
+import { cn, fm, getGateLabel, resolveLabel } from "@/lib/utils";
 
 interface ExplorerPanelProps {
   snapshot: CircuitSnapshot;
@@ -79,7 +79,7 @@ function ExplorerPanel({
                     )}
                   </span>
                   <span className="truncate">
-                    {getGateLabel(c.type, GATES[c.type]?.label ?? c.type)}
+                    {resolveLabel(c.label) || getGateLabel(c.type, GATES[c.type]?.label ?? c.type)}
                   </span>
                 </button>
               );

@@ -38,6 +38,21 @@ export const getGateLabel = (
   return entry ? fm(entry.messageKey, intl) : fallback;
 };
 
+/**
+ * Resolve a component's label. If it matches a known i18n message key,
+ * return the localized text; otherwise return the raw string as-is.
+ */
+export const resolveLabel = (
+  label: string | undefined,
+  intl?: IntlShape,
+): string | undefined => {
+  if (!label) return undefined;
+
+  if (label in MESSAGES) return fm(label as Messages, intl);
+
+  return label;
+};
+
 export const initializeLogger = (
   setter: (value: SetStateAction<LogEntry[]>) => void,
 ) => {
