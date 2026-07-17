@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { FormattedMessage } from "react-intl";
 
-import { WIRE_TYPE } from "@/lib/constants";
-import { type WireType } from "@/lib/types";
+import { PIN_DIR, WIRE_TYPE } from "@/lib/constants";
+import { type PinDir, type WireType } from "@/lib/types";
 import { cn, signalsToBinary, signalsToHex } from "@/lib/utils";
 
 interface Point {
@@ -16,22 +16,60 @@ interface BusWirePathProps {
   width: number;
   signals: boolean[];
   style: WireType;
+  dir1?: PinDir;
+  dir2?: PinDir;
   isSelected: boolean;
   isRunning?: boolean;
   isPreview?: boolean;
   onClick?: (e: React.MouseEvent) => void;
 }
 
-function bezierPath(p1: Point, p2: Point): string {
-  const dx = Math.max(40, Math.abs(p2.x - p1.x) / 2);
+function bezierPath(p1: Point, p2: Point, dir1: PinDir, dir2: PinDir): string {
+  const dist = Math.max(
+    40,
+    Math.abs(p2.x - p1.x) / 2,
+    Math.abs(p2.y - p1.y) / 2,
+  );
+  const c1 = ctrlPt(p1, dir1, dist);
+  const c2 = ctrlPt(p2, dir2, dist);
 
-  return `M ${p1.x} ${p1.y} C ${p1.x + dx} ${p1.y}, ${p2.x - dx} ${p2.y}, ${p2.x} ${p2.y}`;
+  return `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`;
 }
 
-function orthoPath(p1: Point, p2: Point): string {
-  const mx = (p1.x + p2.x) / 2;
+function orthoPath(p1: Point, p2: Point, dir1: PinDir, dir2: PinDir): string {
+  const isH1 = dir1 === PIN_DIR.LEFT || dir1 === PIN_DIR.RIGHT;
+  const isH2 = dir2 === PIN_DIR.LEFT || dir2 === PIN_DIR.RIGHT;
 
-  return `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
+  if (isH1 !== isH2) {
+    const corner = isH1 ? { x: p2.x, y: p1.y } : { x: p1.x, y: p2.y };
+
+    return `M ${p1.x} ${p1.y} L ${corner.x} ${corner.y} L ${p2.x} ${p2.y}`;
+  }
+
+  if (isH1) {
+    const mx = (p1.x + p2.x) / 2;
+
+    return `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
+  }
+
+  const my = (p1.y + p2.y) / 2;
+
+  return `M ${p1.x} ${p1.y} L ${p1.x} ${my} L ${p2.x} ${my} L ${p2.x} ${p2.y}`;
+}
+
+function ctrlPt(p: Point, dir: PinDir, dist: number): Point {
+  switch (dir) {
+    case PIN_DIR.RIGHT:
+      return { x: p.x + dist, y: p.y };
+    case PIN_DIR.LEFT:
+      return { x: p.x - dist, y: p.y };
+    case PIN_DIR.DOWN:
+      return { x: p.x, y: p.y + dist };
+    case PIN_DIR.UP:
+      return { x: p.x, y: p.y - dist };
+    default:
+      return { x: p.x + dist, y: p.y };
+  }
 }
 
 /** Compute midpoint of a bezier or ortho path */
@@ -43,6 +81,8 @@ BusWirePath.defaultProps = {
   isRunning: false,
   isPreview: undefined,
   onClick: undefined,
+  dir1: PIN_DIR.RIGHT,
+  dir2: PIN_DIR.LEFT,
 };
 
 function BusWirePath({
@@ -51,12 +91,17 @@ function BusWirePath({
   width: busWidth,
   signals,
   style,
+  dir1 = PIN_DIR.RIGHT,
+  dir2 = PIN_DIR.LEFT,
   isSelected,
   isRunning,
   isPreview,
   onClick,
 }: BusWirePathProps) {
-  const d = style === WIRE_TYPE.ORTHO ? orthoPath(p1, p2) : bezierPath(p1, p2);
+  const d =
+    style === WIRE_TYPE.ORTHO
+      ? orthoPath(p1, p2, dir1, dir2)
+      : bezierPath(p1, p2, dir1, dir2);
   const strokeWidth = busWidth * 2 + 4;
   const mid = midpoint(p1, p2);
 
@@ -80,7 +125,9 @@ function BusWirePath({
   const rP1 = { x: p1.x - 1, y: p1.y };
   const rP2 = { x: p2.x + 1, y: p2.y };
   const db =
-    style === WIRE_TYPE.ORTHO ? orthoPath(rP1, rP2) : bezierPath(rP1, rP2);
+    style === WIRE_TYPE.ORTHO
+      ? orthoPath(rP1, rP2, dir1, dir2)
+      : bezierPath(rP1, rP2, dir1, dir2);
 
   return (
     <g onClick={onClick} style={{ cursor: "pointer" }}>

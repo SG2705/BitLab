@@ -66,10 +66,11 @@ import BottomBar from "./BottomBar";
 import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
 import ExplorerPanel from "./ExplorerPanel";
+import GateProperties from "./GateProperties";
 import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
-import PropertiesPanel from "./PropertiesPanel";
 import TopBar from "./TopBar";
+import WireProperties from "./WireProperties";
 
 const BUILT_IN_OPEN = Object.fromEntries(
   library.getCategories().map((c) => [c.name, true]),
@@ -919,6 +920,22 @@ function DigitalGateApp() {
     [selection, snapshot.components],
   );
 
+  const selectedWireData = useMemo(() => {
+    if (selWires.size !== 1 || selection.size > 0) return null;
+
+    const wireId = Array.from(selWires)[0];
+    const wire = snapshot.wires[wireId];
+
+    if (!wire) return null;
+
+    const fromComp = snapshot.components[wire.from.comp];
+    const toComp = snapshot.components[wire.to.comp];
+
+    if (!fromComp || !toComp) return null;
+
+    return { wire, fromComp, toComp };
+  }, [selWires, selection, snapshot.wires, snapshot.components]);
+
   return (
     <div className="h-full w-full flex flex-col text-foreground bg-background overflow-hidden font-display">
       {/* Hidden file input for importing circuits as gates */}
@@ -1172,6 +1189,8 @@ function DigitalGateApp() {
                   const groupSelected = group.wireIds.some((id) =>
                     selWires.has(id),
                   );
+                  const bd1 = pinDirection(sourceComp, PIN_KIND.OUT);
+                  const bd2 = pinDirection(targetComp, PIN_KIND.IN);
 
                   return (
                     <BusWirePath
@@ -1181,6 +1200,8 @@ function DigitalGateApp() {
                       width={group.width}
                       signals={group.signals}
                       style={wireStyle}
+                      dir1={bd1}
+                      dir2={bd2}
                       isSelected={groupSelected}
                       isRunning={isRunning}
                       onClick={(e: React.MouseEvent) => {
@@ -1347,13 +1368,20 @@ function DigitalGateApp() {
         <aside className="w-72 shrink-0 border-l border-border bg-panel/60 flex flex-col">
           {/* Properties */}
           {selectedComp && (
-            <PropertiesPanel
+            <GateProperties
               comp={selectedComp}
               onUpdate={(id: string, patch: Partial<ComponentInstance>) =>
                 updateComponent(id, patch)
               }
               onDelete={deleteSelected}
               onDuplicate={duplicateSelected}
+            />
+          )}
+          {selectedWireData && !selectedComp && (
+            <WireProperties
+              wire={selectedWireData.wire}
+              fromComp={selectedWireData.fromComp}
+              toComp={selectedWireData.toComp}
             />
           )}
           {/* Circuit configs */}

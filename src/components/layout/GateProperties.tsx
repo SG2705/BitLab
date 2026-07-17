@@ -20,7 +20,7 @@ interface PropertiesPanelProps {
   onDuplicate: () => void;
 }
 
-function PropertiesPanel({
+function GateProperties({
   comp,
   onUpdate,
   onDelete,
@@ -106,14 +106,7 @@ function PropertiesPanel({
             <div className="text-[10px] uppercase text-muted-foreground mb-1">
               <FormattedMessage id="FH7+Uk" defaultMessage="Transform" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-muted-foreground w-8">
-                <FormattedMessage
-                  id="wC1xUk"
-                  defaultMessage="{deg}°"
-                  values={{ deg: comp.rotation ?? 0 }}
-                />
-              </span>
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -130,6 +123,13 @@ function PropertiesPanel({
               >
                 <RotateCw className="h-3.5 w-3.5" />
               </button>
+              <span className="text-xs font-mono text-muted-foreground w-8">
+                <FormattedMessage
+                  id="wC1xUk"
+                  defaultMessage="{deg}°"
+                  values={{ deg: comp.rotation ?? 0 }}
+                />
+              </span>
             </div>
           </div>
         )}
@@ -247,4 +247,4 @@ function PropertiesPanel({
   );
 }
 
-export default memo(PropertiesPanel);
+export default memo(GateProperties);
