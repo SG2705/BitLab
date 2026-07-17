@@ -419,7 +419,7 @@ function DigitalGateApp() {
 
       setLasso({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
 
-      if (!e.shiftKey) {
+      if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
         setSelection(new Set());
         setSelWires(new Set());
       }
@@ -508,11 +508,24 @@ function DigitalGateApp() {
   const startCompDrag = (e: React.MouseEvent, c: ComponentInstance) => {
     e.stopPropagation();
 
+    const multiSelect = e.metaKey || e.ctrlKey;
+
     // Deselect all wires
     setSelWires(new Set());
 
-    if (!e.shiftKey && !selection.has(c.id)) setSelection(new Set([c.id]));
-    else if (e.shiftKey) setSelection(new Set([...selection, c.id]));
+    if (multiSelect) {
+      // Toggle this component in the selection
+      setSelection((s) => {
+        const n = new Set(s);
+
+        if (n.has(c.id)) n.delete(c.id);
+        else n.add(c.id);
+
+        return n;
+      });
+    } else if (!selection.has(c.id)) {
+      setSelection(new Set([c.id]));
+    }
 
     const p = toWorld(e.clientX, e.clientY);
 
@@ -1170,9 +1183,22 @@ function DigitalGateApp() {
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 
-                        // Deselect all components and other wires; select only this wire
+                        const multi = e.metaKey || e.ctrlKey;
+
                         setSelection(new Set());
-                        setSelWires(new Set([w.id]));
+
+                        if (multi) {
+                          setSelWires((s) => {
+                            const n = new Set(s);
+
+                            if (n.has(w.id)) n.delete(w.id);
+                            else n.add(w.id);
+
+                            return n;
+                          });
+                        } else {
+                          setSelWires(new Set([w.id]));
+                        }
                       }}
                     />
                   );
@@ -1207,9 +1233,21 @@ function DigitalGateApp() {
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 
-                        // Deselect all components and other wires; select only this bus group
+                        const multi = e.metaKey || e.ctrlKey;
+
                         setSelection(new Set());
-                        setSelWires(new Set(group.wireIds));
+
+                        if (multi) {
+                          setSelWires((s) => {
+                            const n = new Set(s);
+
+                            for (const id of group.wireIds) n.add(id);
+
+                            return n;
+                          });
+                        } else {
+                          setSelWires(new Set(group.wireIds));
+                        }
                       }}
                     />
                   );
@@ -1388,7 +1426,10 @@ function DigitalGateApp() {
           <ExplorerPanel
             snapshot={snapshot}
             selection={selection}
+            selWires={selWires}
             setSelection={setSelection}
+            onDuplicate={duplicateSelected}
+            onDelete={deleteSelected}
           />
         </aside>
       </div>
