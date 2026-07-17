@@ -350,7 +350,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     outputs: PINC4,
     width: 80,
     height: 80,
-    outputLabels: ["B3", "B2", "B1", "B0"],
+    outputLabels: ["B0", "B1", "B2", "B3"],
     isSequential: false,
     isClock: false,
     isInput: true,
@@ -371,7 +371,7 @@ const DEFINITIONS: ComponentDefinition[] = [
 
       return {
         outputs: Array.from({ length: 4 }, (_, bit) =>
-          Boolean((digit >> (3 - bit)) & 1),
+          Boolean((digit >> bit) & 1),
         ),
         state: s,
       };
