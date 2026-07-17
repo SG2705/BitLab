@@ -8,8 +8,6 @@
  */
 import { v4 as uuidv4 } from "uuid";
 
-import { fm } from "@/lib/utils";
-
 import {
   DEFAULT_PROBE_SAMPLES,
   GATE_CATEGORY_ARITHMETIC,
@@ -69,6 +67,7 @@ import {
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
   KEY_SEPARATOR,
+  LB_MAP,
   PINC0,
   PINC1,
   PINC2,
@@ -106,6 +105,7 @@ const H_OVERRIDES = [GATE_TYPE_PROBE];
 const hw = (c: ComponentDefinition): ComponentDefinition => {
   return {
     ...c,
+    label: LB_MAP[c.type],
     height: H_OVERRIDES.includes(c.type)
       ? c.height
       : getHeightForPinCount(Math.max(c.inputs, c.outputs)),
@@ -135,7 +135,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Logic Gates ─────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_AND,
-    label: fm("lb_and"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -148,7 +148,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_OR,
-    label: fm("lb_or"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -161,7 +161,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_XOR,
-    label: fm("lb_xor"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -177,7 +177,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_XNOR,
-    label: fm("lb_xnor"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -193,7 +193,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_NAND,
-    label: fm("lb_nand"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -206,7 +206,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_NOR,
-    label: fm("lb_nor"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC2,
     outputs: PINC1,
@@ -219,7 +219,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_NOT,
-    label: fm("lb_not"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC1,
     outputs: PINC1,
@@ -232,7 +232,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_BUFFER,
-    label: fm("lb_buffer"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC1,
     outputs: PINC1,
@@ -245,7 +245,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_AND3,
-    label: fm("lb_and_3"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC3,
     outputs: PINC1,
@@ -258,7 +258,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_OR3,
-    label: fm("lb_or_3"),
+    label: "",
     category: GATE_CATEGORY_LOGIC,
     inputs: PINC3,
     outputs: PINC1,
@@ -273,7 +273,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Inputs ───────────────────────────────────────────────────────────────────
   hw({
     type: GATE_TYPE_TOGGLE,
-    label: fm("lb_toggle"),
+    label: "",
     category: GATE_CATEGORY_INPUT,
     inputs: PINC0,
     outputs: PINC1,
@@ -289,7 +289,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_BUTTON,
-    label: fm("lb_button"),
+    label: "",
     category: GATE_CATEGORY_INPUT,
     inputs: PINC0,
     outputs: PINC1,
@@ -305,7 +305,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_CONST,
-    label: fm("lb_const"),
+    label: "",
     category: GATE_CATEGORY_INPUT,
     inputs: PINC0,
     outputs: PINC1,
@@ -321,7 +321,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_CLOCK,
-    label: fm("lb_clock"),
+    label: "",
     category: GATE_CATEGORY_INPUT,
     inputs: PINC0,
     outputs: PINC1,
@@ -344,7 +344,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Digit→Binary input ───────────────────────────────────────────────────────
   hw({
     type: GATE_TYPE_DIGIT_BIN,
-    label: fm("lb_digit_bin"),
+    label: "",
     category: GATE_CATEGORY_INPUT,
     inputs: PINC0,
     outputs: PINC4,
@@ -381,7 +381,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Outputs ──────────────────────────────────────────────────────────────────
   hw({
     type: GATE_TYPE_LED,
-    label: fm("lb_led"),
+    label: "",
     category: GATE_CATEGORY_OUTPUT,
     inputs: PINC1,
     outputs: PINC0,
@@ -397,7 +397,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_DISPLAY7,
-    label: fm("lb_7_seg"),
+    label: "",
     category: GATE_CATEGORY_OUTPUT,
     inputs: PINC4,
     outputs: PINC0,
@@ -422,7 +422,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_PROBE,
-    label: fm("lb_probe"),
+    label: "",
     category: GATE_CATEGORY_OUTPUT,
     inputs: PINC1,
     outputs: PINC0,
@@ -464,7 +464,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Sequential ────────────────────────────────────────────────────────────────
   hw({
     type: GATE_TYPE_SR_LATCH,
-    label: fm("lb_sr_latch"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC2,
     outputs: PINC2,
@@ -498,7 +498,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_DFF,
-    label: fm("lb_d_flip_flop"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC2,
     outputs: PINC2,
@@ -526,7 +526,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_JKFF,
-    label: fm("lb_jk_flip_flop"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC3,
     outputs: PINC2,
@@ -562,7 +562,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_TIFF,
-    label: fm("lb_t_flip_flop"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC2,
     outputs: PINC2,
@@ -590,7 +590,7 @@ const DEFINITIONS: ComponentDefinition[] = [
 
   hw({
     type: GATE_TYPE_DLATCH,
-    label: fm("lb_dlatch"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC2,
     outputs: PINC2,
@@ -616,7 +616,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_REG4,
-    label: fm("lb_reg4"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC5,
     outputs: PINC4,
@@ -655,7 +655,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_COUNTER4,
-    label: fm("lb_counter4"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC2,
     outputs: PINC4,
@@ -692,7 +692,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_SHREG4,
-    label: fm("lb_shreg4"),
+    label: "",
     category: GATE_CATEGORY_SEQUENTIAL,
     inputs: PINC3,
     outputs: PINC4,
@@ -731,7 +731,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Arithmetic ────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_HALF_ADDER,
-    label: fm("lb_halfadder"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC2,
     outputs: PINC2,
@@ -747,7 +747,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_FULL_ADDER,
-    label: fm("lb_adder"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC3,
     outputs: PINC2,
@@ -764,7 +764,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_MUX2,
-    label: fm("lb_mux_2_1"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC3,
     outputs: PINC1,
@@ -777,7 +777,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_MUX4,
-    label: fm("lb_mux_4_1"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC6,
     outputs: PINC1,
@@ -794,7 +794,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DEMUX2,
-    label: fm("lb_dmux_1_2"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC2,
     outputs: PINC2,
@@ -811,7 +811,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DECODER2,
-    label: fm("lb_dcode_2_4"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC2,
     outputs: PINC4,
@@ -831,7 +831,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_ENCODER4,
-    label: fm("lb_ecode_4_2"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC4,
     outputs: PINC2,
@@ -856,7 +856,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_COMPARATOR,
-    label: fm("lb_comparator"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC2,
     outputs: PINC3,
@@ -874,7 +874,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DECODER3,
-    label: fm("lb_decoder3"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC3,
     outputs: PINC8,
@@ -894,7 +894,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_MUX8,
-    label: fm("lb_mux8"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC11,
     outputs: PINC1,
@@ -923,7 +923,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_HALF_SUB,
-    label: fm("lb_half_sub"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC2,
     outputs: PINC2,
@@ -939,7 +939,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_FULL_SUB,
-    label: fm("lb_full_sub"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC3,
     outputs: PINC2,
@@ -960,7 +960,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_CMP4,
-    label: fm("lb_cmp4"),
+    label: "",
     category: GATE_CATEGORY_ARITHMETIC,
     inputs: PINC8,
     outputs: PINC3,
@@ -987,7 +987,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   // ── Utility ──────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_SPLITTER,
-    label: fm("lb_splitter"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC1,
     outputs: PINC4,
@@ -1004,7 +1004,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_COMMENT,
-    label: fm("lb_comment"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: 0,
     outputs: 0,
@@ -1015,7 +1015,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_BUS4,
-    label: fm("lb_bus4"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC4,
     outputs: PINC4,
@@ -1032,7 +1032,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_BUS8,
-    label: fm("lb_bus8"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC8,
     outputs: PINC8,
@@ -1049,7 +1049,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_BUS16,
-    label: fm("lb_bus16"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC16,
     outputs: PINC16,
@@ -1100,7 +1100,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DEBUS4,
-    label: fm("lb_debus4"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC4,
     outputs: PINC4,
@@ -1117,7 +1117,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DEBUS8,
-    label: fm("lb_debus8"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC8,
     outputs: PINC8,
@@ -1134,7 +1134,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   cb({
     type: GATE_TYPE_DEBUS16,
-    label: fm("lb_debus16"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC16,
     outputs: PINC16,
@@ -1185,7 +1185,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_UREG4,
-    label: fm("lb_ureg4"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC5,
     outputs: PINC4,
@@ -1221,7 +1221,7 @@ const DEFINITIONS: ComponentDefinition[] = [
   }),
   hw({
     type: GATE_TYPE_UREG8,
-    label: fm("lb_ureg8"),
+    label: "",
     category: GATE_CATEGORY_UTILITY,
     inputs: PINC9,
     outputs: PINC8,
