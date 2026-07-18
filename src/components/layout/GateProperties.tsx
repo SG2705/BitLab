@@ -208,11 +208,11 @@ function GateProperties({
                       )}
                     >
                       <FormattedMessage
-                        id="+qEqKV"
-                        defaultMessage="{i}: {o}"
+                        id="asdasd"
+                        defaultMessage="{gateLabel} : {gateState}"
                         values={{
-                          i,
-                          o: o ? "1" : "0",
+                          gateLabel: gate.outputLabels?.[i] ?? `O${i}`,
+                          gateState: o ? "1" : "0",
                         }}
                       />
                     </span>

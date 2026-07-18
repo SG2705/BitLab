@@ -164,6 +164,7 @@ function DigitalGateApp() {
     oy: number;
     moved: boolean;
   } | null>(null);
+  const clipboardRef = useRef<string[]>([]);
 
   const handleLoadProject = useCallback(() => {
     loadProjectFromLocal();
@@ -864,6 +865,21 @@ function DigitalGateApp() {
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) undo();
       if (meta && e.key.toLowerCase() === "d") duplicateSelected();
       if (meta && e.key.toLowerCase() === "s") saveProjectToLocal();
+      if (meta && e.key.toLowerCase() === "c" && selection.size > 0) {
+        clipboardRef.current = Array.from(selection);
+      }
+      if (
+        meta &&
+        e.key.toLowerCase() === "v" &&
+        clipboardRef.current.length > 0
+      ) {
+        const idMap = duplicateComponents(clipboardRef.current);
+        // Update clipboard to point to the new copies so next paste offsets from these
+        clipboardRef.current = Array.from(idMap.values());
+
+        setSelection(new Set(idMap.values()));
+        setSelWires(new Set());
+      }
       if (
         meta &&
         (e.key.toLowerCase() === "y" ||
