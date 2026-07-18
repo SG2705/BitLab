@@ -453,6 +453,12 @@
       "value": "Full Adder"
     }
   ],
+  "bDsp4x": [
+    {
+      "type": 0,
+      "value": "Bus Display"
+    }
+  ],
   "cpOWpz": [
     {
       "type": 0,

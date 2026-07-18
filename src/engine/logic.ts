@@ -213,6 +213,15 @@ export const evalLed = (i: SignalValue[]): EvaluateResult => ({
   state: { on: i[0] === O },
 });
 
+export const evalBusDisplay = (i: SignalValue[]): EvaluateResult => {
+  const value = i.reduce(
+    (acc, bit, idx) => acc | (bit === O ? 1 << idx : 0),
+    0,
+  );
+
+  return { outputs: [], state: { value } };
+};
+
 export const evalDisplay7 = (i: SignalValue[]): EvaluateResult => {
   const value =
     (i[3] === O ? 8 : 0) |

@@ -12,6 +12,7 @@ import {
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS_DISPLAY,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -120,6 +121,7 @@ export const MESSAGES = defineMessages({
   lb_debus16: { id: "o8W9TU", defaultMessage: "Debus 16" },
   lb_ureg4: { id: "XqpRRy", defaultMessage: "U-Reg 4" },
   lb_ureg8: { id: "sCV/Bb", defaultMessage: "U-Reg 8" },
+  lb_bus_display: { id: "DVOUgX", defaultMessage: "Bus Display" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -223,4 +225,5 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_DEBUS16]: { en: "Debus 16", messageKey: "lb_debus16" },
   [GATE_TYPE_UREG4]: { en: "U-Reg 4", messageKey: "lb_ureg4" },
   [GATE_TYPE_UREG8]: { en: "U-Reg 8", messageKey: "lb_ureg8" },
+  [GATE_TYPE_BUS_DISPLAY]: { en: "Bus Display", messageKey: "lb_bus_display" },
 };

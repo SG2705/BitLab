@@ -18,6 +18,7 @@ import {
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS_DISPLAY,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -79,6 +80,7 @@ import {
   PINC16,
 } from "./constants";
 import {
+  evalBusDisplay,
   evalClockTick,
   evalCmp4,
   evalComment,
@@ -442,6 +444,24 @@ const DEFINITIONS: ComponentDefinition[] = [
       history: [] as Array<{ v: boolean; t: number }>,
     }),
     evaluate: evalProbe,
+  }),
+  hw({
+    type: GATE_TYPE_BUS_DISPLAY,
+    label: "",
+    category: GATE_CATEGORY_OUTPUT,
+    inputs: PINC4,
+    outputs: PINC0,
+    width: 80,
+    height: 80,
+    symbol: "◉4",
+    isBusInput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: false,
+    isOutput: true,
+    inputLabels: ["B0", "B1", "B2", "B3"],
+    initialState: () => ({ value: 0 }),
+    evaluate: evalBusDisplay,
   }),
 
   // ── Sequential ────────────────────────────────────────────────────────────────
@@ -1437,6 +1457,7 @@ export class ComponentLibrary {
       isClock: false,
       isInput: false,
       isOutput: false,
+      isBusOutput: sinkComps.some(({ def: sinkDef }) => sinkDef.isBusInput),
       inputLabels,
       outputLabels,
       initialState: () => {
