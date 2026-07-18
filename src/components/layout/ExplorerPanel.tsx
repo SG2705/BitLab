@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { FormattedMessage } from "react-intl";
-import { Copy, Cpu, Trash2 } from "lucide-react";
+import { Copy, Cpu, RotateCw, Trash2 } from "lucide-react";
 
 import { Button, GATE_ICON, type GateIcon } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
@@ -15,6 +15,7 @@ interface ExplorerPanelProps {
   setSelection: (s: Set<string>) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onRotate: () => void;
 }
 
 function ExplorerPanel({
@@ -24,6 +25,7 @@ function ExplorerPanel({
   setSelection,
   onDuplicate,
   onDelete,
+  onRotate,
 }: ExplorerPanelProps) {
   const groups: Record<string, ComponentInstance[]> = {};
 
@@ -64,6 +66,17 @@ function ExplorerPanel({
                   />
                 </span>
               )}
+            </Button>
+          )}
+          {selection.size > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRotate}
+              className="flex-1 h-7 gap-1 text-xs"
+            >
+              <RotateCw className="h-3 w-3" />
+              <FormattedMessage id="UoljwI" defaultMessage="Rotate 90° CW" />
             </Button>
           )}
           <Button

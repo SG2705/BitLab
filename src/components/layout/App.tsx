@@ -642,6 +642,19 @@ function DigitalGateApp() {
     setSelection(new Set(idMap.values()));
   };
 
+  const rotateSelected = () => {
+    for (const id of selection) {
+      const comp = snapshot.components[id];
+
+      if (!comp) continue;
+
+      const current = comp.rotation ?? 0;
+      const next = ((current + 90) % 360) as 0 | 90 | 180 | 270;
+
+      updateComponent(id, { rotation: next });
+    }
+  };
+
   const handleCompClick = (c: ComponentInstance) => {
     if (c.type === GATE_TYPE_TOGGLE || c.type === GATE_TYPE_CONST)
       setInput(c.id, { on: !c.state?.on });
@@ -1290,6 +1303,7 @@ function DigitalGateApp() {
             setSelection={setSelection}
             onDuplicate={duplicateSelected}
             onDelete={deleteSelected}
+            onRotate={rotateSelected}
           />
         </aside>
       </div>

@@ -43,6 +43,7 @@ export interface AddComponentOptions {
   y?: number;
   label?: string;
   color?: string;
+  rotation?: 0 | 90 | 180 | 270;
   properties?: Record<string, unknown>;
 }
 
@@ -91,6 +92,7 @@ export class CircuitManager {
       x: opts.x ?? 0,
       y: opts.y ?? 0,
       label: opts.label ?? def.label,
+      rotation: opts.rotation,
       state: initialState,
       outputs,
       inputs: new Array<SignalValue>(def.inputs).fill(U),

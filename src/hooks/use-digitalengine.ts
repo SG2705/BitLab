@@ -231,6 +231,7 @@ export function useDigitalEngine(
           y: src.y + 20,
           label: src.label,
           color: src.color,
+          rotation: src.rotation,
           properties: src.properties,
         });
 
