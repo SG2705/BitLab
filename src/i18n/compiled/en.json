@@ -249,6 +249,12 @@
       "value": "busWidth"
     }
   ],
+  "Gnd0Vx": [
+    {
+      "type": 0,
+      "value": "GND"
+    }
+  ],
   "GkBxYy": [
     {
       "type": 0,
@@ -415,6 +421,12 @@
     {
       "type": 0,
       "value": "Comparator"
+    }
+  ],
+  "Vcc5Vx": [
+    {
+      "type": 0,
+      "value": "5V (VCC)"
     }
   ],
   "X/SJAt": [

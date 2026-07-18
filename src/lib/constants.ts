@@ -36,6 +36,7 @@ import {
   GATE_TYPE_ENCODER4,
   GATE_TYPE_FULL_ADDER,
   GATE_TYPE_FULL_SUB,
+  GATE_TYPE_GND,
   GATE_TYPE_HALF_ADDER,
   GATE_TYPE_HALF_SUB,
   GATE_TYPE_JKFF,
@@ -57,6 +58,7 @@ import {
   GATE_TYPE_TOGGLE,
   GATE_TYPE_UREG4,
   GATE_TYPE_UREG8,
+  GATE_TYPE_VCC,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/engine/constants";
@@ -122,6 +124,8 @@ export const MESSAGES = defineMessages({
   lb_ureg4: { id: "XqpRRy", defaultMessage: "U-Reg 4" },
   lb_ureg8: { id: "sCV/Bb", defaultMessage: "U-Reg 8" },
   lb_bus_display: { id: "DVOUgX", defaultMessage: "Bus Display" },
+  lb_vcc: { id: "6JZETj", defaultMessage: "5V (VCC)" },
+  lb_gnd: { id: "EiGY9t", defaultMessage: "GND" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -226,4 +230,6 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_UREG4]: { en: "U-Reg 4", messageKey: "lb_ureg4" },
   [GATE_TYPE_UREG8]: { en: "U-Reg 8", messageKey: "lb_ureg8" },
   [GATE_TYPE_BUS_DISPLAY]: { en: "Bus Display", messageKey: "lb_bus_display" },
+  [GATE_TYPE_VCC]: { en: "5V (VCC)", messageKey: "lb_vcc" },
+  [GATE_TYPE_GND]: { en: "GND", messageKey: "lb_gnd" },
 };

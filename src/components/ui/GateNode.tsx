@@ -450,7 +450,7 @@ function GateNode({
             {/* Component name label — always below, horizontal */}
             <text
               x={isVertical ? rw / 2 : rw + 6}
-              y={isVertical ? rh + 15 : rw / 2}
+              y={isVertical ? rh + 15 : rh / 2}
               textAnchor={isVertical ? "middle" : "start"}
               fill="var(--color-muted-foreground)"
               fontSize={9}

@@ -175,6 +175,16 @@ export const evalInput = (
   state: s,
 });
 
+export const evalVcc = (): EvaluateResult => ({
+  outputs: [O],
+  state: { on: true },
+});
+
+export const evalGnd = (): EvaluateResult => ({
+  outputs: [Z],
+  state: { on: false },
+});
+
 export const evalClockTick = (
   state: Record<string, unknown> | null,
 ): EvaluateResult => {

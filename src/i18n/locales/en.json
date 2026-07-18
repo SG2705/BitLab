@@ -95,6 +95,9 @@
   "Gab3IF": {
     "defaultMessage": "Digit (0-9)"
   },
+  "Gnd0Vx": {
+    "defaultMessage": "GND"
+  },
   "Gb5Mf2": {
     "defaultMessage": "/{busWidth}"
   },
@@ -181,6 +184,9 @@
   },
   "VAZneg": {
     "defaultMessage": "Comparator"
+  },
+  "Vcc5Vx": {
+    "defaultMessage": "5V (VCC)"
   },
   "X/SJAt": {
     "defaultMessage": "Half Sub"
