@@ -37,7 +37,7 @@ function GateProperties({
   const gate = library.get(comp.type);
 
   return (
-    <div className="p-3 border-b border-border">
+    <div className="p-3 border-b border-border max-h-1/2 overflow-y-auto">
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
         <Settings2 className="h-3.5 w-3.5" />
         <FormattedMessage id="aI80kg" defaultMessage="Properties" />

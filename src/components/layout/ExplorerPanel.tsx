@@ -36,7 +36,7 @@ function ExplorerPanel({
   const hasMultiSelection = selection.size > 1 || selWires.size > 0;
 
   return (
-    <div className="flex-1 overflow-y-auto p-3">
+    <div className="flex-1 p-3 max-h-1/2 overflow-y-auto">
       <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
         <Cpu className="h-3.5 w-3.5" />
         <FormattedMessage id="lS7pBq" defaultMessage="Circuit Explorer" />

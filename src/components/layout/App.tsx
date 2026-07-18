@@ -1011,7 +1011,6 @@ function DigitalGateApp() {
             setView={setView}
             fitToScreen={fitToScreen}
           />
-
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             ref={canvasRef}
