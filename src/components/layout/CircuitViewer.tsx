@@ -273,7 +273,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                   key={w.id}
                   p1={p1}
                   p2={p2}
-                  isLiveSignal={false}
+                  isSignalUp={false}
                   isRunning={false}
                   wireType="bezier"
                   dir1={d1}

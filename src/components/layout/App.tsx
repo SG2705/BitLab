@@ -1053,7 +1053,7 @@ function DigitalGateApp() {
                   const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                   const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
                   const signal = a.outputs[w.from.pin] ?? LogicValue.ZERO;
-                  const isLive = signal === LogicValue.ONE;
+                  const isSignalUp = signal === LogicValue.ONE;
                   const d1 = pinDirection(a, PIN_KIND.OUT);
                   const d2 = pinDirection(b, PIN_KIND.IN);
 
@@ -1062,7 +1062,7 @@ function DigitalGateApp() {
                       key={w.id}
                       p1={p1}
                       p2={p2}
-                      isLiveSignal={isLive}
+                      isSignalUp={isSignalUp}
                       signal={signal}
                       isRunning={isRunning}
                       wireType={wireStyle}
@@ -1177,7 +1177,7 @@ function DigitalGateApp() {
                       <WirePath
                         p1={p1}
                         p2={{ x: pendingWire.mx, y: pendingWire.my }}
-                        isLiveSignal={false}
+                        isSignalUp={false}
                         isRunning={false}
                         wireType={wireStyle}
                         isPreview

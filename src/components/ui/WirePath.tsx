@@ -30,8 +30,7 @@ function signalColor(signal: SignalValue): string {
 interface WirePathProps {
   p1: Point;
   p2: Point;
-  /** @deprecated Use `signal` instead for four-state color */
-  isLiveSignal: boolean;
+  isSignalUp: boolean;
   /** Four-state signal value for wire coloring */
   signal?: SignalValue;
   isRunning: boolean;
@@ -125,7 +124,7 @@ WirePath.defaultProps = {
 function WirePath({
   p1,
   p2,
-  isLiveSignal,
+  isSignalUp,
   signal,
   isRunning,
   wireType,
@@ -139,9 +138,9 @@ function WirePath({
     wireType === "ortho"
       ? orthoPath(p1, p2, dir1, dir2)
       : bezierPath(p1, p2, dir1, dir2);
-  // Use four-state signal if provided, otherwise fall back to boolean isLiveSignal
+  // Use four-state signal if provided, otherwise fall back to boolean isSignalUp
   const effectiveSignal =
-    signal ?? (isLiveSignal ? LogicValue.ONE : LogicValue.ZERO);
+    signal ?? (isSignalUp ? LogicValue.ONE : LogicValue.ZERO);
   const color = signalColor(effectiveSignal);
   const isActive = effectiveSignal === LogicValue.ONE;
 
