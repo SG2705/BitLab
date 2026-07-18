@@ -353,7 +353,10 @@ function GateNode({
   return (
     <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
       {(() => {
-        const r = comp.rotation ?? 0;
+        const r =
+          comp.type === GATE_TYPE_PROBE || comp.type === GATE_TYPE_DISPLAY7
+            ? 0
+            : (comp.rotation ?? 0);
         const rw = r === 90 || r === 270 ? def.height : def.width;
         const rh = r === 90 || r === 270 ? def.width : def.height;
         const isVertical = r === 0 || r === 180;
@@ -446,9 +449,9 @@ function GateNode({
               ))}
             {/* Component name label — always below, horizontal */}
             <text
-              x={rw / 2}
-              y={rh + 24}
-              textAnchor="middle"
+              x={isVertical ? rw / 2 : rw + 6}
+              y={isVertical ? rh + 15 : rw / 2}
+              textAnchor={isVertical ? "middle" : "start"}
               fill="var(--color-muted-foreground)"
               fontSize={9}
               pointerEvents="none"

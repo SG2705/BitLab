@@ -488,11 +488,8 @@ function DigitalGateApp() {
 
     const multiSelect = e.metaKey || e.ctrlKey;
 
-    // Deselect all wires
-    setSelWires(new Set());
-
     if (multiSelect) {
-      // Toggle this component in the selection
+      // Toggle this component in the selection, keep wires
       setSelection((s) => {
         const n = new Set(s);
 
@@ -503,6 +500,7 @@ function DigitalGateApp() {
       });
     } else if (!selection.has(c.id)) {
       setSelection(new Set([c.id]));
+      setSelWires(new Set());
     }
 
     const p = toWorld(e.clientX, e.clientY);
@@ -866,6 +864,11 @@ function DigitalGateApp() {
       if (meta && e.key.toLowerCase() === "d") duplicateSelected();
       if (meta && e.key.toLowerCase() === "s") saveProjectToLocal();
 
+      if (meta && e.key.toLowerCase() === "a") {
+        setSelection(new Set(Object.keys(snapshot.components)));
+        setSelWires(new Set(Object.keys(snapshot.wires)));
+      }
+
       if (meta && e.key.toLowerCase() === "c" && selection.size > 0) {
         clipboardRef.current = Array.from(selection);
       }
@@ -1074,8 +1077,6 @@ function DigitalGateApp() {
 
                         const multi = e.metaKey || e.ctrlKey;
 
-                        setSelection(new Set());
-
                         if (multi) {
                           setSelWires((s) => {
                             const n = new Set(s);
@@ -1086,6 +1087,7 @@ function DigitalGateApp() {
                             return n;
                           });
                         } else {
+                          setSelection(new Set());
                           setSelWires(new Set([w.id]));
                         }
                       }}
@@ -1124,17 +1126,19 @@ function DigitalGateApp() {
 
                         const multi = e.metaKey || e.ctrlKey;
 
-                        setSelection(new Set());
-
                         if (multi) {
                           setSelWires((s) => {
                             const n = new Set(s);
 
-                            for (const id of group.wireIds) n.add(id);
+                            for (const id of group.wireIds) {
+                              if (n.has(id)) n.delete(id);
+                              else n.add(id);
+                            }
 
                             return n;
                           });
                         } else {
+                          setSelection(new Set());
                           setSelWires(new Set(group.wireIds));
                         }
                       }}

@@ -8,6 +8,8 @@ import { type ComponentInstance, library, LogicValue } from "@/engine";
 import {
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_DISPLAY7,
+  GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
 import { cn, getGateLabel } from "@/lib/utils";
@@ -100,38 +102,40 @@ function GateProperties({
           </div>
         </div>
         {/* Rotation */}
-        {!gate.isAnnotation && (
-          <div>
-            <div className="text-[10px] uppercase text-muted-foreground mb-1">
-              <FormattedMessage id="FH7+Uk" defaultMessage="Transform" />
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const current = comp.rotation ?? 0;
-                  const next = ((current + 90) % 360) as 0 | 90 | 180 | 270;
+        {!gate.isAnnotation &&
+          comp.type !== GATE_TYPE_PROBE &&
+          comp.type !== GATE_TYPE_DISPLAY7 && (
+            <div>
+              <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                <FormattedMessage id="FH7+Uk" defaultMessage="Transform" />
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = comp.rotation ?? 0;
+                    const next = ((current + 90) % 360) as 0 | 90 | 180 | 270;
 
-                  onUpdate(comp.id, { rotation: next });
-                }}
-                title={intl.formatMessage({
-                  id: "UoljwI",
-                  defaultMessage: "Rotate 90° CW",
-                })}
-                className="flex items-center justify-center h-8 w-8 rounded-md border border-border hover:bg-secondary transition-colors"
-              >
-                <RotateCw className="h-3.5 w-3.5" />
-              </button>
-              <span className="text-xs font-mono text-muted-foreground w-8">
-                <FormattedMessage
-                  id="wC1xUk"
-                  defaultMessage="{deg}°"
-                  values={{ deg: comp.rotation ?? 0 }}
-                />
-              </span>
+                    onUpdate(comp.id, { rotation: next });
+                  }}
+                  title={intl.formatMessage({
+                    id: "UoljwI",
+                    defaultMessage: "Rotate 90° CW",
+                  })}
+                  className="flex items-center justify-center h-8 w-8 rounded-md border border-border hover:bg-secondary transition-colors"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-xs font-mono text-muted-foreground w-8">
+                  <FormattedMessage
+                    id="wC1xUk"
+                    defaultMessage="{deg}°"
+                    values={{ deg: comp.rotation ?? 0 }}
+                  />
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         {!gate.isAnnotation && comp.type === GATE_TYPE_DIGIT_BIN && (
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">

@@ -174,22 +174,20 @@ function ConsolePanel({
         {/* Signal state legend */}
         <div className="flex items-center gap-2 ml-auto mr-2">
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-on" />
-            <FormattedMessage id="Tf9Oo0" defaultMessage="1" />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-off" />
+            <FormattedMessage id="V+xjJQ" defaultMessage="LOW" />
           </span>
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-off" />
-
-            <FormattedMessage id="MbygIJ" defaultMessage="0" />
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-on" />
+            <FormattedMessage id="xsfBZ4" defaultMessage="HIGH" />
           </span>
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-unknown" />
-
-            <FormattedMessage id="MXPwVk" defaultMessage="X" />
+            <FormattedMessage id="uTM3YG" defaultMessage="UNKNOWN" />
           </span>
           <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-highz" />
-            <FormattedMessage id="MiXf8H" defaultMessage="Z" />
+            <FormattedMessage id="wyLK6M" defaultMessage="HIGH IMPEDENCE" />
           </span>
         </div>
 
