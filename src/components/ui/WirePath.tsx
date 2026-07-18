@@ -2,7 +2,7 @@ import { memo } from "react";
 
 import type { SignalValue } from "@/engine";
 import { LogicValue } from "@/engine";
-import { PIN_DIR } from "@/lib/constants";
+import { PIN_DIR, WIRE_TYPE } from "@/lib/constants";
 import { type PinDir, type WireType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -135,7 +135,7 @@ function WirePath({
   onClick,
 }: WirePathProps) {
   const d =
-    wireType === "ortho"
+    wireType === WIRE_TYPE.ORTHO
       ? orthoPath(p1, p2, dir1, dir2)
       : bezierPath(p1, p2, dir1, dir2);
   // Use four-state signal if provided, otherwise fall back to boolean isSignalUp
