@@ -63,6 +63,7 @@ import {
 import { cn, fm, getGateLabel, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
+import CircuitViewer from "./CircuitViewer";
 import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
 import ExplorerPanel from "./ExplorerPanel";
@@ -130,6 +131,10 @@ function DigitalGateApp() {
     [GATE_CATEGORY_CUSTOM]: true,
   });
   const [customBump, setCustomBump] = useState(0);
+  const [viewingCircuit, setViewingCircuit] = useState<{
+    name: string;
+    circuit: CircuitSnapshot;
+  } | null>(null);
 
   const [view, setView] = useState({ x: 0, y: 0, k: 1 });
   const [size, setSize] = useState({ w: 1200, h: 800 });
@@ -1049,6 +1054,20 @@ function DigitalGateApp() {
                         onDragStart={() => setDragType(g)}
                         isCustom={library.isCustom(g)}
                         onRemove={() => removeCustomCircuit(g)}
+                        onInspect={
+                          library.isCustom(g)
+                            ? () => {
+                                const meta = library.getCustomMeta(g);
+
+                                if (meta) {
+                                  setViewingCircuit({
+                                    name: meta.name,
+                                    circuit: meta.circuit,
+                                  });
+                                }
+                              }
+                            : undefined
+                        }
                       />
                     ))}
                     {cat.name === GATE_CATEGORY_CUSTOM &&
@@ -1508,6 +1527,15 @@ function DigitalGateApp() {
               })),
             ),
           ]}
+        />
+      )}
+
+      {/* Circuit Viewer Modal */}
+      {viewingCircuit && (
+        <CircuitViewer
+          name={viewingCircuit.name}
+          circuit={viewingCircuit.circuit}
+          onClose={() => setViewingCircuit(null)}
         />
       )}
     </div>

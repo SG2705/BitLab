@@ -1,5 +1,5 @@
 import { FormattedMessage, useIntl } from "react-intl";
-import { Package } from "lucide-react";
+import { Eye, Package } from "lucide-react";
 
 import { GATE_ICON, type GateIcon } from "@/components/ui";
 import { library } from "@/engine";
@@ -10,17 +10,25 @@ interface GateChipProps {
   onDragStart: () => void;
   isCustom?: boolean;
   onRemove?: () => void;
+  onInspect?: () => void;
 }
 
 GateChip.defaultProps = {
   isCustom: false,
   onRemove: undefined,
+  onInspect: undefined,
 };
 
 /**
  * GateChip
  */
-function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
+function GateChip({
+  type,
+  onDragStart,
+  isCustom,
+  onRemove,
+  onInspect,
+}: GateChipProps) {
   const intl = useIntl();
   const def = library.has(type) ? library.get(type) : null;
 
@@ -75,6 +83,22 @@ function GateChip({ type, onDragStart, isCustom, onRemove }: GateChipProps) {
           })}
         >
           <FormattedMessage id="MXPwVk" defaultMessage="X" />
+        </button>
+      )}
+      {isCustom && onInspect && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onInspect();
+          }}
+          className="absolute -top-1 -left-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] leading-none shadow"
+          title={intl.formatMessage({
+            id: "gateChip.inspect",
+            defaultMessage: "View internal circuit",
+          })}
+        >
+          <Eye className="h-2.5 w-2.5" />
         </button>
       )}
       <div
