@@ -158,7 +158,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = `${name.replace(/\s+/g, "-")}.circuit.json`;
+    a.download = `${name.replace(/\s+/g, "-").toLowerCase()}.circuit.json`;
     a.click();
 
     URL.revokeObjectURL(url);

@@ -137,11 +137,24 @@ export class ProjectManager {
   }
 
   importJSON(json: string): void {
-    const project = JSON.parse(json) as SerializedProject;
-    const migrated = migrate(project);
+    const parsed = JSON.parse(json);
 
-    this.projectName = migrated.name;
-    this.manager.loadSnapshot(migrated.circuit);
+    // Support both formats:
+    // 1. Full project: { version, name, circuit: { components, wires } }
+    // 2. Raw circuit snapshot: { components, wires }
+    if (parsed.circuit && parsed.version !== undefined) {
+      const project = parsed as SerializedProject;
+      const migrated = migrate(project);
+
+      this.projectName = migrated.name;
+      this.manager.loadSnapshot(migrated.circuit);
+    } else if (parsed.components) {
+      // Raw CircuitSnapshot
+      this.manager.loadSnapshot(parsed as CircuitSnapshot);
+    } else {
+      throw new Error("Unrecognized JSON format");
+    }
+
     this.push();
   }
 
@@ -153,7 +166,7 @@ export class ProjectManager {
 
     a.href = url;
     a.download =
-      filename ?? `${this.projectName.replace(/\s+/g, "-")}.dgate.json`;
+      filename ?? `${this.projectName.replace(/\s+/g, "-")}.bitlab.json`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -165,7 +178,7 @@ export class ProjectManager {
       const input = document.createElement("input");
 
       input.type = "file";
-      input.accept = ".json,.dgate.json";
+      input.accept = ".json,.bitlab.json,.circuit.json,.dgate.json";
 
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];

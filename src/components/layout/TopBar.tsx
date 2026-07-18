@@ -40,6 +40,7 @@ interface TopBarProps {
   saveProjectToLocal: () => void;
   loadProjectFromLocal: () => void;
   exportProject: () => void;
+  importToCanvas: () => void;
   newProject: () => void;
   openCmd: () => void;
   importCircuit: () => void;
@@ -89,6 +90,7 @@ function TopBar({
   saveProjectToLocal,
   loadProjectFromLocal,
   exportProject,
+  importToCanvas,
   newProject,
   openCmd,
   createCircuitFromGates,
@@ -129,6 +131,11 @@ function TopBar({
         onClick={exportProject}
         icon={<Save className="h-4 w-4 rotate-180" />}
         label="Export"
+      />
+      <TBBtn
+        onClick={importToCanvas}
+        icon={<FolderOpen className="h-4 w-4" />}
+        label="Import circuit to canvas"
       />
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn

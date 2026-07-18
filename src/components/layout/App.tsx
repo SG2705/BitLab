@@ -111,6 +111,7 @@ function DigitalGateApp() {
     step,
     reset,
     exportJSON,
+    importJSON,
     newProject,
     saveProjectToLocal,
     loadProjectFromLocal,
@@ -744,21 +745,40 @@ function DigitalGateApp() {
 
     if (!file) return;
 
-    const suggested = file.name.replace(/\.[^.]+$/, "");
+    const suggested = file.name
+      .replace(/\.(bitlab|circuit|dgate|json)$/g, "")
+      .replace(/\./g, "")
+      .replace(/\s+/g, "-");
 
     file
       .text()
       .then((text) => {
         try {
-          const data = JSON.parse(text) as CircuitSnapshot;
+          const parsed = JSON.parse(text);
 
-          if (!data || typeof data !== "object" || !data.components)
+          // Detect format: full project vs raw circuit snapshot
+          let circuitData: CircuitSnapshot;
+
+          if (parsed.circuit && parsed.version !== undefined) {
+            // Full project format — extract the circuit
+            circuitData = parsed.circuit as CircuitSnapshot;
+          } else if (parsed.components) {
+            // Raw CircuitSnapshot
+            circuitData = parsed as CircuitSnapshot;
+          } else {
+            throw new Error("Unrecognized JSON format");
+          }
+
+          if (
+            !circuitData.components ||
+            typeof circuitData.components !== "object"
+          )
             throw new Error("Invalid circuit file");
 
           // eslint-disable-next-line no-alert
           const name = window.prompt("Circuit name", suggested) || suggested;
 
-          const type = library.registerCustomCircuit(name.trim(), data);
+          const type = library.registerCustomCircuit(name.trim(), circuitData);
 
           if (!type) {
             addLog(
@@ -782,7 +802,7 @@ function DigitalGateApp() {
 
           saveCustomCircuitToLocal();
 
-          addLog(CONSOLE_TAB.LOG, `Imported "${name}" as gate unit.`);
+          addLog(CONSOLE_TAB.LOG, `Imported "${name}" as custom gate.`);
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
 
@@ -976,7 +996,7 @@ function DigitalGateApp() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="application/json,.json"
+        accept="application/json,.json,.bitlab.json,.circuit.json,.dgate.json"
         className="hidden"
         onChange={importCustomCircuitFromFile}
       />
@@ -999,6 +1019,18 @@ function DigitalGateApp() {
         saveProjectToLocal={saveProjectToLocal}
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
+        importToCanvas={() => {
+          importJSON().then((success) => {
+            if (success) {
+              addLog(CONSOLE_TAB.LOG, "Circuit imported to canvas.");
+            } else {
+              addLog(
+                CONSOLE_TAB.ERROR,
+                "Failed to import circuit. Check that the file is a valid exported project JSON.",
+              );
+            }
+          });
+        }}
         newProject={newProject}
         openCmd={() => setCmdOpen(true)}
         createCircuitFromGates={createCircuitFromGates}
