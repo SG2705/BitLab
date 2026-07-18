@@ -3,7 +3,8 @@ import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { GATE_ICON, type GateIcon } from "@/components/ui";
-import { type ComponentInstance, library } from "@/engine";
+import { type ComponentInstance, library, LogicValue } from "@/engine";
+import type { SignalValue } from "@/engine";
 import {
   DEFAULT_PROBE_SAMPLES,
   GATE_TYPE_BUTTON,
@@ -48,6 +49,34 @@ const SEG_RECTS = [
   [0, 7, 5, 23], // f top-left
   [2, 29, 33, 5], // g middle
 ];
+
+/** Map a signal value to the appropriate CSS color for pin/output rendering */
+function pinColor(signal: SignalValue): string {
+  switch (signal) {
+    case LogicValue.ONE:
+      return "var(--color-signal-on)";
+    case LogicValue.UNKNOWN:
+      return "var(--color-signal-unknown)";
+    case LogicValue.HIGH_IMPEDANCE:
+      return "var(--color-signal-highz)";
+    default:
+      return "var(--color-wire)";
+  }
+}
+
+/** Map a signal value to its glow CSS class (or empty string if ZERO) */
+function glowClass(signal: SignalValue): string {
+  switch (signal) {
+    case LogicValue.ONE:
+      return "signal-glow";
+    case LogicValue.UNKNOWN:
+      return "signal-glow-unknown";
+    case LogicValue.HIGH_IMPEDANCE:
+      return "signal-glow-highz";
+    default:
+      return "";
+  }
+}
 
 function SevenSegDisplay({ value }: { value: number }) {
   // eslint-disable-next-line no-bitwise
@@ -243,7 +272,16 @@ function GateNode({
   const def = library.get(comp.type);
   const resolvedLabel = getGateLabel(def.type, def.label, intl);
 
-  const active = comp.outputs.some(Boolean) || Boolean(comp.state?.on);
+  const dominantOutput =
+    comp.outputs.find((v) => v !== LogicValue.ZERO) ?? LogicValue.ZERO;
+  const isActive =
+    dominantOutput !== LogicValue.ZERO || Boolean(comp.state?.on);
+  const bodyGlow =
+    dominantOutput !== LogicValue.ZERO
+      ? glowClass(dominantOutput)
+      : comp.state?.on
+        ? "signal-glow"
+        : "";
   const isIO = [
     GATE_TYPE_TOGGLE,
     GATE_TYPE_BUTTON,
@@ -340,7 +378,15 @@ function GateNode({
               height={rh}
               rx={6}
               fill="var(--color-card)"
-              stroke={active ? "var(--color-signal-on)" : "var(--color-border)"}
+              stroke={
+                isActive
+                  ? pinColor(
+                      dominantOutput !== LogicValue.ZERO
+                        ? dominantOutput
+                        : LogicValue.ONE,
+                    )
+                  : "var(--color-border)"
+              }
               strokeWidth={1.5}
               onClick={onClickBody}
               onPointerDown={onPointerDownBody}
@@ -348,7 +394,7 @@ function GateNode({
               onPointerLeave={onPointerUpBody}
               onPointerCancel={onPointerUpBody}
               style={{ cursor: isIO ? "pointer" : "grab" }}
-              className={cn(active && "signal-glow")}
+              className={cn(bodyGlow)}
             />
             {/* Symbol/Icon — always horizontal text */}
             {comp.type !== GATE_TYPE_DISPLAY7 &&
@@ -361,11 +407,16 @@ function GateNode({
                   width={40}
                   height={40}
                   stroke={
-                    active
-                      ? "var(--color-signal-on)"
+                    isActive
+                      ? pinColor(
+                          dominantOutput !== LogicValue.ZERO
+                            ? dominantOutput
+                            : LogicValue.ONE,
+                        )
                       : "var(--color-foreground)"
                   }
                   pointerEvents="none"
+                  className={cn(bodyGlow)}
                 />
               ) : (
                 <text
@@ -373,14 +424,19 @@ function GateNode({
                   y={rh / 2 + (isCustomLabel ? 4 : 5)}
                   textAnchor="middle"
                   fill={
-                    active
-                      ? "var(--color-signal-on)"
+                    isActive
+                      ? pinColor(
+                          dominantOutput !== LogicValue.ZERO
+                            ? dominantOutput
+                            : LogicValue.ONE,
+                        )
                       : "var(--color-foreground)"
                   }
                   fontSize={isCustomLabel ? 10 : 14}
                   fontWeight={600}
                   fontFamily="var(--font-mono)"
                   pointerEvents="none"
+                  className={cn(bodyGlow)}
                 >
                   {def.symbol ?? resolvedLabel}
                 </text>
@@ -429,7 +485,9 @@ function GateNode({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill={
-                  active ? "var(--color-signal-on)" : "var(--color-foreground)"
+                  isActive
+                    ? "var(--color-signal-on)"
+                    : "var(--color-foreground)"
                 }
                 fontSize={32}
                 fontWeight={700}
@@ -444,20 +502,20 @@ function GateNode({
               ? (() => {
                   const bx =
                     r === 0
-                      ? -14
+                      ? -9
                       : r === 90
                         ? rw / 2
                         : r === 180
-                          ? rw + 14
+                          ? rw + 9
                           : rw / 2;
                   const by =
                     r === 0
                       ? rh / 2
                       : r === 90
-                        ? -14
+                        ? -9
                         : r === 180
                           ? rh / 2
-                          : rh + 14;
+                          : rh + 9;
 
                   return (
                     <g key="gate-node-bus-in">
@@ -468,16 +526,32 @@ function GateNode({
                         height={12}
                         rx={2}
                         ry={2}
-                        fill="var(--color-background)"
-                        stroke={
-                          comp.inputs.some(Boolean)
-                            ? "var(--color-primary)"
-                            : "var(--color-accent)"
-                        }
+                        fill={(() => {
+                          const dominantIn =
+                            comp.inputs.find((v) => v !== LogicValue.ZERO) ??
+                            LogicValue.ZERO;
+                          return dominantIn === LogicValue.ONE
+                            ? "var(--color-signal-on)"
+                            : dominantIn === LogicValue.UNKNOWN
+                              ? "var(--color-signal-unknown)"
+                              : dominantIn === LogicValue.HIGH_IMPEDANCE
+                                ? "var(--color-signal-highz)"
+                                : "var(--color-background)";
+                        })()}
+                        stroke={pinColor(
+                          comp.inputs.find((v) => v !== LogicValue.ZERO) ??
+                            LogicValue.ZERO,
+                        )}
                         strokeWidth={1.5}
                         onMouseUp={(e) => onPinUp(e, -1, PIN_KIND.IN)}
                         style={{ cursor: "crosshair" }}
-                        className="hover:stroke-primary"
+                        className={cn(
+                          "hover:stroke-primary",
+                          glowClass(
+                            comp.inputs.find((v) => v !== LogicValue.ZERO) ??
+                              LogicValue.ZERO,
+                          ),
+                        )}
                       />
                     </g>
                   );
@@ -517,6 +591,7 @@ function GateNode({
                   }
 
                   const pinLabel = def.inputLabels?.[i];
+                  const inSignal = comp.inputs[i] ?? LogicValue.HIGH_IMPEDANCE;
 
                   return (
                     // eslint-disable-next-line react/no-array-index-key
@@ -526,20 +601,31 @@ function GateNode({
                         y1={ly}
                         x2={cx}
                         y2={cy}
-                        stroke="var(--color-wire)"
+                        stroke={pinColor(inSignal)}
                         strokeWidth={1.5}
                       />
                       <circle
                         cx={cx}
                         cy={cy}
                         r={5}
-                        fill="var(--color-background)"
-                        stroke="var(--color-wire)"
+                        fill={
+                          inSignal === LogicValue.ONE
+                            ? "var(--color-signal-on)"
+                            : inSignal === LogicValue.UNKNOWN
+                              ? "var(--color-signal-unknown)"
+                              : inSignal === LogicValue.HIGH_IMPEDANCE
+                                ? "var(--color-signal-highz)"
+                                : "var(--color-background)"
+                        }
+                        stroke={pinColor(inSignal)}
                         strokeWidth={1.5}
                         onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
                         onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
                         style={{ cursor: "crosshair" }}
-                        className="hover:stroke-primary"
+                        className={cn(
+                          "hover:stroke-primary",
+                          glowClass(inSignal),
+                        )}
                       />
                       {pinLabel && (
                         <text
@@ -571,42 +657,46 @@ function GateNode({
               ? (() => {
                   const bx =
                     r === 0
-                      ? rw + 14
+                      ? rw + 3
                       : r === 90
-                        ? rw / 2
+                        ? rw / 2 - 6
                         : r === 180
-                          ? -14
-                          : rw / 2;
+                          ? -15
+                          : rw / 2 - 6;
                   const by =
                     r === 0
                       ? rh / 2
                       : r === 90
-                        ? rh + 14
+                        ? rh + 9
                         : r === 180
                           ? rh / 2
-                          : -14;
+                          : -9;
 
                   return (
                     <g key="gate-node-bus-out">
                       <rect
-                        x={bx - 6}
+                        x={bx}
                         y={by - 6}
                         width={12}
                         height={12}
                         rx={2}
                         ry={2}
-                        fill="var(--color-background)"
-                        stroke={
-                          comp.outputs.some(Boolean)
-                            ? "var(--color-primary)"
-                            : "var(--color-accent)"
+                        fill={
+                          dominantOutput === LogicValue.ONE
+                            ? "var(--color-signal-on)"
+                            : dominantOutput === LogicValue.UNKNOWN
+                              ? "var(--color-signal-unknown)"
+                              : dominantOutput === LogicValue.HIGH_IMPEDANCE
+                                ? "var(--color-signal-highz)"
+                                : "var(--color-background)"
                         }
+                        stroke={pinColor(dominantOutput)}
                         strokeWidth={1.5}
                         onMouseDown={(e) => onPinDown(e, -1, PIN_KIND.OUT)}
                         style={{ cursor: "crosshair" }}
                         className={cn(
                           "hover:stroke-primary",
-                          comp.outputs.some(Boolean) && "signal-glow",
+                          glowClass(dominantOutput),
                         )}
                       />
                     </g>
@@ -616,7 +706,8 @@ function GateNode({
                   const count = def.outputs;
                   const spacing = (isVertical ? rh : rw) / (count + 1);
                   const pos = spacing * (i + 1);
-                  const on = Boolean(comp.outputs[i]);
+                  const outSignal = comp.outputs[i] ?? LogicValue.UNKNOWN;
+                  const isOn = outSignal === LogicValue.ONE;
 
                   let cx: number;
                   let cy: number;
@@ -655,9 +746,7 @@ function GateNode({
                         y1={ly}
                         x2={cx}
                         y2={cy}
-                        stroke={
-                          on ? "var(--color-signal-on)" : "var(--color-wire)"
-                        }
+                        stroke={pinColor(outSignal)}
                         strokeWidth={1.5}
                       />
                       <circle
@@ -665,20 +754,22 @@ function GateNode({
                         cy={cy}
                         r={5}
                         fill={
-                          on
+                          isOn
                             ? "var(--color-signal-on)"
-                            : "var(--color-background)"
+                            : outSignal === LogicValue.UNKNOWN
+                              ? "var(--color-signal-unknown)"
+                              : outSignal === LogicValue.HIGH_IMPEDANCE
+                                ? "var(--color-signal-highz)"
+                                : "var(--color-background)"
                         }
-                        stroke={
-                          on ? "var(--color-signal-on)" : "var(--color-wire)"
-                        }
+                        stroke={pinColor(outSignal)}
                         strokeWidth={1.5}
                         onMouseDown={(e) => onPinDown(e, i, PIN_KIND.OUT)}
                         onMouseUp={(e) => onPinUp(e, i, PIN_KIND.OUT)}
                         style={{ cursor: "crosshair" }}
                         className={cn(
                           "hover:stroke-primary",
-                          on && "signal-glow",
+                          glowClass(outSignal),
                         )}
                       />
                       {pinLabel && (

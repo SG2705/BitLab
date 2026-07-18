@@ -4,13 +4,12 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { Copy, RotateCw, Settings2, Trash2 } from "lucide-react";
 
 import { Button, Input } from "@/components/ui";
-import { type ComponentInstance, library } from "@/engine";
+import { type ComponentInstance, library, LogicValue } from "@/engine";
 import {
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
-import {} from "@/lib/constants";
 import { cn, getGateLabel } from "@/lib/utils";
 
 interface PropertiesPanelProps {
@@ -188,6 +187,52 @@ function GateProperties({
           ) : (
             <div>
               <div className="text-[10px] uppercase text-muted-foreground mb-1">
+                <FormattedMessage
+                  id="liveInputs"
+                  defaultMessage="Live Inputs"
+                />
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {comp.inputs.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">
+                    <FormattedMessage id="SL+c5a" defaultMessage="—" />
+                  </span>
+                ) : (
+                  comp.inputs.map((inp, i) => (
+                    <span
+                      // eslint-disable-next-line react/no-array-index-key
+                      key={i}
+                      className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-mono border",
+                        inp === LogicValue.ONE
+                          ? "bg-signal-on/20 border-signal-on text-signal-on"
+                          : inp === LogicValue.UNKNOWN
+                            ? "bg-signal-unknown/20 border-signal-unknown text-signal-unknown"
+                            : inp === LogicValue.HIGH_IMPEDANCE
+                              ? "bg-signal-highz/20 border-signal-highz text-signal-highz"
+                              : "bg-secondary border-border text-muted-foreground",
+                      )}
+                    >
+                      <FormattedMessage
+                        id="liveInputLabel"
+                        defaultMessage="{gateLabel} : {gateState}"
+                        values={{
+                          gateLabel: gate.inputLabels?.[i] ?? `I${i}`,
+                          gateState:
+                            inp === LogicValue.ONE
+                              ? "1"
+                              : inp === LogicValue.UNKNOWN
+                                ? "X"
+                                : inp === LogicValue.HIGH_IMPEDANCE
+                                  ? "Z"
+                                  : "0",
+                        }}
+                      />
+                    </span>
+                  ))
+                )}
+              </div>
+              <div className="text-[10px] uppercase text-muted-foreground mb-1 mt-2">
                 <FormattedMessage id="iiWNbN" defaultMessage="Live Outputs" />
               </div>
               <div className="flex gap-1 flex-wrap">
@@ -202,9 +247,13 @@ function GateProperties({
                       key={i}
                       className={cn(
                         "px-2 py-0.5 rounded text-[10px] font-mono border",
-                        o
+                        o === LogicValue.ONE
                           ? "bg-signal-on/20 border-signal-on text-signal-on"
-                          : "bg-secondary border-border text-muted-foreground",
+                          : o === LogicValue.UNKNOWN
+                            ? "bg-signal-unknown/20 border-signal-unknown text-signal-unknown"
+                            : o === LogicValue.HIGH_IMPEDANCE
+                              ? "bg-signal-highz/20 border-signal-highz text-signal-highz"
+                              : "bg-secondary border-border text-muted-foreground",
                       )}
                     >
                       <FormattedMessage
@@ -212,7 +261,14 @@ function GateProperties({
                         defaultMessage="{gateLabel} : {gateState}"
                         values={{
                           gateLabel: gate.outputLabels?.[i] ?? `O${i}`,
-                          gateState: o ? "1" : "0",
+                          gateState:
+                            o === LogicValue.ONE
+                              ? "1"
+                              : o === LogicValue.UNKNOWN
+                                ? "X"
+                                : o === LogicValue.HIGH_IMPEDANCE
+                                  ? "Z"
+                                  : "0",
                         }}
                       />
                     </span>

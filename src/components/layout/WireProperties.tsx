@@ -3,7 +3,7 @@ import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Cable } from "lucide-react";
 
-import { type ComponentInstance, library } from "@/engine";
+import { type ComponentInstance, library, LogicValue } from "@/engine";
 import type { Wire } from "@/engine/types";
 import { cn, resolveLabel } from "@/lib/utils";
 
@@ -35,7 +35,7 @@ function WireProperties({ wire, fromComp, toComp }: WirePropertiesProps) {
   const fromPinLabel =
     fromDef?.outputLabels?.[wire.from.pin] ?? `O${wire.from.pin}`;
   const toPinLabel = toDef?.inputLabels?.[wire.to.pin] ?? `I${wire.to.pin}`;
-  const live = Boolean(fromComp.outputs[wire.from.pin]);
+  const signal = fromComp.outputs[wire.from.pin] ?? LogicValue.ZERO;
   const isBus = Boolean(fromDef?.isBusOutput) && Boolean(toDef?.isBusInput);
 
   return (
@@ -76,18 +76,34 @@ function WireProperties({ wire, fromComp, toComp }: WirePropertiesProps) {
           <span
             className={cn(
               "font-mono",
-              live ? "text-signal-on" : "text-muted-foreground",
+              signal === LogicValue.ONE
+                ? "text-signal-on"
+                : signal === LogicValue.UNKNOWN
+                  ? "text-signal-unknown"
+                  : signal === LogicValue.HIGH_IMPEDANCE
+                    ? "text-signal-highz"
+                    : "text-muted-foreground",
             )}
           >
-            {live
+            {signal === LogicValue.ONE
               ? intl.formatMessage({
                   id: "97i0f9",
                   defaultMessage: "HIGH (1)",
                 })
-              : intl.formatMessage({
-                  id: "e+L5nJ",
-                  defaultMessage: "LOW (0)",
-                })}
+              : signal === LogicValue.UNKNOWN
+                ? intl.formatMessage({
+                    id: "signalUnknown",
+                    defaultMessage: "UNKNOWN (X)",
+                  })
+                : signal === LogicValue.HIGH_IMPEDANCE
+                  ? intl.formatMessage({
+                      id: "signalHighZ",
+                      defaultMessage: "Hi-Z (Z)",
+                    })
+                  : intl.formatMessage({
+                      id: "e+L5nJ",
+                      defaultMessage: "LOW (0)",
+                    })}
           </span>
         </div>
         <div className="flex justify-between text-xs">

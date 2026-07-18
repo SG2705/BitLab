@@ -12,8 +12,8 @@ export enum LogicValue {
   HIGH_IMPEDANCE = 3,
 }
 
-/** Current signal type — boolean for now, will migrate to LogicValue */
-export type SignalValue = boolean;
+/** Signal type — four-state logic value */
+export type SignalValue = LogicValue;
 export type ComponentId = string;
 export type WireId = string;
 

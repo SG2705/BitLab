@@ -1,5 +1,7 @@
 import { memo } from "react";
 
+import type { SignalValue } from "@/engine";
+import { LogicValue } from "@/engine";
 import { PIN_DIR } from "@/lib/constants";
 import { type PinDir, type WireType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -9,10 +11,27 @@ interface Point {
   y: number;
 }
 
+/** Map a LogicValue to its CSS color variable */
+function signalColor(signal: SignalValue): string {
+  switch (signal) {
+    case LogicValue.ONE:
+      return "var(--color-signal-on)";
+    case LogicValue.UNKNOWN:
+      return "var(--color-signal-unknown)";
+    case LogicValue.HIGH_IMPEDANCE:
+      return "var(--color-signal-highz)";
+    default:
+      return "var(--color-wire)";
+  }
+}
+
 interface WirePathProps {
   p1: Point;
   p2: Point;
-  live: boolean;
+  /** @deprecated Use `signal` instead for four-state color */
+  isLive: boolean;
+  /** Four-state signal value for wire coloring */
+  signal?: SignalValue;
   isRunning: boolean;
   style: WireType;
   /** Direction the source pin faces (default: RIGHT) */
@@ -103,7 +122,8 @@ WirePath.defaultProps = {
 function WirePath({
   p1,
   p2,
-  live,
+  isLive,
+  signal,
   isRunning,
   style,
   dir1 = PIN_DIR.RIGHT,
@@ -116,7 +136,10 @@ function WirePath({
     style === "ortho"
       ? orthoPath(p1, p2, dir1, dir2)
       : bezierPath(p1, p2, dir1, dir2);
-  const color = live ? "var(--color-signal-on)" : "var(--color-wire)";
+  // Use four-state signal if provided, otherwise fall back to boolean isLive
+  const effectiveSignal = signal ?? (isLive ? LogicValue.ONE : LogicValue.ZERO);
+  const color = signalColor(effectiveSignal);
+  const isActive = effectiveSignal === LogicValue.ONE;
 
   return (
     <g onClick={onClick} style={{ cursor: "pointer" }}>
@@ -127,7 +150,10 @@ function WirePath({
         strokeWidth={isSelected ? 3 : 2}
         fill="none"
         strokeDasharray={isPreview ? "5 5" : undefined}
-        className={cn(live && isRunning && "wire-flow", live && "signal-glow")}
+        className={cn(
+          isActive && isRunning && "wire-flow",
+          isActive && "signal-glow",
+        )}
         style={{ opacity: isPreview ? 0.7 : 1 }}
       />
     </g>

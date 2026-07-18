@@ -25,9 +25,9 @@ interface CircuitViewerProps {
   onClose: () => void;
 }
 
-const NOOP = () => {};
-const NOOP_MOUSE = (_e: React.MouseEvent) => {};
-const NOOP_PIN = (_e: React.MouseEvent, _pin: number, _kind: PinKind) => {};
+const NOOP = () => { };
+const NOOP_MOUSE = (_e: React.MouseEvent) => { };
+const NOOP_PIN = (_e: React.MouseEvent, _pin: number, _kind: PinKind) => { };
 
 function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
   const intl = useIntl();
@@ -266,7 +266,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                   key={w.id}
                   p1={p1}
                   p2={p2}
-                  live={false}
+                  isLive={false}
                   isRunning={false}
                   style="bezier"
                   dir1={d1}

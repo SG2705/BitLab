@@ -11,7 +11,7 @@ const messageModules: Record<
   en: () =>
     // eslint-disable-next-line import/extensions
     import("./locales/en.json").then(
-      (m) => m.default as Record<string, string>,
+      (m) => m.default as unknown as Record<string, string>,
     ),
 };
 

@@ -80,6 +80,51 @@ import {
   PINC11,
   PINC16,
 } from "./constants";
+import {
+  evalClockTick,
+  evalCmp4,
+  evalComment,
+  evalComparator,
+  evalCounter4,
+  evalDecoder2,
+  evalDecoder3,
+  evalDemux2,
+  evalDff,
+  evalDigitBin,
+  evalDisplay7,
+  evalDlatch,
+  evalEncoder4,
+  evalFullAdder,
+  evalFullSub,
+  evalGateAnd,
+  evalGateBuffer,
+  evalGateNand,
+  evalGateNor,
+  evalGateNot,
+  evalGateOr,
+  evalGateXnor,
+  evalGateXor,
+  evalHalfAdder,
+  evalHalfSub,
+  evalInput,
+  evalJkff,
+  evalLed,
+  evalMux2,
+  evalMux4,
+  evalMux8,
+  evalPassthrough,
+  evalProbe,
+  evalReg4,
+  evalShreg4,
+  evalSplitter,
+  evalSrLatch,
+  evalTiff,
+  evalUreg4,
+  evalUreg8,
+  fromBool,
+  toBool,
+} from "./logic";
+import { LogicValue } from "./types";
 import type {
   CircuitSnapshot,
   ComponentDefinition,
@@ -88,6 +133,8 @@ import type {
 } from "./types";
 import { getHeightForPinCount } from "./utils";
 
+const { ZERO, ONE } = LogicValue;
+
 export interface CustomGateMeta {
   type: string;
   name: string;
@@ -95,8 +142,6 @@ export interface CustomGateMeta {
   outputLabels: string[];
   circuit: CircuitSnapshot;
 }
-
-const b = (v: unknown): boolean => Boolean(v);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -144,7 +189,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
+    evaluate: evalGateAnd,
   }),
   cb({
     type: GATE_TYPE_OR,
@@ -157,7 +202,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥1",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [i.some(b)], state: null }),
+    evaluate: evalGateOr,
   }),
   cb({
     type: GATE_TYPE_XOR,
@@ -170,10 +215,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "=1",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({
-      outputs: [i.reduce((a: boolean, v) => a !== b(v), false)],
-      state: null,
-    }),
+    evaluate: evalGateXor,
   }),
   cb({
     type: GATE_TYPE_XNOR,
@@ -186,10 +228,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "=",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({
-      outputs: [!i.reduce((a: boolean, v) => a !== b(v), false)],
-      state: null,
-    }),
+    evaluate: evalGateXnor,
   }),
   cb({
     type: GATE_TYPE_NAND,
@@ -202,7 +241,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&̄",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [!i.every(b)], state: null }),
+    evaluate: evalGateNand,
   }),
   cb({
     type: GATE_TYPE_NOR,
@@ -215,7 +254,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥1̄",
     inputLabels: ["A", "B"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [!i.some(b)], state: null }),
+    evaluate: evalGateNor,
   }),
   cb({
     type: GATE_TYPE_NOT,
@@ -228,7 +267,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "!",
     inputLabels: ["A"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [!b(i[0])], state: null }),
+    evaluate: evalGateNot,
   }),
   cb({
     type: GATE_TYPE_BUFFER,
@@ -241,7 +280,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "1",
     inputLabels: ["A"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [b(i[0])], state: null }),
+    evaluate: evalGateBuffer,
   }),
   cb({
     type: GATE_TYPE_AND3,
@@ -254,7 +293,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "&3",
     inputLabels: ["A", "B", "C"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [i.every(b)], state: null }),
+    evaluate: evalGateAnd,
   }),
   cb({
     type: GATE_TYPE_OR3,
@@ -267,7 +306,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥1·3",
     inputLabels: ["A", "B", "C"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [i.some(b)], state: null }),
+    evaluate: evalGateOr,
   }),
 
   // ── Inputs ───────────────────────────────────────────────────────────────────
@@ -285,7 +324,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
+    evaluate: evalInput,
   }),
   hw({
     type: GATE_TYPE_BUTTON,
@@ -301,7 +340,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
+    evaluate: evalInput,
   }),
   hw({
     type: GATE_TYPE_CONST,
@@ -317,7 +356,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ on: true }),
-    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
+    evaluate: evalInput,
   }),
   hw({
     type: GATE_TYPE_CLOCK,
@@ -333,12 +372,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: false,
     isOutput: false,
     initialState: () => ({ on: false }),
-    evaluate: (_i, s) => ({ outputs: [Boolean(s?.on)], state: s }),
-    tick(state) {
-      const on = !(state?.on as boolean);
-
-      return { outputs: [on], state: { on } };
-    },
+    evaluate: evalInput,
+    tick: evalClockTick,
   }),
 
   // ── Digit→Binary input ───────────────────────────────────────────────────────
@@ -356,26 +391,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: true,
     isOutput: false,
     initialState: () => ({ digit: 0 }),
-    evaluate: (_i, s) => {
-      const digit = s?.digit as number | null | undefined;
-      const zero: boolean[] = Array<boolean>(4).fill(false);
-
-      if (
-        typeof digit !== "number" ||
-        !Number.isInteger(digit) ||
-        digit < 0 ||
-        digit > 9
-      ) {
-        return { outputs: zero, state: s };
-      }
-
-      return {
-        outputs: Array.from({ length: 4 }, (_, bit) =>
-          Boolean((digit >> bit) & 1),
-        ),
-        state: s,
-      };
-    },
+    evaluate: evalDigitBin,
   }),
 
   // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -393,7 +409,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: false,
     isOutput: true,
     initialState: () => ({ on: false }),
-    evaluate: (i) => ({ outputs: [], state: { on: b(i[0]) } }),
+    evaluate: evalLed,
   }),
   hw({
     type: GATE_TYPE_DISPLAY7,
@@ -410,15 +426,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: true,
     inputLabels: ["D0", "D1", "D2", "D3"],
     initialState: () => ({ value: 0 }),
-    evaluate: (i) => {
-      const value =
-        (b(i[3]) ? 8 : 0) |
-        (b(i[2]) ? 4 : 0) |
-        (b(i[1]) ? 2 : 0) |
-        (b(i[0]) ? 1 : 0);
-
-      return { outputs: [], state: { value } };
-    },
+    evaluate: evalDisplay7,
   }),
   hw({
     type: GATE_TYPE_PROBE,
@@ -429,8 +437,6 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 120,
     height: 70,
     inputLabels: ["IN"],
-    // A probe records the signal that has settled in the current pass. It is
-    // stateful history, not edge-triggered storage.
     isSequential: false,
     samplesEveryTick: true,
     isClock: false,
@@ -439,26 +445,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     initialState: () => ({
       history: [] as Array<{ v: boolean; t: number }>,
     }),
-    evaluate: (inputs, state, context) => {
-      const v = Boolean(inputs[0]);
-      const t = context?.tick ?? 0;
-
-      // Migrate from old boolean[] format gracefully
-      const raw = state?.history as unknown[] | undefined;
-      const prev: Array<{ v: boolean; t: number }> =
-        Array.isArray(raw) &&
-        raw.length > 0 &&
-        typeof raw[0] === "object" &&
-        raw[0] !== null
-          ? (raw as Array<{ v: boolean; t: number }>)
-          : [];
-
-      // Keep one extra entry beyond the visible window so the renderer can
-      // always look up the signal value at the window's left edge.
-      const history = [...prev, { v, t }].slice(-(DEFAULT_PROBE_SAMPLES + 1));
-
-      return { outputs: [], state: { history } };
-    },
+    evaluate: evalProbe,
   }),
 
   // ── Sequential ────────────────────────────────────────────────────────────────
@@ -471,9 +458,6 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "SR",
-    // An SR latch is stateful but level-sensitive: it must observe inputs
-    // settled during this propagation pass, rather than the pre-pass snapshot
-    // reserved for edge-triggered storage.
     isSequential: false,
     isClock: false,
     isInput: false,
@@ -481,20 +465,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["S", "R"],
     outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false }),
-    evaluate: (i, s) => {
-      let q = Boolean(s?.q);
-      const S = b(i[0]);
-      const R = b(i[1]);
-
-      if (S && !R) {
-        q = true;
-      } else if (!S && R) {
-        q = false;
-      }
-
-      // S=1 R=1 is an invalid state; hold
-      return { outputs: [q, !q], state: { q } };
-    },
+    evaluate: evalSrLatch,
   }),
   hw({
     type: GATE_TYPE_DFF,
@@ -512,17 +483,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["D", "CLK"],
     outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
-    evaluate: (i, s) => {
-      let q = Boolean(s?.q);
-      const clk = b(i[1]);
-
-      // Sample D on rising clock edge
-      if (clk && !s?.prevClk) {
-        q = b(i[0]);
-      }
-
-      return { outputs: [q, !q], state: { q, prevClk: clk } };
-    },
+    evaluate: evalDff,
   }),
   hw({
     type: GATE_TYPE_JKFF,
@@ -540,25 +501,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["J", "K", "CLK"],
     outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
-    evaluate: (i, s) => {
-      const clk = b(i[2]);
-      let q = Boolean(s?.q);
-
-      if (clk && !s?.prevClk) {
-        const J = b(i[0]);
-        const K = b(i[1]);
-
-        if (J && !K) {
-          q = true;
-        } else if (!J && K) {
-          q = false;
-        } else if (J && K) {
-          q = !q; // toggle
-        }
-      }
-
-      return { outputs: [q, !q], state: { q, prevClk: clk } };
-    },
+    evaluate: evalJkff,
   }),
   hw({
     type: GATE_TYPE_TIFF,
@@ -576,18 +519,8 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["T", "CLK"],
     outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false, prevClk: false }),
-    evaluate: (i, s) => {
-      let q = Boolean(s?.q);
-      const clk = b(i[1]);
-
-      if (clk && !s?.prevClk && b(i[0])) {
-        q = !q;
-      }
-
-      return { outputs: [q, !q], state: { q, prevClk: clk } };
-    },
+    evaluate: evalTiff,
   }),
-
   hw({
     type: GATE_TYPE_DLATCH,
     label: "",
@@ -597,8 +530,6 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 80,
     height: 70,
     symbol: "DL",
-    // A D latch is transparent while E is high, so it must read live inputs.
-    // Only edge-triggered storage uses the pre-pass input snapshot.
     isSequential: false,
     isClock: false,
     isInput: false,
@@ -606,13 +537,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["D", "E"],
     outputLabels: ["Q", "Q'"],
     initialState: () => ({ q: false }),
-    evaluate: (i, s) => {
-      let q = Boolean(s?.q);
-
-      if (b(i[1])) q = b(i[0]);
-
-      return { outputs: [q, !q], state: { q } };
-    },
+    evaluate: evalDlatch,
   }),
   hw({
     type: GATE_TYPE_REG4,
@@ -630,28 +555,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["D0", "D1", "D2", "D3", "CLK"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
     initialState: () => ({ q: 0, prevClk: false }),
-    evaluate: (i, s) => {
-      let q = (s?.q as number) ?? 0;
-      const clk = b(i[4]);
-
-      if (clk && !s?.prevClk) {
-        q =
-          (b(i[3]) ? 8 : 0) |
-          (b(i[2]) ? 4 : 0) |
-          (b(i[1]) ? 2 : 0) |
-          (b(i[0]) ? 1 : 0);
-      }
-
-      return {
-        outputs: [
-          Boolean(q & 1),
-          Boolean(q & 2),
-          Boolean(q & 4),
-          Boolean(q & 8),
-        ],
-        state: { q, prevClk: clk },
-      };
-    },
+    evaluate: evalReg4,
   }),
   hw({
     type: GATE_TYPE_COUNTER4,
@@ -669,26 +573,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["CLK", "RST"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
     initialState: () => ({ count: 0, prevClk: false }),
-    evaluate: (i, s) => {
-      let count = (s?.count as number) ?? 0;
-      const clk = b(i[0]);
-
-      if (b(i[1])) {
-        count = 0;
-      } else if (clk && !s?.prevClk) {
-        count = (count + 1) & 0xf;
-      }
-
-      return {
-        outputs: [
-          Boolean(count & 1),
-          Boolean(count & 2),
-          Boolean(count & 4),
-          Boolean(count & 8),
-        ],
-        state: { count, prevClk: clk },
-      };
-    },
+    evaluate: evalCounter4,
   }),
   hw({
     type: GATE_TYPE_SHREG4,
@@ -706,26 +591,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     inputLabels: ["SI", "CLK", "RST"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
     initialState: () => ({ bits: 0, prevClk: false }),
-    evaluate: (i, s) => {
-      let bits = (s?.bits as number) ?? 0;
-      const clk = b(i[1]);
-
-      if (b(i[2])) {
-        bits = 0;
-      } else if (clk && !s?.prevClk) {
-        bits = ((bits << 1) | (b(i[0]) ? 1 : 0)) & 0xf;
-      }
-
-      return {
-        outputs: [
-          Boolean(bits & 1),
-          Boolean(bits & 2),
-          Boolean(bits & 4),
-          Boolean(bits & 8),
-        ],
-        state: { bits, prevClk: clk },
-      };
-    },
+    evaluate: evalShreg4,
   }),
 
   // ── Arithmetic ────────────────────────────────────────────────────────────────
@@ -740,10 +606,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "½+",
     inputLabels: ["A", "B"],
     outputLabels: ["S", "C"],
-    evaluate: (i) => ({
-      outputs: [b(i[0]) !== b(i[1]), b(i[0]) && b(i[1])],
-      state: null,
-    }),
+    evaluate: evalHalfAdder,
   }),
   cb({
     type: GATE_TYPE_FULL_ADDER,
@@ -756,11 +619,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "Σ",
     inputLabels: ["A", "B", "Cin"],
     outputLabels: ["S", "Co"],
-    evaluate: (i) => {
-      const s = (b(i[0]) ? 1 : 0) + (b(i[1]) ? 1 : 0) + (b(i[2]) ? 1 : 0);
-
-      return { outputs: [s % 2 === 1, s >= 2], state: null };
-    },
+    evaluate: evalFullAdder,
   }),
   cb({
     type: GATE_TYPE_MUX2,
@@ -773,7 +632,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "M",
     inputLabels: ["D0", "D1", "S"],
     outputLabels: ["Y"],
-    evaluate: (i) => ({ outputs: [b(i[2]) ? b(i[1]) : b(i[0])], state: null }),
+    evaluate: evalMux2,
   }),
   cb({
     type: GATE_TYPE_MUX4,
@@ -786,11 +645,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "M4",
     inputLabels: ["D0", "D1", "D2", "D3", "S0", "S1"],
     outputLabels: ["Y"],
-    evaluate: (i) => {
-      const sel = (b(i[5]) ? 2 : 0) | (b(i[4]) ? 1 : 0);
-
-      return { outputs: [b(i[sel])], state: null };
-    },
+    evaluate: evalMux4,
   }),
   cb({
     type: GATE_TYPE_DEMUX2,
@@ -803,11 +658,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "DM",
     inputLabels: ["D", "S"],
     outputLabels: ["Y0", "Y1"],
-    evaluate: (i) => {
-      const sel = b(i[1]);
-
-      return { outputs: [!sel && b(i[0]), sel && b(i[0])], state: null };
-    },
+    evaluate: evalDemux2,
   }),
   cb({
     type: GATE_TYPE_DECODER2,
@@ -820,14 +671,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "DEC",
     inputLabels: ["A", "B"],
     outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: (i) => {
-      const idx = (b(i[1]) ? 2 : 0) | (b(i[0]) ? 1 : 0);
-
-      return {
-        outputs: [idx === 0, idx === 1, idx === 2, idx === 3],
-        state: null,
-      };
-    },
+    evaluate: evalDecoder2,
   }),
   cb({
     type: GATE_TYPE_ENCODER4,
@@ -840,19 +684,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "ENC",
     inputLabels: ["D0", "D1", "D2", "D3"],
     outputLabels: ["A", "B"],
-    evaluate: (i) => {
-      let idx = 0;
-
-      for (let j = 3; j >= 0; j -= 1) {
-        if (b(i[j])) {
-          idx = j;
-
-          break;
-        }
-      }
-
-      return { outputs: [Boolean(idx & 1), Boolean(idx & 2)], state: null };
-    },
+    evaluate: evalEncoder4,
   }),
   cb({
     type: GATE_TYPE_COMPARATOR,
@@ -865,12 +697,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "CMP",
     inputLabels: ["A", "B"],
     outputLabels: ["<", "=", ">"],
-    evaluate: (i) => {
-      const a = b(i[0]) ? 1 : 0;
-      const bv = b(i[1]) ? 1 : 0;
-
-      return { outputs: [a < bv, a === bv, a > bv], state: null };
-    },
+    evaluate: evalComparator,
   }),
   cb({
     type: GATE_TYPE_DECODER3,
@@ -883,14 +710,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "3:8",
     inputLabels: ["A", "B", "C"],
     outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: (i) => {
-      const idx = (b(i[2]) ? 4 : 0) | (b(i[1]) ? 2 : 0) | (b(i[0]) ? 1 : 0);
-
-      return {
-        outputs: [0, 1, 2, 3, 4, 5, 6, 7].map((j) => idx === j),
-        state: null,
-      };
-    },
+    evaluate: evalDecoder3,
   }),
   cb({
     type: GATE_TYPE_MUX8,
@@ -915,11 +735,7 @@ const DEFINITIONS: ComponentDefinition[] = [
       "S2",
     ],
     outputLabels: ["Y"],
-    evaluate: (i) => {
-      const sel = (b(i[10]) ? 4 : 0) | (b(i[9]) ? 2 : 0) | (b(i[8]) ? 1 : 0);
-
-      return { outputs: [b(i[sel])], state: null };
-    },
+    evaluate: evalMux8,
   }),
   cb({
     type: GATE_TYPE_HALF_SUB,
@@ -932,10 +748,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "½−",
     inputLabels: ["A", "B"],
     outputLabels: ["D", "Bo"],
-    evaluate: (i) => ({
-      outputs: [b(i[0]) !== b(i[1]), !b(i[0]) && b(i[1])],
-      state: null,
-    }),
+    evaluate: evalHalfSub,
   }),
   cb({
     type: GATE_TYPE_FULL_SUB,
@@ -948,15 +761,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "Σ−",
     inputLabels: ["A", "B", "Bin"],
     outputLabels: ["D", "Bo"],
-    evaluate: (i) => {
-      const A = b(i[0]);
-      const B = b(i[1]);
-      const Bin = b(i[2]);
-      const D = (A !== B) !== Bin;
-      const Bo = (!A && B) || (!A && Bin) || (B && Bin);
-
-      return { outputs: [D, Bo], state: null };
-    },
+    evaluate: evalFullSub,
   }),
   cb({
     type: GATE_TYPE_CMP4,
@@ -969,21 +774,9 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "≥≤",
     inputLabels: ["A0", "A1", "A2", "A3", "B0", "B1", "B2", "B3"],
     outputLabels: ["<", "=", ">"],
-    evaluate: (i) => {
-      const a =
-        (b(i[3]) ? 8 : 0) |
-        (b(i[2]) ? 4 : 0) |
-        (b(i[1]) ? 2 : 0) |
-        (b(i[0]) ? 1 : 0);
-      const bv =
-        (b(i[7]) ? 8 : 0) |
-        (b(i[6]) ? 4 : 0) |
-        (b(i[5]) ? 2 : 0) |
-        (b(i[4]) ? 1 : 0);
-
-      return { outputs: [a < bv, a === bv, a > bv], state: null };
-    },
+    evaluate: evalCmp4,
   }),
+
   // ── Utility ──────────────────────────────────────────────────────────────────
   cb({
     type: GATE_TYPE_SPLITTER,
@@ -996,11 +789,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     symbol: "1:4",
     inputLabels: ["IN"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    evaluate: (i) => {
-      const v = b(i[0]);
-
-      return { outputs: [v, v, v, v], state: null };
-    },
+    evaluate: evalSplitter,
   }),
   cb({
     type: GATE_TYPE_COMMENT,
@@ -1011,7 +800,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     width: 120,
     height: 34,
     isAnnotation: true,
-    evaluate: () => ({ outputs: [], state: null }),
+    evaluate: evalComment,
   }),
   cb({
     type: GATE_TYPE_BUS4,
@@ -1025,10 +814,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isBusOutput: true,
     inputLabels: ["B0", "B1", "B2", "B3"],
     outputLabels: ["B0", "B1", "B2", "B3"],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   cb({
     type: GATE_TYPE_BUS8,
@@ -1042,10 +828,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isBusOutput: true,
     inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
     outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   cb({
     type: GATE_TYPE_BUS16,
@@ -1093,10 +876,7 @@ const DEFINITIONS: ComponentDefinition[] = [
       "B14",
       "B15",
     ],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   cb({
     type: GATE_TYPE_DEBUS4,
@@ -1110,10 +890,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isBusInput: true,
     inputLabels: ["B0", "B1", "B2", "B3"],
     outputLabels: ["B0", "B1", "B2", "B3"],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   cb({
     type: GATE_TYPE_DEBUS8,
@@ -1127,10 +904,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isBusInput: true,
     inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
     outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   cb({
     type: GATE_TYPE_DEBUS16,
@@ -1178,10 +952,7 @@ const DEFINITIONS: ComponentDefinition[] = [
       "B14",
       "B15",
     ],
-    evaluate: (inputs) => ({
-      outputs: inputs.slice(),
-      state: null,
-    }),
+    evaluate: evalPassthrough,
   }),
   hw({
     type: GATE_TYPE_UREG4,
@@ -1198,26 +969,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: false,
     isOutput: false,
     initialState: () => ({ val: 0 }),
-    evaluate: (inputs, state) => {
-      const we = Boolean(inputs[4]);
-
-      if (we) {
-        const data = inputs.slice(0, 4);
-        const val = data.reduce(
-          (acc: number, bit, i) => (bit ? acc | (1 << i) : acc),
-          0,
-        );
-
-        return { outputs: data.slice(), state: { val } };
-      }
-
-      const val = (state?.val as number) ?? 0;
-      const outputs = Array.from({ length: 4 }, (_, i) =>
-        Boolean((val >> i) & 1),
-      );
-
-      return { outputs, state };
-    },
+    evaluate: evalUreg4,
   }),
   hw({
     type: GATE_TYPE_UREG8,
@@ -1234,26 +986,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isInput: false,
     isOutput: false,
     initialState: () => ({ val: 0 }),
-    evaluate: (inputs, state) => {
-      const we = Boolean(inputs[8]);
-
-      if (we) {
-        const data = inputs.slice(0, 8);
-        const val = data.reduce(
-          (acc: number, bit, i) => (bit ? acc | (1 << i) : acc),
-          0,
-        );
-
-        return { outputs: data.slice(), state: { val } };
-      }
-
-      const val = (state?.val as number) ?? 0;
-      const outputs = Array.from({ length: 8 }, (_, i) =>
-        Boolean((val >> i) & 1),
-      );
-
-      return { outputs, state };
-    },
+    evaluate: evalUreg8,
   }),
 ];
 
@@ -1327,10 +1060,6 @@ export class ComponentLibrary {
    * Returns true if all custom gate dependencies of the given type are
    * currently registered in the library. Returns false if any component in
    * the gate's circuit references an unknown custom type.
-   *
-   * Only checks custom gate types (CUSTOM_*) since built-in types are always
-   * available. Also skips the gate's own type to avoid false positives when
-   * an instance of the gate itself was on the canvas at save time.
    */
   hasValidDependencies(type: string): boolean {
     const meta = this.customMeta.get(type);
@@ -1338,12 +1067,8 @@ export class ComponentLibrary {
     if (!meta) return true;
 
     for (const comp of Object.values(meta.circuit.components)) {
-      // Only custom types can be missing — built-in types are always registered
       if (!comp.type.startsWith("CUSTOM_")) continue;
-
-      // Skip self-references (the gate's own type on the canvas at save time)
       if (comp.type === type) continue;
-
       if (!this.has(comp.type)) return false;
     }
 
@@ -1379,8 +1104,7 @@ export class ComponentLibrary {
    * Compile `circuit` into a reusable black-box component.
    *
    * Each source output becomes an input port and each output-sink input
-   * becomes an output port. This preserves multi-bit sources and displays,
-   * unlike the former one-pin-per-component representation.
+   * becomes an output port.
    */
   registerCustomCircuit(
     name: string,
@@ -1411,9 +1135,6 @@ export class ComponentLibrary {
 
     if (sourceComps.length === 0 && sinkComps.length === 0) return null;
 
-    // Separate clock components from regular input sources. All internal
-    // clocks are consolidated into a single external "CLK" input port so the
-    // clock signal is driven externally rather than by the internal tick().
     const clockComps = sourceComps.filter(({ def }) => def.isClock);
     const nonClockSourceComps = sourceComps.filter(({ def }) => !def.isClock);
     const hasInternalClocks = clockComps.length > 0;
@@ -1455,9 +1176,6 @@ export class ComponentLibrary {
         })),
     );
 
-    // If the sub-circuit contains clock components, append a single "CLK"
-    // input port. During evaluation, this port's signal is broadcast to all
-    // internal clock component outputs.
     if (hasInternalClocks) {
       inputPorts.push({
         compId: "__CLK__",
@@ -1498,9 +1216,6 @@ export class ComponentLibrary {
       });
     }
 
-    // Edge-triggered components are source nodes in this order: they read the
-    // previous signal snapshot, then their new outputs feed the live
-    // combinational paths below.
     const downstream = new Map<string, Set<string>>(
       executable.map(({ component }) => [component.id, new Set()]),
     );
@@ -1570,11 +1285,11 @@ export class ComponentLibrary {
           def.initialState(),
         ]),
       );
-    const createInitialOutputs = (): Record<string, boolean[]> =>
+    const createInitialOutputs = (): Record<string, SignalValue[]> =>
       Object.fromEntries(
         executable.map(({ component, def }) => [
           component.id,
-          new Array<boolean>(def.outputs).fill(false),
+          new Array<SignalValue>(def.outputs).fill(ZERO),
         ]),
       );
 
@@ -1586,20 +1301,20 @@ export class ComponentLibrary {
     ): EvaluateResult => {
       const saved = state as {
         compStates?: Record<string, Record<string, unknown> | null>;
-        compOutputs?: Record<string, boolean[]>;
+        compOutputs?: Record<string, SignalValue[]>;
       } | null;
       const compStates = {
         ...createInitialStates(),
         ...(saved?.compStates ?? {}),
       };
       const savedOutputs = saved?.compOutputs ?? {};
-      const signals: Record<string, boolean[]> = {};
-      const priorSignals: Record<string, boolean[]> = {};
+      const signals: Record<string, SignalValue[]> = {};
+      const priorSignals: Record<string, SignalValue[]> = {};
 
       for (const { component, def } of knownComps) {
         const prior = savedOutputs[component.id];
         const outputs =
-          prior?.slice() ?? new Array<boolean>(def.outputs).fill(false);
+          prior?.slice() ?? new Array<SignalValue>(def.outputs).fill(ZERO);
 
         signals[component.id] = outputs;
         priorSignals[component.id] = outputs.slice();
@@ -1607,11 +1322,8 @@ export class ComponentLibrary {
 
       inputPorts.forEach((port, index) => {
         if (port.compId === "__CLK__") {
-          // Broadcast the external CLK signal to all internal clock components
-          const clkVal = Boolean(externalInputs[index]);
-          const clkPrior = Boolean(
-            snapshotInputs?.[index] ?? externalInputs[index],
-          );
+          const clkVal = externalInputs[index];
+          const clkPrior = snapshotInputs?.[index] ?? externalInputs[index];
 
           for (const { component, def: clkDef } of clockComps) {
             for (let p = 0; p < clkDef.outputs; p += 1) {
@@ -1623,25 +1335,29 @@ export class ComponentLibrary {
           return;
         }
 
-        signals[port.compId][port.pin] = Boolean(externalInputs[index]);
-        priorSignals[port.compId][port.pin] = Boolean(
-          snapshotInputs?.[index] ?? externalInputs[index],
-        );
+        signals[port.compId][port.pin] = externalInputs[index];
+        priorSignals[port.compId][port.pin] =
+          snapshotInputs?.[index] ?? externalInputs[index];
       });
 
-      const readInputs = (compId: string, useSnapshot: boolean): boolean[] => {
+      const readInputs = (
+        compId: string,
+        useSnapshot: boolean,
+      ): SignalValue[] => {
         const target = compById.get(compId);
 
         if (!target) return [];
 
-        const inputs = new Array<boolean>(target.def.inputs).fill(false);
+        const inputs = new Array<SignalValue>(target.def.inputs).fill(
+          LogicValue.HIGH_IMPEDANCE,
+        );
         const sourceSignals = useSnapshot ? priorSignals : signals;
 
         for (let pin = 0; pin < target.def.inputs; pin += 1) {
           const wire = inputWires.get(`${compId}${KEY_SEPARATOR}${pin}`);
 
           if (wire)
-            inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? false;
+            inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? ZERO;
         }
 
         return inputs;
@@ -1672,10 +1388,6 @@ export class ComponentLibrary {
 
       for (const id of executionOrder) evaluateComponent(id);
 
-      // Combinational cycles are not part of the topological plan. Resolve
-      // them event-by-event, with the same per-component guard as the main
-      // propagator, instead of relying on a fixed number of whole-circuit
-      // passes.
       if (cyclicOrder.length > 0) {
         const pending = [...cyclicOrder];
         const queued = new Set(cyclicOrder);
@@ -1703,7 +1415,7 @@ export class ComponentLibrary {
       }
 
       const outputs = outputPorts.map(
-        (port) => readInputs(port.compId, false)[port.pin] ?? false,
+        (port) => readInputs(port.compId, false)[port.pin] ?? ZERO,
       );
       const compOutputs = Object.fromEntries(
         executable.map(({ component }) => [
@@ -1724,9 +1436,6 @@ export class ComponentLibrary {
       width: 90,
       height: Math.max(60, Math.max(numInputs, numOutputs) * 22 + 20),
       symbol: name.slice(0, 4),
-      // A composite receives live signals so its combinational outputs settle
-      // in the current pass. It separately consumes snapshotInputs for any
-      // internal edge-triggered components.
       isSequential: false,
       needsInputSnapshot: hasSequentialInternals,
       isClock: false,
@@ -1741,7 +1450,7 @@ export class ComponentLibrary {
         };
 
         return evaluateCompiled(
-          new Array<boolean>(numInputs).fill(false),
+          new Array<SignalValue>(numInputs).fill(LogicValue.HIGH_IMPEDANCE),
           blankState,
           undefined,
           0,
@@ -1794,7 +1503,6 @@ export class ComponentLibrary {
         result.push({ name: cat, gates: groups.get(cat) ?? [] });
     }
 
-    // Append any categories not in ORDER (e.g. Custom)
     for (const [cat, gates] of groups) {
       if (!ORDER.includes(cat)) result.push({ name: cat, gates });
     }

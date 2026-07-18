@@ -1,6 +1,8 @@
 import { memo } from "react";
 import { FormattedMessage } from "react-intl";
 
+import type { SignalValue } from "@/engine";
+import { LogicValue } from "@/engine";
 import { PIN_DIR, WIRE_TYPE } from "@/lib/constants";
 import { type PinDir, type WireType } from "@/lib/types";
 import { cn, signalsToBinary, signalsToHex } from "@/lib/utils";
@@ -14,7 +16,7 @@ interface BusWirePathProps {
   p1: Point;
   p2: Point;
   width: number;
-  signals: boolean[];
+  signals: SignalValue[];
   style: WireType;
   dir1?: PinDir;
   dir2?: PinDir;
@@ -212,19 +214,19 @@ function BusWirePath({
       {/* N parallel thin lines inside */}
       {Array.from({ length: busWidth }, (_, i) => {
         const offset = -totalSpan / 2 + i * 2;
-        const live = Boolean(signals[i]);
+        const isLive = signals[i] === LogicValue.ONE;
 
         return (
           <path
             key={i}
             d={d}
-            stroke={live ? "var(--color-signal-on)" : "var(--color-wire)"}
+            stroke={isLive ? "var(--color-signal-on)" : "var(--color-wire)"}
             strokeWidth={1.5}
             fill="none"
             strokeDasharray={isPreview ? "8 6" : undefined}
             className={cn(
-              live && isRunning && "wire-flow",
-              live && "signal-glow",
+              isLive && isRunning && "wire-flow",
+              isLive && "signal-glow",
             )}
             style={{
               opacity: isPreview ? 0.5 : 1,
@@ -290,7 +292,15 @@ function BusWirePath({
                 width={boxSize}
                 height={boxSize}
                 rx={1}
-                fill={sig ? "#4ade80" : "#6b7280"}
+                fill={
+                  sig === LogicValue.ONE
+                    ? "#4ade80"
+                    : sig === LogicValue.UNKNOWN
+                      ? "var(--color-signal-unknown)"
+                      : sig === LogicValue.HIGH_IMPEDANCE
+                        ? "var(--color-signal-highz)"
+                        : "#6b7280"
+                }
               />
             );
           })}

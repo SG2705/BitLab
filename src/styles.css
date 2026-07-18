@@ -128,9 +128,15 @@
 }
 
 @utility signal-glow {
-  filter: drop-shadow(
-    0 0 6px color-mix(in oklab, var(--signal-on) 70%, transparent)
-  );
+  filter: none;
+}
+
+@utility signal-glow-unknown {
+  filter: none;
+}
+
+@utility signal-glow-highz {
+  filter: none;
 }
 
 @keyframes dash-flow {

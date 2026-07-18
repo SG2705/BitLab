@@ -7,6 +7,7 @@ export { default as GateChip } from "./GateChip";
 export { default as GateNode } from "./GateNode";
 export { default as ToolBtn } from "./ToolBtn";
 export { default as WirePath } from "./WirePath";
+export { default as EmptyCanvas } from "./EmptyCanvas";
 
 // Types
 export type { ButtonProps } from "./Button";

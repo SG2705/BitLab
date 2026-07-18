@@ -16,14 +16,15 @@ import {
 import {
   BitLabLogo,
   BusWirePath,
+  EmptyCanvas,
   GateChip,
   GateNode,
   Input,
   ToolBtn,
   WirePath,
 } from "@/components/ui";
-import type { CircuitSnapshot, ComponentInstance } from "@/engine";
-import { library } from "@/engine";
+import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
+import { library, LogicValue } from "@/engine";
 import {
   GATE_CATEGORY_CUSTOM,
   GATE_TYPE_BUTTON,
@@ -72,6 +73,7 @@ import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
 import TopBar from "./TopBar";
 import WireProperties from "./WireProperties";
+import CategoryPanel from "./CategoryPanel";
 
 const BUILT_IN_OPEN = Object.fromEntries(
   library.getCategories().map((c) => [c.name, true]),
@@ -1040,91 +1042,12 @@ function DigitalGateApp() {
 
       <div className="flex-1 flex min-h-0">
         {/* Left toolbox */}
-        <aside className="w-64 shrink-0 border-r border-border bg-panel/60 flex flex-col">
-          {/* Component Search */}
-          <div className="p-3 border-b border-border">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">
-              <Cpu className="h-3.5 w-3.5" />
-              <FormattedMessage id="AcAA5x" defaultMessage="Components" />
-            </div>
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search…"
-                className="pl-7 h-8 bg-background/60 text-sm"
-              />
-            </div>
-          </div>
-          {/* Component categories */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            {filteredCats.map((cat) => (
-              <div key={cat.name}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpenCats((o) => ({ ...o, [cat.name]: !o[cat.name] }))
-                  }
-                  className="w-full flex items-center gap-1 px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
-                >
-                  {openCats[cat.name] ? (
-                    <ChevronDown className="h-3 w-3" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3" />
-                  )}
-                  {GATE_CATEGORY_LABELS[cat.name]
-                    ? fm(GATE_CATEGORY_LABELS[cat.name].messageKey)
-                    : cat.name}
-                </button>
-                {openCats[cat.name] && (
-                  <div className="grid grid-cols-2 gap-1.5 px-1 pb-2">
-                    {cat.gates.map((g) => (
-                      <GateChip
-                        key={g}
-                        type={g}
-                        onDragStart={() => setDragType(g)}
-                        isCustom={library.isCustom(g)}
-                        onRemove={() => removeCustomCircuit(g)}
-                        onInspect={
-                          library.isCustom(g)
-                            ? () => {
-                                const meta = library.getCustomMeta(g);
-
-                                if (meta) {
-                                  setViewingCircuit({
-                                    name: meta.name,
-                                    circuit: meta.circuit,
-                                  });
-                                }
-                              }
-                            : undefined
-                        }
-                      />
-                    ))}
-                    {cat.name === GATE_CATEGORY_CUSTOM &&
-                      cat.gates.length === 0 && (
-                        <div className="col-span-2 text-[10.5px] text-muted-foreground/80 border border-dashed border-border rounded-md p-2 leading-snug">
-                          <FormattedMessage
-                            id="BRqTi+"
-                            defaultMessage="Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
-                            values={{
-                              save: (
-                                <Package className="h-3 w-3 inline -mt-0.5" />
-                              ),
-                              upload: (
-                                <Upload className="h-3 w-3 inline -mt-0.5" />
-                              ),
-                            }}
-                          />
-                        </div>
-                      )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </aside>
+        <CategoryPanel
+          onDragStart={setDragType}
+          onRemoveCustom={removeCustomCircuit}
+          onInspectCustom={(name, circuit) => setViewingCircuit({ name, circuit })}
+          customBump={customBump}
+        />
 
         {/* Center canvas */}
         <main className="flex-1 relative min-w-0 bg-background">
@@ -1232,7 +1155,8 @@ function DigitalGateApp() {
 
                   const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                   const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
-                  const live = Boolean(a.outputs[w.from.pin]);
+                  const signal = a.outputs[w.from.pin] ?? LogicValue.ZERO;
+                  const isLive = signal === LogicValue.ONE;
                   const d1 = pinDirection(a, PIN_KIND.OUT);
                   const d2 = pinDirection(b, PIN_KIND.IN);
 
@@ -1241,7 +1165,8 @@ function DigitalGateApp() {
                       key={w.id}
                       p1={p1}
                       p2={p2}
-                      live={live}
+                      isLive={isLive}
+                      signal={signal}
                       isRunning={isRunning}
                       style={wireStyle}
                       dir1={d1}
@@ -1331,10 +1256,10 @@ function DigitalGateApp() {
                         ? library.get(src.type)
                         : null;
                       const width = def ? def.outputs : 4;
-                      const previewSignals: boolean[] = [];
+                      const previewSignals: SignalValue[] = [];
 
                       for (let idx = 0; idx < width; idx += 1)
-                        previewSignals.push(false);
+                        previewSignals.push(LogicValue.UNKNOWN);
 
                       return (
                         <BusWirePath
@@ -1355,7 +1280,7 @@ function DigitalGateApp() {
                       <WirePath
                         p1={p1}
                         p2={{ x: pendingWire.mx, y: pendingWire.my }}
-                        live={false}
+                        isLive={false}
                         isRunning={false}
                         style={wireStyle}
                         isPreview
@@ -1371,27 +1296,27 @@ function DigitalGateApp() {
                     onPointerDownBody={
                       c.type === GATE_TYPE_BUTTON
                         ? (e: React.PointerEvent) => {
-                            e.stopPropagation();
+                          e.stopPropagation();
 
-                            (e.target as Element).setPointerCapture(
-                              e.pointerId,
-                            );
+                          (e.target as Element).setPointerCapture(
+                            e.pointerId,
+                          );
 
-                            setInput(c.id, { on: true });
-                          }
+                          setInput(c.id, { on: true });
+                        }
                         : undefined
                     }
                     onPointerUpBody={
                       c.type === GATE_TYPE_BUTTON
                         ? (e: React.PointerEvent) => {
-                            e.stopPropagation();
+                          e.stopPropagation();
 
-                            (e.target as Element).releasePointerCapture(
-                              e.pointerId,
-                            );
+                          (e.target as Element).releasePointerCapture(
+                            e.pointerId,
+                          );
 
-                            setInput(c.id, { on: false });
-                          }
+                          setInput(c.id, { on: false });
+                        }
                         : undefined
                     }
                     onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
@@ -1432,40 +1357,7 @@ function DigitalGateApp() {
               <Minimap snapshot={snapshot} view={view} size={size} />
             )}
             {/* Empty Canvas */}
-            {Object.keys(snapshot.components).length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-center">
-                  <BitLabLogo />
-                  {/* <div className="mx-auto mb-4 h-16 w-16 rounded-2xl glass-panel flex items-center justify-center">
-                    <Zap className="h-7 w-7 text-primary" />
-                  </div> */}
-                  <div className="text-lg font-semibold">
-                    <FormattedMessage
-                      id="GkBxYy"
-                      defaultMessage="Start designing"
-                    />
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    <FormattedMessage
-                      id="Xco1sn"
-                      defaultMessage="Drag a component from the toolbox onto the canvas"
-                    />
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-3">
-                    <FormattedMessage id="uizmax" defaultMessage="Press" />
-                    &nbsp;
-                    <kbd className="px-1.5 py-0.5 rounded bg-secondary border border-border">
-                      <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
-                    </kbd>
-                    &nbsp;
-                    <FormattedMessage
-                      id="0TVISU"
-                      defaultMessage="for the command palette"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            {Object.keys(snapshot.components).length === 0 && <EmptyCanvas />}
           </div>
         </main>
 

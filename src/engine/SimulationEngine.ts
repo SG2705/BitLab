@@ -21,13 +21,17 @@ import {
 } from "./constants";
 import { type GraphManager } from "./GraphManager";
 import { type SignalPropagator } from "./SignalPropagator";
+import { LogicValue } from "./types";
 import type {
   ComponentInstance,
   EngineEvent,
   EngineListener,
+  SignalValue,
   SimulationStats,
   SimulationStatus,
 } from "./types";
+
+const U = LogicValue.HIGH_IMPEDANCE;
 
 export interface SimulationEngineOptions {
   clockHz?: number; // simulation ticks per second (default 8)
@@ -114,7 +118,7 @@ export class SimulationEngine {
       const def = defs.get(comp.type);
       const initialState = def.initialState();
       const initialOutputs = def.evaluate(
-        new Array<boolean>(def.inputs).fill(false),
+        new Array<SignalValue>(def.inputs).fill(U),
         initialState,
       ).outputs;
 
@@ -122,7 +126,7 @@ export class SimulationEngine {
         ...comp,
         state: initialState,
         outputs: initialOutputs,
-        inputs: new Array<boolean>(def.inputs).fill(false),
+        inputs: new Array<SignalValue>(def.inputs).fill(U),
       };
     }
 
@@ -209,9 +213,9 @@ export class SimulationEngine {
 
       if (!def.isClock || !def.tick) continue;
 
-      const prevOutput = comp.outputs[0] ?? false;
+      const prevOutput = comp.outputs[0] ?? U;
       const result = def.tick(comp.state, dt);
-      const newOutput = result.outputs[0] ?? false;
+      const newOutput = result.outputs[0] ?? U;
 
       this.components[id] = {
         ...comp,

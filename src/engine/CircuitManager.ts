@@ -24,15 +24,19 @@ import { ENGINE_EVENT_TYPE } from "./constants";
 import { GraphManager } from "./GraphManager";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";
+import { LogicValue } from "./types";
 import type {
   CircuitSnapshot,
   ComponentInstance,
   EngineEvent,
   EngineListener,
+  SignalValue,
   SimulationStats,
   SimulationStatus,
   Wire,
 } from "./types";
+
+const U = LogicValue.HIGH_IMPEDANCE;
 
 export interface AddComponentOptions {
   x?: number;
@@ -78,7 +82,7 @@ export class CircuitManager {
     const def = this.library.get(type);
     const initialState = def.initialState();
     const { outputs } = def.evaluate(
-      new Array<boolean>(def.inputs).fill(false),
+      new Array<SignalValue>(def.inputs).fill(U),
       initialState,
     );
     const comp: ComponentInstance = {
@@ -89,7 +93,7 @@ export class CircuitManager {
       label: opts.label ?? def.label,
       state: initialState,
       outputs,
-      inputs: new Array<boolean>(def.inputs).fill(false),
+      inputs: new Array<SignalValue>(def.inputs).fill(U),
       color: opts.color,
       properties: opts.properties,
     };
@@ -237,7 +241,7 @@ export class CircuitManager {
     if (target) {
       const inputs = [...target.inputs];
 
-      inputs[wire.to.pin] = false;
+      inputs[wire.to.pin] = U;
 
       // Re-evaluate the target with updated inputs so outputs reflect the change
       if (this.library.has(target.type)) {
@@ -353,7 +357,7 @@ export class CircuitManager {
 
       this.components[id] = {
         ...comp,
-        inputs: comp.inputs ?? new Array(inputCount).fill(false),
+        inputs: comp.inputs ?? new Array(inputCount).fill(U),
       };
 
       this.graph.addNode(id);
@@ -384,13 +388,13 @@ export class CircuitManager {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  private buildInputs(compId: string): boolean[] {
+  private buildInputs(compId: string): SignalValue[] {
     const { type } = this.components[compId];
 
     if (!this.library.has(type)) return [];
 
     const def = this.library.get(type);
-    const inputs: boolean[] = new Array<boolean>(def.inputs).fill(false);
+    const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(U);
 
     for (let pin = 0; pin < def.inputs; pin += 1) {
       const wire = this.graph.getInputWire(compId, pin);
@@ -398,7 +402,7 @@ export class CircuitManager {
       if (wire) {
         const src = this.components[wire.from.comp];
 
-        if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
+        if (src) inputs[pin] = src.outputs[wire.from.pin] ?? U;
       }
     }
 

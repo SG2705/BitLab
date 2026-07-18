@@ -22,6 +22,25 @@ export type {
   EngineListener,
 } from "./types";
 
+export { LogicValue } from "./types";
+
+export {
+  fromBool,
+  toBool,
+  isHigh,
+  isLow,
+  evalGateAnd,
+  evalGateOr,
+  evalGateXor,
+  evalGateNand,
+  evalGateNor,
+  evalGateXnor,
+  evalGateNot,
+  evalGateBuffer,
+  resolveSignal,
+  migrateSignal,
+} from "./logic";
+
 export { EventQueue } from "./EventQueue";
 export { GraphManager } from "./GraphManager";
 export { ComponentLibrary, library } from "./ComponentLibrary";

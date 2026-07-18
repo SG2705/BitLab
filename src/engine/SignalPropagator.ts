@@ -22,9 +22,11 @@ import { type ComponentLibrary } from "./ComponentLibrary";
 import { EventQueue } from "./EventQueue";
 import { type GraphManager } from "./GraphManager";
 import type { ComponentInstance, SignalValue } from "./types";
+import { LogicValue } from "./types";
 import { stateEqual } from "./utils";
 
 const MAX_EVALS_PER_COMPONENT = 64;
+const U = LogicValue.HIGH_IMPEDANCE;
 
 export interface PropagationResult {
   /** Number of component evaluations performed */
@@ -62,7 +64,7 @@ export class SignalPropagator {
     // Snapshot only outputs of components that feed sequential gates.
     // This avoids O(all components) cloning when only a fraction of the
     // circuit contains edge-triggered elements.
-    const outputSnapshot = new Map<string, boolean[]>();
+    const outputSnapshot = new Map<string, SignalValue[]>();
 
     for (const [id, c] of Object.entries(components)) {
       if (!this.library.has(c.type)) continue;
@@ -126,11 +128,11 @@ export class SignalPropagator {
       // inputs for their combinational paths and snapshotInputs for their
       // internal edge-triggered storage.
       const needsSnapshot = def.isSequential || def.needsInputSnapshot;
-      const liveInputs: SignalValue[] = new Array<boolean>(def.inputs).fill(
-        false,
+      const liveInputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+        U,
       );
       const snapshotInputs = needsSnapshot
-        ? new Array<boolean>(def.inputs).fill(false)
+        ? new Array<SignalValue>(def.inputs).fill(U)
         : undefined;
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
@@ -140,10 +142,9 @@ export class SignalPropagator {
           const liveOutputs = components[wire.from.comp]?.outputs;
           const priorOutputs = outputSnapshot.get(wire.from.comp);
 
-          if (liveOutputs)
-            liveInputs[pin] = liveOutputs[wire.from.pin] ?? false;
+          if (liveOutputs) liveInputs[pin] = liveOutputs[wire.from.pin] ?? U;
           if (snapshotInputs && priorOutputs)
-            snapshotInputs[pin] = priorOutputs[wire.from.pin] ?? false;
+            snapshotInputs[pin] = priorOutputs[wire.from.pin] ?? U;
         }
       }
 
@@ -223,7 +224,7 @@ export class SignalPropagator {
 
       if (def.isClock || def.isInput) continue; // these drive signals; don't re-evaluate
 
-      const inputs: SignalValue[] = new Array<boolean>(def.inputs).fill(false);
+      const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(U);
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
         const wire = this.graph.getInputWire(compId, pin);
@@ -231,7 +232,7 @@ export class SignalPropagator {
         if (wire) {
           const src = components[wire.from.comp];
 
-          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? false;
+          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? U;
         }
       }
 

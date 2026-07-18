@@ -6,6 +6,7 @@ import {
   type TOOL,
   type WIRE_TYPE,
 } from "@/lib/constants";
+import type { SignalValue } from "@/engine";
 
 export type Theme = (typeof THEME)[keyof typeof THEME];
 
@@ -37,5 +38,5 @@ export interface BusWireGroup {
   /** Number of wires in the group */
   width: number;
   /** Per-wire signal values (index 0 = LSB) */
-  signals: boolean[];
+  signals: SignalValue[];
 }

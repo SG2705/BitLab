@@ -65,12 +65,15 @@ export const snap = (v: number) => {
   return Math.round(v / GRID) * GRID;
 };
 
+import { LogicValue } from "@/engine";
+import type { SignalValue } from "@/engine";
+
 /** Convert signals array to hex string (index 0 = LSB) */
-export const signalsToHex = (signals: boolean[]): string => {
+export const signalsToHex = (signals: SignalValue[]): string => {
   let value = 0;
 
   for (let i = 0; i < signals.length; i += 1) {
-    if (signals[i]) {
+    if (signals[i] === LogicValue.ONE) {
       // eslint-disable-next-line no-bitwise
       value |= 1 << i;
     }
@@ -80,9 +83,17 @@ export const signalsToHex = (signals: boolean[]): string => {
 };
 
 /** Convert signals array to binary string (MSB first) */
-export const signalsToBinary = (signals: boolean[]): string =>
+export const signalsToBinary = (signals: SignalValue[]): string =>
   signals
     .slice()
     .reverse()
-    .map((s) => (s ? "1" : "0"))
+    .map((s) =>
+      s === LogicValue.ONE
+        ? "1"
+        : s === LogicValue.UNKNOWN
+          ? "X"
+          : s === LogicValue.HIGH_IMPEDANCE
+            ? "Z"
+            : "0",
+    )
     .join("");

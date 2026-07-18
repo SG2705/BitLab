@@ -6,7 +6,7 @@
  */
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
-import { library } from "@/engine";
+import { library, LogicValue } from "@/engine";
 import { KEY_SEPARATOR } from "@/engine/constants";
 import { PIN_DIR, PIN_KIND } from "@/lib/constants";
 import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
@@ -213,7 +213,9 @@ export function computeBusWireGroups(
     const sourceComp = snapshot.components[group.fromComp];
 
     // Derive signal values from source component's outputs array
-    const signals = group.wires.map((w) => sourceComp.outputs[w.pin] ?? false);
+    const signals = group.wires.map(
+      (w) => sourceComp.outputs[w.pin] ?? LogicValue.UNKNOWN,
+    );
 
     result.push({
       id: `bus:${group.fromComp}${KEY_SEPARATOR}${group.toComp}`,
