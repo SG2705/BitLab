@@ -187,10 +187,7 @@ function GateProperties({
           ) : (
             <div>
               <div className="text-[10px] uppercase text-muted-foreground mb-1">
-                <FormattedMessage
-                  id="liveInputs"
-                  defaultMessage="Live Inputs"
-                />
+                <FormattedMessage id="wGeGIk" defaultMessage="Live Inputs" />
               </div>
               <div className="flex gap-1 flex-wrap">
                 {comp.inputs.length === 0 ? (
@@ -214,7 +211,7 @@ function GateProperties({
                       )}
                     >
                       <FormattedMessage
-                        id="liveInputLabel"
+                        id="2BUZ/h"
                         defaultMessage="{gateLabel} : {gateState}"
                         values={{
                           gateLabel: gate.inputLabels?.[i] ?? `I${i}`,
@@ -257,7 +254,7 @@ function GateProperties({
                       )}
                     >
                       <FormattedMessage
-                        id="asdasd"
+                        id="2BUZ/h"
                         defaultMessage="{gateLabel} : {gateState}"
                         values={{
                           gateLabel: gate.outputLabels?.[i] ?? `O${i}`,

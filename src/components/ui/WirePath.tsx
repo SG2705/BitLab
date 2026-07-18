@@ -20,6 +20,8 @@ function signalColor(signal: SignalValue): string {
       return "var(--color-signal-unknown)";
     case LogicValue.HIGH_IMPEDANCE:
       return "var(--color-signal-highz)";
+    case LogicValue.ZERO:
+      return "var(--color-wire)";
     default:
       return "var(--color-wire)";
   }
@@ -29,11 +31,11 @@ interface WirePathProps {
   p1: Point;
   p2: Point;
   /** @deprecated Use `signal` instead for four-state color */
-  isLive: boolean;
+  isLiveSignal: boolean;
   /** Four-state signal value for wire coloring */
   signal?: SignalValue;
   isRunning: boolean;
-  style: WireType;
+  wireType: WireType;
   /** Direction the source pin faces (default: RIGHT) */
   dir1?: PinDir;
   /** Direction the target pin faces (default: LEFT) */
@@ -115,6 +117,7 @@ WirePath.defaultProps = {
   isSelected: false,
   isPreview: false,
   onClick: () => {},
+  signal: LogicValue.ZERO,
   dir1: PIN_DIR.RIGHT,
   dir2: PIN_DIR.LEFT,
 };
@@ -122,10 +125,10 @@ WirePath.defaultProps = {
 function WirePath({
   p1,
   p2,
-  isLive,
+  isLiveSignal,
   signal,
   isRunning,
-  style,
+  wireType,
   dir1 = PIN_DIR.RIGHT,
   dir2 = PIN_DIR.LEFT,
   isSelected,
@@ -133,11 +136,12 @@ function WirePath({
   onClick,
 }: WirePathProps) {
   const d =
-    style === "ortho"
+    wireType === "ortho"
       ? orthoPath(p1, p2, dir1, dir2)
       : bezierPath(p1, p2, dir1, dir2);
-  // Use four-state signal if provided, otherwise fall back to boolean isLive
-  const effectiveSignal = signal ?? (isLive ? LogicValue.ONE : LogicValue.ZERO);
+  // Use four-state signal if provided, otherwise fall back to boolean isLiveSignal
+  const effectiveSignal =
+    signal ?? (isLiveSignal ? LogicValue.ONE : LogicValue.ZERO);
   const color = signalColor(effectiveSignal);
   const isActive = effectiveSignal === LogicValue.ONE;
 

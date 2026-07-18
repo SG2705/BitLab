@@ -1,6 +1,10 @@
-import BitLabLogo from "./BitLabLogo";
 import { FormattedMessage } from "react-intl";
 
+import BitLabLogo from "./BitLabLogo";
+
+/**
+ * EmptyCanvas
+ */
 function EmptyCanvas() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

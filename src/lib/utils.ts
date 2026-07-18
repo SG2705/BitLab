@@ -3,6 +3,8 @@ import { createIntl, createIntlCache, type IntlShape } from "react-intl";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import type { SignalValue } from "@/engine";
+import { LogicValue } from "@/engine";
 import {
   GATE_TYPE_LABELS,
   GRID,
@@ -64,9 +66,6 @@ export const initializeLogger = (
 export const snap = (v: number) => {
   return Math.round(v / GRID) * GRID;
 };
-
-import { LogicValue } from "@/engine";
-import type { SignalValue } from "@/engine";
 
 /** Convert signals array to hex string (index 0 = LSB) */
 export const signalsToHex = (signals: SignalValue[]): string => {

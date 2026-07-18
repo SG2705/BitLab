@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Cable } from "lucide-react";
@@ -92,12 +91,12 @@ function WireProperties({ wire, fromComp, toComp }: WirePropertiesProps) {
                 })
               : signal === LogicValue.UNKNOWN
                 ? intl.formatMessage({
-                    id: "signalUnknown",
+                    id: "k46aB2",
                     defaultMessage: "UNKNOWN (X)",
                   })
                 : signal === LogicValue.HIGH_IMPEDANCE
                   ? intl.formatMessage({
-                      id: "signalHighZ",
+                      id: "qNPjsN",
                       defaultMessage: "Hi-Z (Z)",
                     })
                   : intl.formatMessage({

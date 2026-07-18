@@ -1,3 +1,4 @@
+import type { SignalValue } from "@/engine";
 import {
   type CONSOLE_TAB,
   type PIN_DIR,
@@ -6,7 +7,6 @@ import {
   type TOOL,
   type WIRE_TYPE,
 } from "@/lib/constants";
-import type { SignalValue } from "@/engine";
 
 export type Theme = (typeof THEME)[keyof typeof THEME];
 

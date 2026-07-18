@@ -1,3 +1,5 @@
+import React, { memo, useMemo, useState } from "react";
+import { FormattedMessage } from "react-intl";
 import {
   ChevronDown,
   ChevronRight,
@@ -6,16 +8,13 @@ import {
   Search,
   Upload,
 } from "lucide-react";
-import React, { memo, useMemo, useState } from "react";
-import { FormattedMessage } from "react-intl";
 
 import { GateChip, Input } from "@/components/ui";
+import type { CircuitSnapshot } from "@/engine";
 import { library } from "@/engine";
 import { GATE_CATEGORY_CUSTOM } from "@/engine/constants";
 import { GATE_CATEGORY_LABELS } from "@/lib/constants";
 import { fm, getGateLabel } from "@/lib/utils";
-
-import type { CircuitSnapshot } from "@/engine";
 
 interface CategoryPanelProps {
   /** Triggers drag-and-drop of a gate type onto the canvas */
@@ -28,8 +27,9 @@ interface CategoryPanelProps {
   customBump?: number;
 }
 
-/** Built-in categories that start expanded */
-const BUILT_IN_OPEN: Record<string, boolean> = {};
+CategoryPanel.defaultProps = {
+  customBump: 0,
+};
 
 function CategoryPanel({
   onDragStart,
@@ -40,9 +40,6 @@ function CategoryPanel({
   const [search, setSearch] = useState("");
   // All categories open by default — only explicitly closed ones are false
   const [openCats, setOpenCats] = useState<Record<string, boolean>>({});
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _bump = customBump; // used to trigger re-render via key/deps
 
   const liveGateCategories = useMemo(() => {
     const cats = library.getCategories();
@@ -130,12 +127,12 @@ function CategoryPanel({
                     onInspect={
                       library.isCustom(g)
                         ? () => {
-                          const meta = library.getCustomMeta(g);
+                            const meta = library.getCustomMeta(g);
 
-                          if (meta) {
-                            onInspectCustom(meta.name, meta.circuit);
+                            if (meta) {
+                              onInspectCustom(meta.name, meta.circuit);
+                            }
                           }
-                        }
                         : undefined
                     }
                   />

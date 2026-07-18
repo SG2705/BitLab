@@ -94,7 +94,7 @@ function GateChip({
           }}
           className="absolute -top-1 -left-1 hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] leading-none shadow"
           title={intl.formatMessage({
-            id: "gateChip.inspect",
+            id: "OdPyqE",
             defaultMessage: "View internal circuit",
           })}
         >

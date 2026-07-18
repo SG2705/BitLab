@@ -1,10 +1,9 @@
-/* eslint-disable no-nested-ternary */
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { GATE_ICON, type GateIcon } from "@/components/ui";
-import { type ComponentInstance, library, LogicValue } from "@/engine";
-import type { SignalValue } from "@/engine";
+import type { ComponentInstance, SignalValue } from "@/engine";
+import { library, LogicValue } from "@/engine";
 import {
   DEFAULT_PROBE_SAMPLES,
   GATE_TYPE_BUTTON,
@@ -53,6 +52,8 @@ const SEG_RECTS = [
 /** Map a signal value to the appropriate CSS color for pin/output rendering */
 function pinColor(signal: SignalValue): string {
   switch (signal) {
+    case LogicValue.ZERO:
+      return "var(--color-wire)";
     case LogicValue.ONE:
       return "var(--color-signal-on)";
     case LogicValue.UNKNOWN:
@@ -73,6 +74,8 @@ function glowClass(signal: SignalValue): string {
       return "signal-glow-unknown";
     case LogicValue.HIGH_IMPEDANCE:
       return "signal-glow-highz";
+    case LogicValue.ZERO:
+      return "";
     default:
       return "";
   }
@@ -530,6 +533,7 @@ function GateNode({
                           const dominantIn =
                             comp.inputs.find((v) => v !== LogicValue.ZERO) ??
                             LogicValue.ZERO;
+
                           return dominantIn === LogicValue.ONE
                             ? "var(--color-signal-on)"
                             : dominantIn === LogicValue.UNKNOWN

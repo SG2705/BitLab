@@ -53,6 +53,7 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  // eslint-disable-next-line no-console
   console.error(error);
 
   const router = useRouter();

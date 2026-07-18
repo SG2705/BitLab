@@ -24,7 +24,6 @@ import { ENGINE_EVENT_TYPE } from "./constants";
 import { GraphManager } from "./GraphManager";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";
-import { LogicValue } from "./types";
 import type {
   CircuitSnapshot,
   ComponentInstance,
@@ -35,6 +34,7 @@ import type {
   SimulationStatus,
   Wire,
 } from "./types";
+import { LogicValue } from "./types";
 
 const U = LogicValue.HIGH_IMPEDANCE;
 

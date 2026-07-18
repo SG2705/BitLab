@@ -21,7 +21,6 @@ import {
 } from "./constants";
 import { type GraphManager } from "./GraphManager";
 import { type SignalPropagator } from "./SignalPropagator";
-import { LogicValue } from "./types";
 import type {
   ComponentInstance,
   EngineEvent,
@@ -30,6 +29,7 @@ import type {
   SimulationStats,
   SimulationStatus,
 } from "./types";
+import { LogicValue } from "./types";
 
 const U = LogicValue.HIGH_IMPEDANCE;
 

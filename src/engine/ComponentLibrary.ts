@@ -1,4 +1,3 @@
-/* eslint-disable no-bitwise */
 /**
  * ComponentLibrary — authoritative registry of all component definitions.
  *
@@ -9,7 +8,6 @@
 import { v4 as uuidv4 } from "uuid";
 
 import {
-  DEFAULT_PROBE_SAMPLES,
   GATE_CATEGORY_ARITHMETIC,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_INPUT,
@@ -121,19 +119,17 @@ import {
   evalTiff,
   evalUreg4,
   evalUreg8,
-  fromBool,
-  toBool,
 } from "./logic";
-import { LogicValue } from "./types";
 import type {
   CircuitSnapshot,
   ComponentDefinition,
   EvaluateResult,
   SignalValue,
 } from "./types";
+import { LogicValue } from "./types";
 import { getHeightForPinCount } from "./utils";
 
-const { ZERO, ONE } = LogicValue;
+const { ZERO } = LogicValue;
 
 export interface CustomGateMeta {
   type: string;

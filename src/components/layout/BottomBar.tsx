@@ -50,8 +50,8 @@ function BottomBar({ isRunning, tick, compCount, wireCount }: BottomBarProps) {
       </span>
       <span className="ml-auto">
         <FormattedMessage
-          id="73Dt+K"
-          defaultMessage="BitLab v{version} · Event-Driven"
+          id="bI5iFx"
+          defaultMessage="BitLab v{version} · Sagar Gupta"
           values={{ version: VERSION }}
         />
       </span>

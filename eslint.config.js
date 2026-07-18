@@ -190,6 +190,7 @@ export default tseslint.config(
       "padded-blocks": ["error", "never"],
       "no-restricted-syntax": "off",
       "no-continue": "off",
+      "no-nested-ternary": "off",
 
       // =====================
       // Whitespace & Formatting Rules

@@ -1,32 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FormattedMessage, useIntl } from "react-intl";
-import {
-  Activity,
-  ChevronDown,
-  ChevronRight,
-  Cpu,
-  Grid3x3,
-  Hand,
-  MousePointer2,
-  Package,
-  Search,
-  Upload,
-} from "lucide-react";
+import { useIntl } from "react-intl";
 
-import {
-  BitLabLogo,
-  BusWirePath,
-  EmptyCanvas,
-  GateChip,
-  GateNode,
-  Input,
-  ToolBtn,
-  WirePath,
-} from "@/components/ui";
+import { BusWirePath, EmptyCanvas, GateNode, WirePath } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
-  GATE_CATEGORY_CUSTOM,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
@@ -46,7 +24,6 @@ import {
   CONSOLE_TAB,
   CUSTOM_CIR_KEYS,
   DEFAULT_CLOCK,
-  GATE_CATEGORY_LABELS,
   PIN_KIND,
   SAVE_LOCAL_ON_ACTION,
   THEME,
@@ -61,9 +38,11 @@ import {
   type Tool,
   type WireType,
 } from "@/lib/types";
-import { cn, fm, getGateLabel, initializeLogger, snap } from "@/lib/utils";
+import { cn, getGateLabel, initializeLogger, snap } from "@/lib/utils";
 
 import BottomBar from "./BottomBar";
+import CanvasToolbar from "./CanvasToolbar";
+import CategoryPanel from "./CategoryPanel";
 import CircuitViewer from "./CircuitViewer";
 import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
@@ -73,11 +52,6 @@ import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
 import TopBar from "./TopBar";
 import WireProperties from "./WireProperties";
-import CategoryPanel from "./CategoryPanel";
-
-const BUILT_IN_OPEN = Object.fromEntries(
-  library.getCategories().map((c) => [c.name, true]),
-);
 
 /**
  * DigitalGateApp
@@ -128,11 +102,6 @@ function DigitalGateApp() {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [showMinimap] = useState(true);
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [openCats, setOpenCats] = useState<Record<string, boolean>>({
-    ...BUILT_IN_OPEN,
-    [GATE_CATEGORY_CUSTOM]: true,
-  });
   const [customBump, setCustomBump] = useState(0);
   const [viewingCircuit, setViewingCircuit] = useState<{
     name: string;
@@ -728,7 +697,6 @@ function DigitalGateApp() {
       return;
     }
 
-    setOpenCats((o) => ({ ...o, [GATE_CATEGORY_CUSTOM]: true }));
     setCustomBump((v) => v + 1);
 
     saveCustomCircuitToLocal();
@@ -756,17 +724,23 @@ function DigitalGateApp() {
       .text()
       .then((text) => {
         try {
-          const parsed = JSON.parse(text);
+          const parsed: unknown = JSON.parse(text);
+
+          if (typeof parsed !== "object" || parsed === null) {
+            throw new Error("Unrecognized JSON format");
+          }
+
+          const obj = parsed as Record<string, unknown>;
 
           // Detect format: full project vs raw circuit snapshot
           let circuitData: CircuitSnapshot;
 
-          if (parsed.circuit && parsed.version !== undefined) {
+          if (obj.circuit && obj.version !== undefined) {
             // Full project format — extract the circuit
-            circuitData = parsed.circuit as CircuitSnapshot;
-          } else if (parsed.components) {
+            circuitData = obj.circuit as CircuitSnapshot;
+          } else if (obj.components) {
             // Raw CircuitSnapshot
-            circuitData = parsed as CircuitSnapshot;
+            circuitData = obj as unknown as CircuitSnapshot;
           } else {
             throw new Error("Unrecognized JSON format");
           }
@@ -799,7 +773,6 @@ function DigitalGateApp() {
             );
           }
 
-          setOpenCats((o) => ({ ...o, [GATE_CATEGORY_CUSTOM]: true }));
           setCustomBump((v) => v + 1);
 
           saveCustomCircuitToLocal();
@@ -892,9 +865,11 @@ function DigitalGateApp() {
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) undo();
       if (meta && e.key.toLowerCase() === "d") duplicateSelected();
       if (meta && e.key.toLowerCase() === "s") saveProjectToLocal();
+
       if (meta && e.key.toLowerCase() === "c" && selection.size > 0) {
         clipboardRef.current = Array.from(selection);
       }
+
       if (
         meta &&
         e.key.toLowerCase() === "v" &&
@@ -902,11 +877,13 @@ function DigitalGateApp() {
       ) {
         const idMap = duplicateComponents(clipboardRef.current);
         // Update clipboard to point to the new copies so next paste offsets from these
+
         clipboardRef.current = Array.from(idMap.values());
 
         setSelection(new Set(idMap.values()));
         setSelWires(new Set());
       }
+
       if (
         meta &&
         (e.key.toLowerCase() === "y" ||
@@ -920,38 +897,6 @@ function DigitalGateApp() {
     return () => window.removeEventListener("keydown", h);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteSelected, isRunning]);
-
-  // Always include the Custom category so the empty-state hint is always shown.
-  const liveGateCategories = useMemo(() => {
-    const cats = library.getCategories();
-
-    if (!cats.some((c) => c.name === GATE_CATEGORY_CUSTOM)) {
-      cats.push({ name: GATE_CATEGORY_CUSTOM, gates: [] });
-    }
-
-    return cats;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customBump]);
-
-  const filteredCats = useMemo(() => {
-    if (!search) return liveGateCategories;
-
-    const q = search.toLowerCase();
-
-    return liveGateCategories
-      .map((c) => ({
-        ...c,
-        gates: c.gates.filter(
-          (g) =>
-            (library.has(g) &&
-              getGateLabel(g, library.get(g).label)
-                .toLowerCase()
-                .includes(q)) ||
-            g.toLowerCase().includes(q),
-        ),
-      }))
-      .filter((c) => c.gates.length);
-  }, [search, liveGateCategories]);
 
   const busWireGroups = useMemo(
     () => computeBusWireGroups(snapshot),
@@ -1022,16 +967,17 @@ function DigitalGateApp() {
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
         importToCanvas={() => {
-          importJSON().then((success) => {
-            if (success) {
-              addLog(CONSOLE_TAB.LOG, "Circuit imported to canvas.");
-            } else {
-              addLog(
-                CONSOLE_TAB.ERROR,
-                "Failed to import circuit. Check that the file is a valid exported project JSON.",
-              );
-            }
-          });
+          importJSON()
+            .then((success) => {
+              if (success)
+                addLog(CONSOLE_TAB.LOG, "Circuit imported to canvas.");
+              else
+                addLog(
+                  CONSOLE_TAB.ERROR,
+                  "Failed to import circuit. Check that the file is a valid exported project JSON.",
+                );
+            })
+            .catch(() => {});
         }}
         newProject={newProject}
         openCmd={() => setCmdOpen(true)}
@@ -1045,74 +991,26 @@ function DigitalGateApp() {
         <CategoryPanel
           onDragStart={setDragType}
           onRemoveCustom={removeCustomCircuit}
-          onInspectCustom={(name, circuit) => setViewingCircuit({ name, circuit })}
+          onInspectCustom={(name, circuit) =>
+            setViewingCircuit({ name, circuit })
+          }
           customBump={customBump}
         />
 
         {/* Center canvas */}
         <main className="flex-1 relative min-w-0 bg-background">
-          {/* Canvas tool */}
-          <div className="absolute z-20 top-3 left-3 flex items-center gap-1 glass-panel rounded-lg p-1 shadow-lg">
-            <ToolBtn
-              active={tool === TOOL.SELECT}
-              onClick={() => setTool(TOOL.SELECT)}
-              icon={<MousePointer2 className="h-4 w-4" />}
-              label="Select (V)"
-            />
-            <ToolBtn
-              active={tool === TOOL.PAN}
-              onClick={() => setTool(TOOL.PAN)}
-              icon={<Hand className="h-4 w-4" />}
-              label="Pan (Space)"
-            />
-            <div className="w-px h-5 bg-border mx-1" />
-            <ToolBtn
-              active={snapEnabled}
-              onClick={() => setSnapEnabled(!snapEnabled)}
-              icon={<Grid3x3 className="h-4 w-4" />}
-              label="Snap to grid"
-            />
-            <ToolBtn
-              active={wireStyle === WIRE_TYPE.ORTHO}
-              onClick={() =>
-                setWireStyle(
-                  wireStyle === WIRE_TYPE.ORTHO
-                    ? WIRE_TYPE.BEZIER
-                    : WIRE_TYPE.ORTHO,
-                )
-              }
-              icon={<Activity className="h-4 w-4" />}
-              label={`Wire: ${wireStyle}`}
-            />
-          </div>
-          {/* Canvas fit */}
-          <div className="absolute z-20 top-3 right-3 flex items-center gap-1 glass-panel rounded-lg p-1 text-xs shadow-lg">
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={fitToScreen}
-              className="px-2 py-1 rounded hover:bg-secondary transition-colors"
-            >
-              <FormattedMessage id="N2HbmZ" defaultMessage="Fit" />
-            </button>
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={() => setView({ x: 0, y: 0, k: 1 })}
-              className="px-2 py-1 rounded hover:bg-secondary transition-colors"
-            >
-              <FormattedMessage id="8ZVfG8" defaultMessage="100%" />
-            </button>
-            <span className="px-2 text-muted-foreground tabular-nums">
-              <FormattedMessage
-                id="qnonu0"
-                defaultMessage="{percentage}%"
-                values={{
-                  percentage: Math.round(view.k * 100),
-                }}
-              />
-            </span>
-          </div>
+          {/* Canvas toolbar */}
+          <CanvasToolbar
+            tool={tool}
+            setTool={setTool}
+            snapEnabled={snapEnabled}
+            setSnapEnabled={setSnapEnabled}
+            wireStyle={wireStyle}
+            setWireStyle={setWireStyle}
+            view={view}
+            setView={setView}
+            fitToScreen={fitToScreen}
+          />
 
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
@@ -1165,10 +1063,10 @@ function DigitalGateApp() {
                       key={w.id}
                       p1={p1}
                       p2={p2}
-                      isLive={isLive}
+                      isLiveSignal={isLive}
                       signal={signal}
                       isRunning={isRunning}
-                      style={wireStyle}
+                      wireType={wireStyle}
                       dir1={d1}
                       dir2={d2}
                       isSelected={selWires.has(w.id)}
@@ -1280,9 +1178,9 @@ function DigitalGateApp() {
                       <WirePath
                         p1={p1}
                         p2={{ x: pendingWire.mx, y: pendingWire.my }}
-                        isLive={false}
+                        isLiveSignal={false}
                         isRunning={false}
-                        style={wireStyle}
+                        wireType={wireStyle}
                         isPreview
                       />
                     );
@@ -1296,27 +1194,27 @@ function DigitalGateApp() {
                     onPointerDownBody={
                       c.type === GATE_TYPE_BUTTON
                         ? (e: React.PointerEvent) => {
-                          e.stopPropagation();
+                            e.stopPropagation();
 
-                          (e.target as Element).setPointerCapture(
-                            e.pointerId,
-                          );
+                            (e.target as Element).setPointerCapture(
+                              e.pointerId,
+                            );
 
-                          setInput(c.id, { on: true });
-                        }
+                            setInput(c.id, { on: true });
+                          }
                         : undefined
                     }
                     onPointerUpBody={
                       c.type === GATE_TYPE_BUTTON
                         ? (e: React.PointerEvent) => {
-                          e.stopPropagation();
+                            e.stopPropagation();
 
-                          (e.target as Element).releasePointerCapture(
-                            e.pointerId,
-                          );
+                            (e.target as Element).releasePointerCapture(
+                              e.pointerId,
+                            );
 
-                          setInput(c.id, { on: false });
-                        }
+                            setInput(c.id, { on: false });
+                          }
                         : undefined
                     }
                     onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
@@ -1428,7 +1326,7 @@ function DigitalGateApp() {
             { label: "Save project to local", action: saveProjectToLocal },
             { label: "Export JSON", action: exportJSON },
             { label: "New project", action: newProject },
-            ...liveGateCategories.flatMap((cat) =>
+            ...library.getCategories().flatMap((cat) =>
               cat.gates.map((g) => ({
                 label: `Add ${library.has(g) ? getGateLabel(g, library.get(g).label) : g}`,
                 action: () => {

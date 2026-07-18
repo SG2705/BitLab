@@ -170,10 +170,33 @@ function ConsolePanel({
             <t.icon className="h-3 w-3" /> {t.label}
           </button>
         ))}
+
+        {/* Signal state legend */}
+        <div className="flex items-center gap-2 ml-auto mr-2">
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-on" />
+            <FormattedMessage id="Tf9Oo0" defaultMessage="1" />
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-off" />
+
+            <FormattedMessage id="MbygIJ" defaultMessage="0" />
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-unknown" />
+
+            <FormattedMessage id="MXPwVk" defaultMessage="X" />
+          </span>
+          <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm bg-signal-highz" />
+            <FormattedMessage id="MiXf8H" defaultMessage="Z" />
+          </span>
+        </div>
+
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="ml-auto text-xs text-muted-foreground hover:text-foreground px-2"
+          className="text-xs text-muted-foreground hover:text-foreground px-2"
         >
           {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
           {open ? "▼" : "▲"}

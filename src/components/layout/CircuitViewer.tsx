@@ -15,9 +15,8 @@ import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
 import { GateNode, WirePath } from "@/components/ui";
 import { library } from "@/engine";
 import type { CircuitSnapshot } from "@/engine/types";
-import { PIN_KIND } from "@/lib/constants";
 import { pinDirection, pinPos } from "@/lib/circuit";
-import { type PinKind } from "@/lib/types";
+import { PIN_KIND } from "@/lib/constants";
 
 interface CircuitViewerProps {
   name: string;
@@ -25,10 +24,15 @@ interface CircuitViewerProps {
   onClose: () => void;
 }
 
-const NOOP = () => { };
-const NOOP_MOUSE = (_e: React.MouseEvent) => { };
-const NOOP_PIN = (_e: React.MouseEvent, _pin: number, _kind: PinKind) => { };
+const NOOP = () => {};
 
+const NOOP_MOUSE = () => {};
+
+const NOOP_PIN = () => {};
+
+/**
+ * CircuitViewer
+ */
 function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
   const intl = useIntl();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,6 +58,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
 
     ro.observe(el);
 
+    // eslint-disable-next-line consistent-return
     return () => ro.disconnect();
   }, []);
 
@@ -169,7 +174,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
       className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col"
       role="dialog"
       aria-label={intl.formatMessage(
-        { id: "circuitViewer.title", defaultMessage: "Circuit: {name}" },
+        { id: "kCQ84U", defaultMessage: "Circuit: {name}" },
         { name },
       )}
     >
@@ -178,16 +183,13 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
         <div className="flex items-center gap-3">
           <h2 className="text-sm font-semibold">
             <FormattedMessage
-              id="circuitViewer.heading"
+              id="KgwdBM"
               defaultMessage="Circuit Viewer: {name}"
               values={{ name }}
             />
           </h2>
           <span className="text-xs text-muted-foreground">
-            <FormattedMessage
-              id="circuitViewer.readOnly"
-              defaultMessage="Read-only"
-            />
+            <FormattedMessage id="djNL6D" defaultMessage="Read-only" />
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -197,7 +199,10 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
               setView((v) => ({ ...v, k: Math.min(4, v.k * 1.3) }))
             }
             className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-            title="Zoom in"
+            title={intl.formatMessage({
+              id: "xbi38c",
+              defaultMessage: "Zoom in",
+            })}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -207,7 +212,10 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
               setView((v) => ({ ...v, k: Math.max(0.2, v.k * 0.7) }))
             }
             className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-            title="Zoom out"
+            title={intl.formatMessage({
+              id: "/UnJ3S",
+              defaultMessage: "Zoom out",
+            })}
           >
             <ZoomOut className="h-4 w-4" />
           </button>
@@ -217,17 +225,14 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors border border-border"
           >
             <Download className="h-3.5 w-3.5" />
-            <FormattedMessage
-              id="circuitViewer.export"
-              defaultMessage="Export JSON"
-            />
+            <FormattedMessage id="aXB7Wg" defaultMessage="Export JSON" />
           </button>
           <button
             type="button"
             onClick={onClose}
             className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
             title={intl.formatMessage({
-              id: "circuitViewer.close",
+              id: "rbrahO",
               defaultMessage: "Close",
             })}
           >
@@ -237,8 +242,10 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
       </div>
 
       {/* Canvas */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <div
         ref={containerRef}
+        role="application"
         className="flex-1 overflow-hidden cursor-grab active:cursor-grabbing select-none"
         onWheel={onWheel}
         onMouseDown={onMouseDown}
@@ -266,9 +273,9 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                   key={w.id}
                   p1={p1}
                   p2={p2}
-                  isLive={false}
+                  isLiveSignal={false}
                   isRunning={false}
-                  style="bezier"
+                  wireType="bezier"
                   dir1={d1}
                   dir2={d2}
                 />

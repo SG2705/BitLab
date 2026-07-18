@@ -137,20 +137,26 @@ export class ProjectManager {
   }
 
   importJSON(json: string): void {
-    const parsed = JSON.parse(json);
+    const parsed: unknown = JSON.parse(json);
+
+    if (typeof parsed !== "object" || parsed === null) {
+      throw new Error("Unrecognized JSON format");
+    }
+
+    const obj = parsed as Record<string, unknown>;
 
     // Support both formats:
     // 1. Full project: { version, name, circuit: { components, wires } }
     // 2. Raw circuit snapshot: { components, wires }
-    if (parsed.circuit && parsed.version !== undefined) {
-      const project = parsed as SerializedProject;
+    if (obj.circuit && obj.version !== undefined) {
+      const project = obj as unknown as SerializedProject;
       const migrated = migrate(project);
 
       this.projectName = migrated.name;
       this.manager.loadSnapshot(migrated.circuit);
-    } else if (parsed.components) {
+    } else if (obj.components) {
       // Raw CircuitSnapshot
-      this.manager.loadSnapshot(parsed as CircuitSnapshot);
+      this.manager.loadSnapshot(obj as unknown as CircuitSnapshot);
     } else {
       throw new Error("Unrecognized JSON format");
     }

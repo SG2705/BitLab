@@ -13,7 +13,7 @@
  */
 
 import { DEFAULT_PROBE_SAMPLES } from "./constants";
-import { LogicValue, type EvaluateResult, type SignalValue } from "./types";
+import { type EvaluateResult, LogicValue, type SignalValue } from "./types";
 
 const { ZERO, ONE, UNKNOWN, HIGH_IMPEDANCE } = LogicValue;
 
@@ -109,7 +109,7 @@ export const resolveSignal = (drivers: LogicValue[]): LogicValue => {
 
 export const migrateSignal = (v: unknown): LogicValue => {
   if (typeof v === "boolean") return v ? O : Z;
-  if (typeof v === "number" && v >= 0 && v <= 3) return v as LogicValue;
+  if (typeof v === "number" && v >= 0 && v <= 3) return v;
 
   return U;
 };
@@ -541,6 +541,7 @@ export const evalMux8 = (i: SignalValue[]): EvaluateResult => {
   const s0 = i[8];
   const s1 = i[9];
   const s2 = i[10];
+
   if (s0 === U || s0 === H || s1 === U || s1 === H || s2 === U || s2 === H)
     return { outputs: [U], state: null };
 
