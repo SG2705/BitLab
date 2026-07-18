@@ -3,6 +3,16 @@
 
 import { type ENGINE_EVENT_TYPE, type SIMULATION_STATUS } from "./constants";
 
+// ── Four-state logic (prepared for future migration) ─────────────────────────
+
+export enum LogicValue {
+  ZERO = 0,
+  ONE = 1,
+  UNKNOWN = 2,
+  HIGH_IMPEDANCE = 3,
+}
+
+/** Current signal type — boolean for now, will migrate to LogicValue */
 export type SignalValue = boolean;
 export type ComponentId = string;
 export type WireId = string;
