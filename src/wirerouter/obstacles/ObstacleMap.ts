@@ -24,8 +24,8 @@ import {
 /** Default router configuration */
 export const DEFAULT_ROUTER_CONFIG: RouterConfig = {
   cellSize: CELL_SIZE,
-  obstaclePadding: 3, // 3 grid cells padding
-  stubLength: 3, // 3 grid cells stub
+  obstaclePadding: 2, // 3 grid cells padding
+  stubLength: 2, // 3 grid cells stub
   turnPenalty: 50, // strong preference for fewer bends
   bendRadius: 0, // 4px rounded corners at bends
 };

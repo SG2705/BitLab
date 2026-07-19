@@ -9,6 +9,7 @@
  * - Source/target component bodies are obstacles
  */
 
+import { CELL_SIZE } from "@/globals";
 import { PIN_DIR } from "@/lib/constants";
 import type { PinDir } from "@/lib/types";
 
@@ -279,29 +280,54 @@ export function findPath(
     waypoints[waypoints.length - 1] = endWorld;
 
     // Align second waypoint with start pin (stub is horizontal or vertical)
+    // and ensure it's on the correct exit side
     if (waypoints.length >= 3) {
       const exitDc = DIR_DC[exitDir];
       const exitDr = DIR_DR[exitDir];
 
       if (exitDc !== 0) {
-        waypoints[1] = { x: waypoints[1].x, y: startWorld.y };
+        // Horizontal exit: Y must match pin, X must be on the exit side
+        let { x } = waypoints[1];
+
+        if (exitDc > 0 && x < startWorld.x) x = startWorld.x + CELL_SIZE;
+        if (exitDc < 0 && x > startWorld.x) x = startWorld.x - CELL_SIZE;
+
+        waypoints[1] = { x, y: startWorld.y };
       } else if (exitDr !== 0) {
-        waypoints[1] = { x: startWorld.x, y: waypoints[1].y };
+        // Vertical exit: X must match pin, Y must be on the exit side
+        let { y } = waypoints[1];
+
+        if (exitDr > 0 && y < startWorld.y) y = startWorld.y + CELL_SIZE;
+        if (exitDr < 0 && y > startWorld.y) y = startWorld.y - CELL_SIZE;
+
+        waypoints[1] = { x: startWorld.x, y };
       }
     }
 
     // Align second-to-last waypoint with end pin
+    // and ensure it's on the correct approach side
     if (waypoints.length >= 3) {
       const approachDc = DIR_DC[approachDir];
       const approachDr = DIR_DR[approachDir];
       const idx = waypoints.length - 2;
 
-      // Only align if it's not the same waypoint as index 1
-      if (idx > 1 || waypoints.length === 3) {
+      if (idx > 0) {
         if (approachDc !== 0) {
-          waypoints[idx] = { x: waypoints[idx].x, y: endWorld.y };
+          // Horizontal approach: Y must match pin, X must be on the approach side
+          let { x } = waypoints[idx];
+
+          if (approachDc > 0 && x < endWorld.x) x = endWorld.x + CELL_SIZE;
+          if (approachDc < 0 && x > endWorld.x) x = endWorld.x - CELL_SIZE;
+
+          waypoints[idx] = { x, y: endWorld.y };
         } else if (approachDr !== 0) {
-          waypoints[idx] = { x: endWorld.x, y: waypoints[idx].y };
+          // Vertical approach: X must match pin, Y must be on the approach side
+          let { y } = waypoints[idx];
+
+          if (approachDr > 0 && y < endWorld.y) y = endWorld.y + CELL_SIZE;
+          if (approachDr < 0 && y > endWorld.y) y = endWorld.y - CELL_SIZE;
+
+          waypoints[idx] = { x: endWorld.x, y };
         }
       }
     }
