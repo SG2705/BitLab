@@ -100,6 +100,18 @@ export interface ComponentDefinition {
   isBusOutput?: boolean;
   /** True → all input pins collapse to a single bus input port in the UI */
   isBusInput?: boolean;
+  /**
+   * Describes which input pins are grouped as bus ports.
+   * Each entry is [startPin, endPin (exclusive)] — those pins render as one bus port.
+   * Pins not covered by any group render as individual pins.
+   * Example: [[2,6],[8,12]] means pins 2-5 and 8-11 are bus ports.
+   */
+  busInputGroups?: [number, number][];
+  /**
+   * Describes which output pins are grouped as bus ports.
+   * Same format as busInputGroups.
+   */
+  busOutputGroups?: [number, number][];
   initialState: () => Record<string, unknown> | null;
   /**
    * Pure combinational / sequential evaluation.

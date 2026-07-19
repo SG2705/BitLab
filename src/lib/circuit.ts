@@ -62,39 +62,69 @@ export function pinPos(
 
   const def = library.get(comp.type);
   const r = comp.rotation ?? 0;
-  const count = kind === PIN_KIND.IN ? def.inputs : def.outputs;
 
   // At 90°/270° the component is rendered with swapped dimensions
   const rw = r === 90 || r === 270 ? def.height : def.width;
   const rh = r === 90 || r === 270 ? def.width : def.height;
-
-  // Determine which edge pins sit on and spacing axis
-  // 0°:   IN=left,   OUT=right  — vertical spacing (top to bottom)
-  // 90°:  IN=top,    OUT=bottom — horizontal spacing (left to right)
-  // 180°: IN=right,  OUT=left   — vertical spacing (top to bottom)
-  // 270°: IN=bottom, OUT=top    — horizontal spacing (left to right)
   const isVertical = r === 0 || r === 180;
-  const spacing = (isVertical ? rh : rw) / (count + 1);
+
+  // Determine slot-based position when bus groups exist
+  const busGroups =
+    kind === PIN_KIND.IN ? def.busInputGroups : def.busOutputGroups;
+  const totalPins = kind === PIN_KIND.IN ? def.inputs : def.outputs;
+
+  let slotIndex: number;
+  let slotCount: number;
+
+  if (busGroups && busGroups.length > 0) {
+    // Count slots: each bus group = 1 slot, each normal pin = 1 slot
+    const groupStartMap = new Map(busGroups.map((g, gi) => [g[0], { gi, g }]));
+    let slots = 0;
+    let foundSlot = -1;
+    let pi = 0;
+
+    while (pi < totalPins) {
+      const entry = groupStartMap.get(pi);
+
+      if (entry) {
+        const [start, end] = entry.g;
+
+        if (idx >= start && idx < end) foundSlot = slots;
+        slots += 1;
+        pi = end;
+      } else {
+        if (pi === idx) foundSlot = slots;
+        slots += 1;
+        pi += 1;
+      }
+    }
+
+    slotCount = slots;
+    slotIndex = foundSlot >= 0 ? foundSlot : idx;
+  } else {
+    slotCount = totalPins;
+    slotIndex = idx;
+  }
+
+  const sizeAxis = isVertical ? rh : rw;
+  const spacing = sizeAxis / (slotCount + 1);
+  const pos = spacing * (slotIndex + 1);
 
   let x: number;
   let y: number;
 
   if (isVertical) {
-    // Pins spaced along the height (vertical), positioned on left/right edge
-    const pinY = comp.y + spacing * (idx + 1);
     const isLeftEdge =
       (r === 0 && kind === PIN_KIND.IN) || (r === 180 && kind === PIN_KIND.OUT);
 
     x = isLeftEdge ? comp.x : comp.x + rw;
-    y = pinY;
+    y = comp.y + pos;
   } else {
-    // Pins spaced along the width (horizontal), positioned on top/bottom edge
-    const pinX = comp.x + spacing * (idx + 1);
     const isTopEdge =
       (r === 90 && kind === PIN_KIND.IN) ||
       (r === 270 && kind === PIN_KIND.OUT);
 
-    x = pinX;
+    x = comp.x + pos;
     y = isTopEdge ? comp.y : comp.y + rh;
   }
 
@@ -182,14 +212,29 @@ export function computeBusWireGroups(
 
     if (!sourceComp || !targetComp) continue;
 
-    // Check if source has isBusOutput and target has isBusInput
     if (!library.has(sourceComp.type) || !library.has(targetComp.type))
       continue;
 
     const sourceDef = library.get(sourceComp.type);
     const targetDef = library.get(targetComp.type);
 
-    if (!sourceDef.isBusOutput || !targetDef.isBusInput) continue;
+    // Check if this wire is part of a bus connection:
+    // Source pin must be in a bus output (isBusOutput or within a busOutputGroup)
+    const srcIsBus =
+      sourceDef.isBusOutput ||
+      (sourceDef.busOutputGroups?.some(
+        ([s, e]) => wire.from.pin >= s && wire.from.pin < e,
+      ) ??
+        false);
+    // Target pin must be in a bus input (isBusInput or within a busInputGroup)
+    const tgtIsBus =
+      targetDef.isBusInput ||
+      (targetDef.busInputGroups?.some(
+        ([s, e]) => wire.to.pin >= s && wire.to.pin < e,
+      ) ??
+        false);
+
+    if (!srcIsBus || !tgtIsBus) continue;
 
     const key = `${wire.from.comp}${KEY_SEPARATOR}${wire.to.comp}`;
 

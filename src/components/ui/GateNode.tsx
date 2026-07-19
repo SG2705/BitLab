@@ -297,6 +297,11 @@ function GateNode({
   // custom circuits — show it prominently inside the gate body when set.
   const isCustomLabel =
     (def.isInput || def.isClock || def.isOutput) && Boolean(comp.label);
+
+  const isNormalIcon =
+    comp.type !== GATE_TYPE_DISPLAY7 &&
+    comp.type !== GATE_TYPE_PROBE &&
+    comp.type !== GATE_TYPE_DIGIT_BIN;
   const IconComponent = GATE_ICON[comp.type as GateIcon];
 
   if (def.isAnnotation) {
@@ -403,50 +408,48 @@ function GateNode({
               className={cn(bodyGlow)}
             />
             {/* Symbol/Icon — always horizontal text */}
-            {comp.type !== GATE_TYPE_DISPLAY7 &&
-              comp.type !== GATE_TYPE_PROBE &&
-              comp.type !== GATE_TYPE_DIGIT_BIN &&
-              (IconComponent ? (
-                <IconComponent
-                  x={rw / 2 - 20}
-                  y={rh / 2 - 20}
-                  width={40}
-                  height={40}
-                  stroke={
-                    isActive
-                      ? pinColor(
-                          dominantOutput !== LogicValue.ZERO
-                            ? dominantOutput
-                            : LogicValue.ONE,
-                        )
-                      : "var(--color-foreground)"
-                  }
-                  pointerEvents="none"
-                  className={cn(bodyGlow)}
-                />
-              ) : (
-                <text
-                  x={rw / 2}
-                  y={rh / 2 + (isCustomLabel ? 4 : 5)}
-                  textAnchor="middle"
-                  fill={
-                    isActive
-                      ? pinColor(
-                          dominantOutput !== LogicValue.ZERO
-                            ? dominantOutput
-                            : LogicValue.ONE,
-                        )
-                      : "var(--color-foreground)"
-                  }
-                  fontSize={isCustomLabel ? 10 : 14}
-                  fontWeight={600}
-                  fontFamily="var(--font-mono)"
-                  pointerEvents="none"
-                  className={cn(bodyGlow)}
-                >
-                  {def.symbol ?? resolvedLabel}
-                </text>
-              ))}
+            {isNormalIcon && IconComponent && (
+              <IconComponent
+                x={rw / 2 - 20}
+                y={rh / 2 - 20}
+                width={40}
+                height={40}
+                stroke={
+                  isActive
+                    ? pinColor(
+                        dominantOutput !== LogicValue.ZERO
+                          ? dominantOutput
+                          : LogicValue.ONE,
+                      )
+                    : "var(--color-foreground)"
+                }
+                pointerEvents="none"
+                className={cn(bodyGlow)}
+              />
+            )}
+            {isNormalIcon && !IconComponent && (
+              <text
+                x={rw / 2}
+                y={rh / 2 + (isCustomLabel ? 4 : 5)}
+                textAnchor="middle"
+                fill={
+                  isActive
+                    ? pinColor(
+                        dominantOutput !== LogicValue.ZERO
+                          ? dominantOutput
+                          : LogicValue.ONE,
+                      )
+                    : "var(--color-foreground)"
+                }
+                fontSize={isCustomLabel ? 10 : 14}
+                fontWeight={600}
+                fontFamily="var(--font-mono)"
+                pointerEvents="none"
+                className={cn(bodyGlow)}
+              >
+                {def.symbol ?? resolvedLabel}
+              </text>
+            )}
             {/* Component name label — always below, horizontal */}
             <text
               x={isVertical ? rw / 2 : rw + 6}
@@ -563,102 +566,233 @@ function GateNode({
                     </g>
                   );
                 })()
-              : Array.from({ length: def.inputs }).map((_, i) => {
-                  const count = def.inputs;
-                  const spacing = (isVertical ? rh : rw) / (count + 1);
-                  const pos = spacing * (i + 1);
+              : (() => {
+                  // Compute visual slots: each normal pin = 1 slot, each bus group = 1 slot
+                  const busGroups = def.busInputGroups ?? [];
 
-                  // Pin circle position (on edge, offset outward by 8px)
-                  let cx: number;
-                  let cy: number;
-                  // Line start (body edge)
-                  let lx: number;
-                  let ly: number;
+                  // Build slot list: { type: 'pin', index } or { type: 'bus', groupIdx, start, end }
+                  type Slot =
+                    | { kind: "pin"; index: number }
+                    | {
+                        kind: "bus";
+                        groupIdx: number;
+                        start: number;
+                        end: number;
+                      };
+                  const slots: Slot[] = [];
+                  const groupStartMap = new Map(
+                    busGroups.map((g, gi) => [g[0], { gi, g }]),
+                  );
+                  let pinIdx = 0;
 
-                  if (r === 0) {
-                    cx = -8;
-                    cy = pos;
-                    lx = 0;
-                    ly = pos;
-                  } else if (r === 90) {
-                    cx = pos;
-                    cy = -8;
-                    lx = pos;
-                    ly = 0;
-                  } else if (r === 180) {
-                    cx = rw + 8;
-                    cy = pos;
-                    lx = rw;
-                    ly = pos;
-                  } else {
-                    cx = pos;
-                    cy = rh + 8;
-                    lx = pos;
-                    ly = rh;
+                  while (pinIdx < def.inputs) {
+                    const entry = groupStartMap.get(pinIdx);
+
+                    if (entry) {
+                      const [start, end] = entry.g;
+
+                      slots.push({
+                        kind: "bus",
+                        groupIdx: entry.gi,
+                        start,
+                        end,
+                      });
+                      pinIdx = end;
+                    } else {
+                      slots.push({ kind: "pin", index: pinIdx });
+                      pinIdx += 1;
+                    }
                   }
 
-                  const pinLabel = def.inputLabels?.[i];
-                  const inSignal = comp.inputs[i] ?? LogicValue.HIGH_IMPEDANCE;
+                  const slotCount = slots.length;
+                  const sizeAxis = isVertical ? rh : rw;
 
-                  return (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <g key={`gate-node-in-${i}`}>
-                      <line
-                        x1={lx}
-                        y1={ly}
-                        x2={cx}
-                        y2={cy}
-                        stroke={pinColor(inSignal)}
-                        strokeWidth={1.5}
-                      />
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={5}
-                        fill={
-                          inSignal === LogicValue.ONE
-                            ? "var(--color-signal-on)"
-                            : inSignal === LogicValue.UNKNOWN
-                              ? "var(--color-signal-unknown)"
-                              : inSignal === LogicValue.HIGH_IMPEDANCE
-                                ? "var(--color-signal-highz)"
-                                : "var(--color-background)"
-                        }
-                        stroke={pinColor(inSignal)}
-                        strokeWidth={1.5}
-                        onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
-                        onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
-                        style={{ cursor: "crosshair" }}
-                        className={cn(
-                          "hover:stroke-primary",
-                          glowClass(inSignal),
+                  return slots.map((slot, si) => {
+                    const pos = (sizeAxis / (slotCount + 1)) * (si + 1);
+
+                    if (slot.kind === "bus") {
+                      // Render bus port square
+                      const bx =
+                        r === 0
+                          ? -12
+                          : r === 90
+                            ? pos
+                            : r === 180
+                              ? rw + 3
+                              : pos;
+                      const by =
+                        r === 0
+                          ? pos
+                          : r === 90
+                            ? -9
+                            : r === 180
+                              ? pos
+                              : rh + 3;
+                      const dominantIn =
+                        comp.inputs
+                          .slice(slot.start, slot.end)
+                          .find((v) => v !== LogicValue.ZERO) ??
+                        LogicValue.ZERO;
+                      const busLabel =
+                        def.inputLabels?.[slot.start]?.replace(/\..*$/, "") ??
+                        `/${slot.end - slot.start}`;
+
+                      return (
+                        <g key={`gate-node-bus-in-${slot.groupIdx}`}>
+                          <rect
+                            x={isVertical ? bx - 3 : bx - 6}
+                            y={isVertical ? by - 6 : by - 3}
+                            width={12}
+                            height={12}
+                            rx={2}
+                            ry={2}
+                            fill={
+                              dominantIn === LogicValue.ONE
+                                ? "var(--color-signal-on)"
+                                : dominantIn === LogicValue.UNKNOWN
+                                  ? "var(--color-signal-unknown)"
+                                  : dominantIn === LogicValue.HIGH_IMPEDANCE
+                                    ? "var(--color-signal-highz)"
+                                    : "var(--color-background)"
+                            }
+                            stroke={pinColor(dominantIn)}
+                            strokeWidth={1.5}
+                            onMouseDown={(e) =>
+                              onPinDown(e, slot.start, PIN_KIND.IN)
+                            }
+                            onMouseUp={(e) =>
+                              onPinUp(e, slot.start, PIN_KIND.IN)
+                            }
+                            style={{ cursor: "crosshair" }}
+                            className={cn(
+                              "hover:stroke-primary",
+                              glowClass(dominantIn),
+                            )}
+                          />
+                          <text
+                            x={isVertical ? (r === 0 ? 4 : rw - 4) : pos}
+                            y={isVertical ? pos : r === 90 ? 10 : rh - 10}
+                            textAnchor={
+                              isVertical
+                                ? r === 0
+                                  ? "start"
+                                  : "end"
+                                : "middle"
+                            }
+                            dominantBaseline={
+                              isVertical
+                                ? "middle"
+                                : r === 90
+                                  ? "hanging"
+                                  : "auto"
+                            }
+                            fill="var(--color-muted-foreground)"
+                            fontSize={7}
+                            fontFamily="var(--font-mono)"
+                            pointerEvents="none"
+                          >
+                            {busLabel}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    // Render normal pin
+                    const i = slot.index;
+                    let cx: number;
+                    let cy: number;
+                    let lx: number;
+                    let ly: number;
+
+                    if (r === 0) {
+                      cx = -8;
+                      cy = pos;
+                      lx = 0;
+                      ly = pos;
+                    } else if (r === 90) {
+                      cx = pos;
+                      cy = -8;
+                      lx = pos;
+                      ly = 0;
+                    } else if (r === 180) {
+                      cx = rw + 8;
+                      cy = pos;
+                      lx = rw;
+                      ly = pos;
+                    } else {
+                      cx = pos;
+                      cy = rh + 8;
+                      lx = pos;
+                      ly = rh;
+                    }
+
+                    const pinLabel = def.inputLabels?.[i];
+                    const inSignal =
+                      comp.inputs[i] ?? LogicValue.HIGH_IMPEDANCE;
+
+                    return (
+                      <g key={`gate-node-in-${i}`}>
+                        <line
+                          x1={lx}
+                          y1={ly}
+                          x2={cx}
+                          y2={cy}
+                          stroke={pinColor(inSignal)}
+                          strokeWidth={1.5}
+                        />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={5}
+                          fill={
+                            inSignal === LogicValue.ONE
+                              ? "var(--color-signal-on)"
+                              : inSignal === LogicValue.UNKNOWN
+                                ? "var(--color-signal-unknown)"
+                                : inSignal === LogicValue.HIGH_IMPEDANCE
+                                  ? "var(--color-signal-highz)"
+                                  : "var(--color-background)"
+                          }
+                          stroke={pinColor(inSignal)}
+                          strokeWidth={1.5}
+                          onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
+                          onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
+                          style={{ cursor: "crosshair" }}
+                          className={cn(
+                            "hover:stroke-primary",
+                            glowClass(inSignal),
+                          )}
+                        />
+                        {pinLabel && (
+                          <text
+                            x={isVertical ? (r === 0 ? 4 : rw - 4) : pos}
+                            y={isVertical ? pos : r === 90 ? 10 : rh - 10}
+                            textAnchor={
+                              isVertical
+                                ? r === 0
+                                  ? "start"
+                                  : "end"
+                                : "middle"
+                            }
+                            dominantBaseline={
+                              isVertical
+                                ? "middle"
+                                : r === 90
+                                  ? "hanging"
+                                  : "auto"
+                            }
+                            fill="var(--color-muted-foreground)"
+                            fontSize={7}
+                            fontFamily="var(--font-mono)"
+                            pointerEvents="none"
+                          >
+                            {pinLabel}
+                          </text>
                         )}
-                      />
-                      {pinLabel && (
-                        <text
-                          x={isVertical ? (r === 0 ? 4 : rw - 4) : pos}
-                          y={isVertical ? pos : r === 90 ? 10 : rh - 10}
-                          textAnchor={
-                            isVertical ? (r === 0 ? "start" : "end") : "middle"
-                          }
-                          dominantBaseline={
-                            isVertical
-                              ? "middle"
-                              : r === 90
-                                ? "hanging"
-                                : "auto"
-                          }
-                          fill="var(--color-muted-foreground)"
-                          fontSize={7}
-                          fontFamily="var(--font-mono)"
-                          pointerEvents="none"
-                        >
-                          {pinLabel}
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
+                      </g>
+                    );
+                  });
+                })()}
             {/* Output pins */}
             {def.isBusOutput
               ? (() => {
@@ -709,101 +843,226 @@ function GateNode({
                     </g>
                   );
                 })()
-              : Array.from({ length: def.outputs }).map((_, i) => {
-                  const count = def.outputs;
-                  const spacing = (isVertical ? rh : rw) / (count + 1);
-                  const pos = spacing * (i + 1);
-                  const outSignal = comp.outputs[i] ?? LogicValue.UNKNOWN;
-                  const isOn = outSignal === LogicValue.ONE;
+              : (() => {
+                  const busGroups = def.busOutputGroups ?? [];
 
-                  let cx: number;
-                  let cy: number;
-                  let lx: number;
-                  let ly: number;
+                  type Slot =
+                    | { kind: "pin"; index: number }
+                    | {
+                        kind: "bus";
+                        groupIdx: number;
+                        start: number;
+                        end: number;
+                      };
+                  const slots: Slot[] = [];
+                  const groupStartMap = new Map(
+                    busGroups.map((g, gi) => [g[0], { gi, g }]),
+                  );
+                  let pinIdx = 0;
 
-                  if (r === 0) {
-                    cx = rw + 8;
-                    cy = pos;
-                    lx = rw;
-                    ly = pos;
-                  } else if (r === 90) {
-                    cx = pos;
-                    cy = rh + 8;
-                    lx = pos;
-                    ly = rh;
-                  } else if (r === 180) {
-                    cx = -8;
-                    cy = pos;
-                    lx = 0;
-                    ly = pos;
-                  } else {
-                    cx = pos;
-                    cy = -8;
-                    lx = pos;
-                    ly = 0;
+                  while (pinIdx < def.outputs) {
+                    const entry = groupStartMap.get(pinIdx);
+
+                    if (entry) {
+                      const [start, end] = entry.g;
+
+                      slots.push({
+                        kind: "bus",
+                        groupIdx: entry.gi,
+                        start,
+                        end,
+                      });
+                      pinIdx = end;
+                    } else {
+                      slots.push({ kind: "pin", index: pinIdx });
+                      pinIdx += 1;
+                    }
                   }
 
-                  const pinLabel = def.outputLabels?.[i];
+                  const slotCount = slots.length;
+                  const sizeAxis = isVertical ? rh : rw;
 
-                  return (
-                    // eslint-disable-next-line react/no-array-index-key
-                    <g key={`gate-node-out-${i}`}>
-                      <line
-                        x1={lx}
-                        y1={ly}
-                        x2={cx}
-                        y2={cy}
-                        stroke={pinColor(outSignal)}
-                        strokeWidth={1.5}
-                      />
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={5}
-                        fill={
-                          isOn
-                            ? "var(--color-signal-on)"
-                            : outSignal === LogicValue.UNKNOWN
-                              ? "var(--color-signal-unknown)"
-                              : outSignal === LogicValue.HIGH_IMPEDANCE
-                                ? "var(--color-signal-highz)"
-                                : "var(--color-background)"
-                        }
-                        stroke={pinColor(outSignal)}
-                        strokeWidth={1.5}
-                        onMouseDown={(e) => onPinDown(e, i, PIN_KIND.OUT)}
-                        onMouseUp={(e) => onPinUp(e, i, PIN_KIND.OUT)}
-                        style={{ cursor: "crosshair" }}
-                        className={cn(
-                          "hover:stroke-primary",
-                          glowClass(outSignal),
+                  return slots.map((slot, si) => {
+                    const pos = (sizeAxis / (slotCount + 1)) * (si + 1);
+
+                    if (slot.kind === "bus") {
+                      const bx =
+                        r === 0
+                          ? rw + 3
+                          : r === 90
+                            ? pos - 6
+                            : r === 180
+                              ? -15
+                              : pos - 6;
+                      const by =
+                        r === 0
+                          ? pos
+                          : r === 90
+                            ? rh + 3
+                            : r === 180
+                              ? pos
+                              : -15;
+                      const dominantBus =
+                        comp.outputs
+                          .slice(slot.start, slot.end)
+                          .find((v) => v !== LogicValue.ZERO) ??
+                        LogicValue.ZERO;
+                      const busLabel =
+                        def.outputLabels?.[slot.start]?.replace(/\..*$/, "") ??
+                        `/${slot.end - slot.start}`;
+
+                      return (
+                        <g key={`gate-node-bus-out-${slot.groupIdx}`}>
+                          <rect
+                            x={isVertical ? bx : bx}
+                            y={isVertical ? by - 6 : by}
+                            width={12}
+                            height={12}
+                            rx={2}
+                            ry={2}
+                            fill={
+                              dominantBus === LogicValue.ONE
+                                ? "var(--color-signal-on)"
+                                : dominantBus === LogicValue.UNKNOWN
+                                  ? "var(--color-signal-unknown)"
+                                  : dominantBus === LogicValue.HIGH_IMPEDANCE
+                                    ? "var(--color-signal-highz)"
+                                    : "var(--color-background)"
+                            }
+                            stroke={pinColor(dominantBus)}
+                            strokeWidth={1.5}
+                            onMouseDown={(e) =>
+                              onPinDown(e, slot.start, PIN_KIND.OUT)
+                            }
+                            style={{ cursor: "crosshair" }}
+                            className={cn(
+                              "hover:stroke-primary",
+                              glowClass(dominantBus),
+                            )}
+                          />
+                          <text
+                            x={isVertical ? (r === 0 ? rw - 4 : 4) : pos}
+                            y={isVertical ? pos : r === 90 ? rh - 10 : 10}
+                            textAnchor={
+                              isVertical
+                                ? r === 0
+                                  ? "end"
+                                  : "start"
+                                : "middle"
+                            }
+                            dominantBaseline={
+                              isVertical
+                                ? "middle"
+                                : r === 90
+                                  ? "auto"
+                                  : "hanging"
+                            }
+                            fill="var(--color-muted-foreground)"
+                            fontSize={7}
+                            fontFamily="var(--font-mono)"
+                            pointerEvents="none"
+                          >
+                            {busLabel}
+                          </text>
+                        </g>
+                      );
+                    }
+
+                    const i = slot.index;
+                    const outSignal = comp.outputs[i] ?? LogicValue.UNKNOWN;
+                    const isOn = outSignal === LogicValue.ONE;
+                    let cx: number;
+                    let cy: number;
+                    let lx: number;
+                    let ly: number;
+
+                    if (r === 0) {
+                      cx = rw + 8;
+                      cy = pos;
+                      lx = rw;
+                      ly = pos;
+                    } else if (r === 90) {
+                      cx = pos;
+                      cy = rh + 8;
+                      lx = pos;
+                      ly = rh;
+                    } else if (r === 180) {
+                      cx = -8;
+                      cy = pos;
+                      lx = 0;
+                      ly = pos;
+                    } else {
+                      cx = pos;
+                      cy = -8;
+                      lx = pos;
+                      ly = 0;
+                    }
+
+                    const pinLabel = def.outputLabels?.[i];
+
+                    return (
+                      <g key={`gate-node-out-${i}`}>
+                        <line
+                          x1={lx}
+                          y1={ly}
+                          x2={cx}
+                          y2={cy}
+                          stroke={pinColor(outSignal)}
+                          strokeWidth={1.5}
+                        />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={5}
+                          fill={
+                            isOn
+                              ? "var(--color-signal-on)"
+                              : outSignal === LogicValue.UNKNOWN
+                                ? "var(--color-signal-unknown)"
+                                : outSignal === LogicValue.HIGH_IMPEDANCE
+                                  ? "var(--color-signal-highz)"
+                                  : "var(--color-background)"
+                          }
+                          stroke={pinColor(outSignal)}
+                          strokeWidth={1.5}
+                          onMouseDown={(e) => onPinDown(e, i, PIN_KIND.OUT)}
+                          onMouseUp={(e) => onPinUp(e, i, PIN_KIND.OUT)}
+                          style={{ cursor: "crosshair" }}
+                          className={cn(
+                            "hover:stroke-primary",
+                            glowClass(outSignal),
+                          )}
+                        />
+                        {pinLabel && (
+                          <text
+                            x={isVertical ? (r === 0 ? rw - 4 : 4) : pos}
+                            y={isVertical ? pos : r === 90 ? rh - 10 : 10}
+                            textAnchor={
+                              isVertical
+                                ? r === 0
+                                  ? "end"
+                                  : "start"
+                                : "middle"
+                            }
+                            dominantBaseline={
+                              isVertical
+                                ? "middle"
+                                : r === 90
+                                  ? "auto"
+                                  : "hanging"
+                            }
+                            fill="var(--color-muted-foreground)"
+                            fontSize={7}
+                            fontFamily="var(--font-mono)"
+                            pointerEvents="none"
+                          >
+                            {pinLabel}
+                          </text>
                         )}
-                      />
-                      {pinLabel && (
-                        <text
-                          x={isVertical ? (r === 0 ? rw - 4 : 4) : pos}
-                          y={isVertical ? pos : r === 90 ? rh - 10 : 10}
-                          textAnchor={
-                            isVertical ? (r === 0 ? "end" : "start") : "middle"
-                          }
-                          dominantBaseline={
-                            isVertical
-                              ? "middle"
-                              : r === 90
-                                ? "auto"
-                                : "hanging"
-                          }
-                          fill="var(--color-muted-foreground)"
-                          fontSize={7}
-                          fontFamily="var(--font-mono)"
-                          pointerEvents="none"
-                        >
-                          {pinLabel}
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
+                      </g>
+                    );
+                  });
+                })()}
           </>
         );
       })()}

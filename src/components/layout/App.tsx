@@ -596,10 +596,11 @@ function DigitalGateApp() {
     e.preventDefault();
 
     const p = toWorld(e.clientX, e.clientY);
+    const def = library.has(comp.type) ? library.get(comp.type) : null;
     const isBus =
-      pin === -1 &&
-      library.has(comp.type) &&
-      library.get(comp.type).isBusOutput === true;
+      def !== null &&
+      (def.isBusOutput === true ||
+        (def.busOutputGroups?.some(([s]) => s === pin) ?? false));
 
     setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y, isBus });
   };
@@ -630,7 +631,11 @@ function DigitalGateApp() {
 
       const targetDef = library.get(comp.type);
 
-      if (!targetDef.isBusInput) {
+      // Check if target accepts bus: either isBusInput (all-bus) or has busInputGroups (mixed)
+      const busGroup = targetDef.busInputGroups?.find(([s]) => s === pin);
+      const isBusTarget = targetDef.isBusInput || busGroup !== undefined;
+
+      if (!isBusTarget) {
         addLog(
           CONSOLE_TAB.WARN,
           "Bus wire can only connect to a bus input port",
@@ -649,12 +654,29 @@ function DigitalGateApp() {
         return;
       }
 
-      let created = 0;
       const sourceDef = library.get(srcComp.type);
-      const wireCount = Math.min(sourceDef.outputs, targetDef.inputs);
+
+      // Determine source pin range (from bus output group or all outputs)
+      const srcBusGroup = sourceDef.busOutputGroups?.find(
+        ([s]) => s === pendingWire.from.pin,
+      );
+      const srcStart = srcBusGroup ? srcBusGroup[0] : 0;
+      const srcEnd = srcBusGroup ? srcBusGroup[1] : sourceDef.outputs;
+
+      // Determine target pin range
+      const tgtStart = busGroup ? busGroup[0] : 0;
+      const tgtEnd = busGroup ? busGroup[1] : targetDef.inputs;
+
+      let created = 0;
+      const wireCount = Math.min(srcEnd - srcStart, tgtEnd - tgtStart);
 
       for (let i = 0; i < wireCount; i += 1) {
-        const wire = addWire(pendingWire.from.comp, i, comp.id, i);
+        const wire = addWire(
+          pendingWire.from.comp,
+          srcStart + i,
+          comp.id,
+          tgtStart + i,
+        );
 
         if (wire) created += 1;
       }
@@ -675,6 +697,18 @@ function DigitalGateApp() {
       setPendingWire(null);
 
       return;
+    }
+
+    // Block non-bus wire from connecting to a bus group port in mixed mode
+    if (library.has(comp.type)) {
+      const tDef = library.get(comp.type);
+
+      if (tDef.busInputGroups?.some(([s]) => s === pin)) {
+        addLog(CONSOLE_TAB.WARN, "Use a bus wire to connect to this port");
+        setPendingWire(null);
+
+        return;
+      }
     }
 
     // ── Regular wire ────────────────────────────────────────────────────────
@@ -1207,8 +1241,25 @@ function DigitalGateApp() {
 
                   if (!sourceComp || !targetComp) return null;
 
-                  const p1 = busPortPos(sourceComp, PIN_KIND.OUT);
-                  const p2 = busPortPos(targetComp, PIN_KIND.IN);
+                  // Use pinPos with the first wire's pin for proper position
+                  // (handles both all-bus and mixed-mode bus groups)
+                  const firstWire = snapshot.wires[group.wireIds[0]];
+                  const firstFromPin = firstWire?.from.pin ?? 0;
+                  const firstToPin = firstWire?.to.pin ?? 0;
+                  const sourceDef = library.has(sourceComp.type)
+                    ? library.get(sourceComp.type)
+                    : null;
+                  const targetDef = library.has(targetComp.type)
+                    ? library.get(targetComp.type)
+                    : null;
+                  const p1 =
+                    sourceDef?.busOutputGroups && !sourceDef.isBusOutput
+                      ? pinPos(sourceComp, PIN_KIND.OUT, firstFromPin)
+                      : busPortPos(sourceComp, PIN_KIND.OUT);
+                  const p2 =
+                    targetDef?.busInputGroups && !targetDef.isBusInput
+                      ? pinPos(targetComp, PIN_KIND.IN, firstToPin)
+                      : busPortPos(targetComp, PIN_KIND.IN);
                   const groupSelected = group.wireIds.some((id) =>
                     selWires.has(id),
                   );
@@ -1258,11 +1309,21 @@ function DigitalGateApp() {
                     if (!src) return null;
 
                     if (pendingWire.isBus) {
-                      const p1 = busPortPos(src, PIN_KIND.OUT);
-                      const def = library.has(src.type)
+                      const srcDef = library.has(src.type)
                         ? library.get(src.type)
                         : null;
-                      const width = def ? def.outputs : 4;
+                      const srcGroup = srcDef?.busOutputGroups?.find(
+                        ([s]) => s === pendingWire.from.pin,
+                      );
+                      const p1 =
+                        srcDef?.busOutputGroups && !srcDef.isBusOutput
+                          ? pinPos(src, PIN_KIND.OUT, pendingWire.from.pin)
+                          : busPortPos(src, PIN_KIND.OUT);
+                      const width = srcGroup
+                        ? srcGroup[1] - srcGroup[0]
+                        : srcDef
+                          ? srcDef.outputs
+                          : 4;
                       const previewSignals: SignalValue[] = [];
 
                       for (let idx = 0; idx < width; idx += 1)

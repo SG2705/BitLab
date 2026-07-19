@@ -12,11 +12,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
 
-import { GateNode, WirePath } from "@/components/ui";
+import { BusWirePath, GateNode, WirePath } from "@/components/ui";
 import { library } from "@/engine";
 import type { CircuitSnapshot } from "@/engine/types";
-import { pinDirection, pinPos } from "@/lib/circuit";
-import { PIN_KIND } from "@/lib/constants";
+import {
+  busPortPos,
+  computeBusWireGroups,
+  pinDirection,
+  pinPos,
+} from "@/lib/circuit";
+import { PIN_KIND, WIRE_TYPE } from "@/lib/constants";
 
 interface CircuitViewerProps {
   name: string;
@@ -256,31 +261,85 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
         <svg width={size.w} height={size.h} className="w-full h-full">
           <g transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}>
             {/* Wires */}
-            {Object.values(circuit.wires).map((w) => {
-              const a = circuit.components[w.from.comp];
-              const b = circuit.components[w.to.comp];
-
-              if (!a || !b) return null;
-              if (!library.has(a.type) || !library.has(b.type)) return null;
-
-              const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
-              const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
-              const d1 = pinDirection(a, PIN_KIND.OUT);
-              const d2 = pinDirection(b, PIN_KIND.IN);
+            {(() => {
+              const busGroups = computeBusWireGroups(circuit);
+              const busWireIds = new Set(busGroups.flatMap((g) => g.wireIds));
 
               return (
-                <WirePath
-                  key={w.id}
-                  p1={p1}
-                  p2={p2}
-                  isSignalUp={false}
-                  isRunning={false}
-                  wireType="bezier"
-                  dir1={d1}
-                  dir2={d2}
-                />
+                <>
+                  {/* Regular wires (not part of bus groups) */}
+                  {Object.values(circuit.wires).map((w) => {
+                    if (busWireIds.has(w.id)) return null;
+
+                    const a = circuit.components[w.from.comp];
+                    const b = circuit.components[w.to.comp];
+
+                    if (!a || !b) return null;
+                    if (!library.has(a.type) || !library.has(b.type))
+                      return null;
+
+                    const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
+                    const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+                    const d1 = pinDirection(a, PIN_KIND.OUT);
+                    const d2 = pinDirection(b, PIN_KIND.IN);
+
+                    return (
+                      <WirePath
+                        key={w.id}
+                        p1={p1}
+                        p2={p2}
+                        isSignalUp={false}
+                        isRunning={false}
+                        wireType="bezier"
+                        dir1={d1}
+                        dir2={d2}
+                      />
+                    );
+                  })}
+                  {/* Bus wires */}
+                  {busGroups.map((group) => {
+                    const sourceComp = circuit.components[group.fromComp];
+                    const targetComp = circuit.components[group.toComp];
+
+                    if (!sourceComp || !targetComp) return null;
+
+                    const firstWire = circuit.wires[group.wireIds[0]];
+                    const firstFromPin = firstWire?.from.pin ?? 0;
+                    const firstToPin = firstWire?.to.pin ?? 0;
+                    const sourceDef = library.has(sourceComp.type)
+                      ? library.get(sourceComp.type)
+                      : null;
+                    const targetDef = library.has(targetComp.type)
+                      ? library.get(targetComp.type)
+                      : null;
+                    const p1 =
+                      sourceDef?.busOutputGroups && !sourceDef.isBusOutput
+                        ? pinPos(sourceComp, PIN_KIND.OUT, firstFromPin)
+                        : busPortPos(sourceComp, PIN_KIND.OUT);
+                    const p2 =
+                      targetDef?.busInputGroups && !targetDef.isBusInput
+                        ? pinPos(targetComp, PIN_KIND.IN, firstToPin)
+                        : busPortPos(targetComp, PIN_KIND.IN);
+                    const bd1 = pinDirection(sourceComp, PIN_KIND.OUT);
+                    const bd2 = pinDirection(targetComp, PIN_KIND.IN);
+
+                    return (
+                      <BusWirePath
+                        key={group.id}
+                        p1={p1}
+                        p2={p2}
+                        width={group.width}
+                        signals={group.signals}
+                        style={WIRE_TYPE.BEZIER}
+                        dir1={bd1}
+                        dir2={bd2}
+                        isSelected={false}
+                      />
+                    );
+                  })}
+                </>
               );
-            })}
+            })()}
             {/* Components */}
             {Object.values(circuit.components).map((c) => {
               if (!library.has(c.type)) return null;

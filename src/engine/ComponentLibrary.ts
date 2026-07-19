@@ -1828,9 +1828,17 @@ export class ComponentLibrary {
       return pinCount === 1 ? base : `${base}.${pinLabel ?? `P${pin}`}`;
     };
 
-    const inputPorts = nonClockSourceComps.flatMap(
-      ({ component, def }, componentIndex) =>
-        Array.from({ length: def.outputs }, (_, pin) => ({
+    // Build input ports in original sorted order, tracking bus groups
+    const inputPorts: Array<{ compId: string; pin: number; label: string }> =
+      [];
+    const busInputGroups: [number, number][] = [];
+
+    for (let ci = 0; ci < nonClockSourceComps.length; ci += 1) {
+      const { component, def } = nonClockSourceComps[ci];
+      const startIdx = inputPorts.length;
+
+      for (let pin = 0; pin < def.outputs; pin += 1) {
+        inputPorts.push({
           compId: component.id,
           pin,
           label: portLabel(
@@ -1838,10 +1846,15 @@ export class ComponentLibrary {
             def.outputLabels?.[pin],
             pin,
             def.outputs,
-            `IN${componentIndex}`,
+            def.isBusOutput ? `BUS${ci}` : `IN${ci}`,
           ),
-        })),
-    );
+        });
+      }
+
+      if (def.isBusOutput) {
+        busInputGroups.push([startIdx, inputPorts.length]);
+      }
+    }
 
     if (hasInternalClocks) {
       inputPorts.push({
@@ -1851,9 +1864,17 @@ export class ComponentLibrary {
       });
     }
 
-    const outputPorts = sinkComps.flatMap(
-      ({ component, def }, componentIndex) =>
-        Array.from({ length: def.inputs }, (_, pin) => ({
+    // Build output ports in original sorted order, tracking bus groups
+    const busOutputGroups: [number, number][] = [];
+    const outputPorts: Array<{ compId: string; pin: number; label: string }> =
+      [];
+
+    for (let ci = 0; ci < sinkComps.length; ci += 1) {
+      const { component, def } = sinkComps[ci];
+      const startIdx = outputPorts.length;
+
+      for (let pin = 0; pin < def.inputs; pin += 1) {
+        outputPorts.push({
           compId: component.id,
           pin,
           label: portLabel(
@@ -1861,10 +1882,16 @@ export class ComponentLibrary {
             def.inputLabels?.[pin],
             pin,
             def.inputs,
-            `OUT${componentIndex}`,
+            def.isBusInput ? `BOUT${ci}` : `OUT${ci}`,
           ),
-        })),
-    );
+        });
+      }
+
+      if (def.isBusInput) {
+        busOutputGroups.push([startIdx, outputPorts.length]);
+      }
+    }
+
     const inputLabels = inputPorts.map((port) => port.label);
     const outputLabels = outputPorts.map((port) => port.label);
     const inputWires = new Map<string, { fromComp: string; fromPin: number }>();
@@ -2094,6 +2121,20 @@ export class ComponentLibrary {
       return { outputs, state: { compStates, compOutputs } };
     };
 
+    // Compute visual slot counts for height calculation
+    const inputSlotCount =
+      busInputGroups.length > 0
+        ? numInputs -
+          busInputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
+          busInputGroups.length
+        : numInputs;
+    const outputSlotCount =
+      busOutputGroups.length > 0
+        ? numOutputs -
+          busOutputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
+          busOutputGroups.length
+        : numOutputs;
+
     const def: ComponentDefinition = {
       type,
       label: name,
@@ -2101,17 +2142,29 @@ export class ComponentLibrary {
       inputs: numInputs,
       outputs: numOutputs,
       width: 90,
-      height: Math.max(60, Math.max(numInputs, numOutputs) * 22 + 20),
+      height: Math.max(60, Math.max(inputSlotCount, outputSlotCount) * 22 + 20),
       symbol: name.slice(0, 4),
       isSequential: false,
       needsInputSnapshot: hasSequentialInternals,
       isClock: false,
       isInput: false,
       isOutput: false,
-      isBusOutput: sinkComps.some(({ def: sinkDef }) => sinkDef.isBusInput),
-      isBusInput: nonClockSourceComps.some(
-        ({ def: srcDef }) => srcDef.isBusOutput,
-      ),
+      isBusOutput:
+        sinkComps.every(({ def: sinkDef }) => sinkDef.isBusInput) &&
+        sinkComps.some(({ def: sinkDef }) => sinkDef.isBusInput),
+      isBusInput:
+        nonClockSourceComps.every(({ def: srcDef }) => srcDef.isBusOutput) &&
+        nonClockSourceComps.some(({ def: srcDef }) => srcDef.isBusOutput),
+      busInputGroups:
+        busInputGroups.length > 0 &&
+        !nonClockSourceComps.every(({ def: srcDef }) => srcDef.isBusOutput)
+          ? busInputGroups
+          : undefined,
+      busOutputGroups:
+        busOutputGroups.length > 0 &&
+        !sinkComps.every(({ def: sinkDef }) => sinkDef.isBusInput)
+          ? busOutputGroups
+          : undefined,
       inputLabels,
       outputLabels,
       initialState: () => {
