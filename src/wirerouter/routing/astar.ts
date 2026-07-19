@@ -242,27 +242,30 @@ export function findPath(
     return { success: false, waypoints: [], gridPath: [] };
   }
 
-  // Build full path: start pin → stub start → A* path → stub end → end pin
+  // Build full path: start pin → stub → A* path → stub → end pin
   const fullGridPath: GridCell[] = [];
 
-  // Add start stub cells (from pin to stub start)
+  // Add start stub cells (from pin to stub start, inclusive)
   const startStubCells = buildStubCells(start, exitDir, config.stubLength);
 
   fullGridPath.push(...startStubCells);
 
-  // Add A* path (skip first cell since it's the stub start, already added)
+  // Add A* path (skip first cell since it's stubStart, already in startStubCells)
   for (let i = 1; i < astarResult.length; i += 1) {
     fullGridPath.push(astarResult[i]);
   }
 
-  // Add end stub cells (from stub end to pin) — in reverse
+  // Add end stub cells walking from stubEnd back to pin
+  // buildStubCells goes: end → end+1 → ... → stubEnd
+  // We want: stubEnd → ... → end+1 → end (but stubEnd is already the last A* cell)
   const endStubCells = buildStubCells(end, approachDir, config.stubLength);
-  const reversedEndStub = endStubCells.slice(0, -1).reverse();
+  // Reverse to get: stubEnd → ... → end
+  const reversedEndStub = [...endStubCells].reverse();
 
-  fullGridPath.push(...reversedEndStub);
-
-  // Add the actual end pin position
-  fullGridPath.push(end);
+  // Skip first (stubEnd already in A* path), keep the rest including end
+  for (let i = 1; i < reversedEndStub.length; i += 1) {
+    fullGridPath.push(reversedEndStub[i]);
+  }
 
   // Simplify: remove collinear intermediate points
   const simplified = simplifyPath(fullGridPath);
@@ -270,8 +273,7 @@ export function findPath(
   // Convert to world coordinates
   const waypoints = simplified.map((cell) => obstacleMap.gridToWorld(cell));
 
-  // Ensure first and last waypoints are exact pin positions
-  // and adjacent waypoints are aligned to keep stubs perfectly straight
+  // Replace first and last with exact pin positions (avoid grid quantization offset)
   if (waypoints.length >= 2) {
     waypoints[0] = startWorld;
     waypoints[waypoints.length - 1] = endWorld;
@@ -282,26 +284,25 @@ export function findPath(
       const exitDr = DIR_DR[exitDir];
 
       if (exitDc !== 0) {
-        // Horizontal stub: align Y of second waypoint to pin Y
         waypoints[1] = { x: waypoints[1].x, y: startWorld.y };
       } else if (exitDr !== 0) {
-        // Vertical stub: align X of second waypoint to pin X
         waypoints[1] = { x: startWorld.x, y: waypoints[1].y };
       }
     }
 
     // Align second-to-last waypoint with end pin
-    if (waypoints.length >= 4) {
+    if (waypoints.length >= 3) {
       const approachDc = DIR_DC[approachDir];
       const approachDr = DIR_DR[approachDir];
       const idx = waypoints.length - 2;
 
-      if (approachDc !== 0) {
-        // Horizontal approach: align Y of second-to-last to pin Y
-        waypoints[idx] = { x: waypoints[idx].x, y: endWorld.y };
-      } else if (approachDr !== 0) {
-        // Vertical approach: align X of second-to-last to pin X
-        waypoints[idx] = { x: endWorld.x, y: waypoints[idx].y };
+      // Only align if it's not the same waypoint as index 1
+      if (idx > 1 || waypoints.length === 3) {
+        if (approachDc !== 0) {
+          waypoints[idx] = { x: waypoints[idx].x, y: endWorld.y };
+        } else if (approachDr !== 0) {
+          waypoints[idx] = { x: endWorld.x, y: waypoints[idx].y };
+        }
       }
     }
   }

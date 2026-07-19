@@ -183,13 +183,35 @@ const H_OVERRIDES = [GATE_TYPE_PROBE, GATE_TYPE_DISPLAY7, GATE_TYPE_DIGIT_BIN];
 const hw = (c: ComponentDefinition): ComponentDefinition => {
   const skipResize = H_OVERRIDES.includes(c.type);
 
+  if (skipResize) {
+    return { ...c, label: LB_MAP[c.type] };
+  }
+
+  // Count bus slots per side to pass to height calculation
+  const inputBusSlots = c.busInputGroups?.length ?? 0;
+  const outputBusSlots = c.busOutputGroups?.length ?? 0;
+
+  // Determine which side has more slots (accounting for bus grouping)
+  const inputSlotCount = c.busInputGroups
+    ? c.inputs -
+      c.busInputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
+      inputBusSlots
+    : c.inputs;
+  const outputSlotCount = c.busOutputGroups
+    ? c.outputs -
+      c.busOutputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
+      outputBusSlots
+    : c.outputs;
+
+  const maxSlots = Math.max(inputSlotCount, outputSlotCount);
+  const busSlots =
+    inputSlotCount >= outputSlotCount ? inputBusSlots : outputBusSlots;
+
   return {
     ...c,
     label: LB_MAP[c.type],
-    width: skipResize ? c.width : Math.max(MIN_COMP_SIZE, c.width),
-    height: skipResize
-      ? c.height
-      : getHeightForPinCount(Math.max(c.inputs, c.outputs)),
+    width: Math.max(MIN_COMP_SIZE, c.width),
+    height: getHeightForPinCount(maxSlots, busSlots),
   };
 };
 
@@ -2141,14 +2163,20 @@ export class ComponentLibrary {
           busOutputGroups.length
         : numOutputs;
 
+    const maxSlots = Math.max(inputSlotCount, outputSlotCount);
+    const busSlots =
+      inputSlotCount >= outputSlotCount
+        ? busInputGroups.length
+        : busOutputGroups.length;
+
     const def: ComponentDefinition = {
       type,
       label: name,
       category: GATE_CATEGORY_CUSTOM,
       inputs: numInputs,
       outputs: numOutputs,
-      width: 90,
-      height: Math.max(60, Math.max(inputSlotCount, outputSlotCount) * 22 + 20),
+      width: Math.max(MIN_COMP_SIZE, 90),
+      height: getHeightForPinCount(maxSlots, busSlots),
       symbol: name.slice(0, 4),
       isSequential: false,
       needsInputSnapshot: hasSequentialInternals,

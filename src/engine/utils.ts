@@ -45,18 +45,23 @@ export const stateEqual = (
  * Ensures that height / (pinCount + 1) is always a multiple of CELL_SIZE,
  * so pins are evenly spaced on grid points.
  */
-export const getHeightForPinCount = (maxPins: number): number => {
-  const slots = maxPins + 1;
+export const getHeightForPinCount = (
+  maxPins: number,
+  busSlotCount = 0,
+): number => {
   const pinSpacing = PIN_SPACING_UNITS * CELL_SIZE;
-  const naturalHeight = slots * pinSpacing;
+  const normalSlots = maxPins - busSlotCount;
+  // Total span: normal slots get single spacing, bus slots get double
+  const totalSpan =
+    Math.max(0, normalSlots - 1) * pinSpacing +
+    busSlotCount * pinSpacing * 2 +
+    (normalSlots > 0 && busSlotCount > 0 ? pinSpacing : 0);
+  // Add padding on top and bottom (one spacing unit each side)
+  const naturalHeight = totalSpan + pinSpacing * 2;
 
   if (naturalHeight >= MIN_COMP_SIZE) {
-    return naturalHeight;
+    return Math.ceil(naturalHeight / CELL_SIZE) * CELL_SIZE;
   }
 
-  // MIN_COMP_SIZE is larger — round up to the nearest multiple of (slots * CELL_SIZE)
-  // so that height / slots is still a multiple of CELL_SIZE
-  const minSpacing = Math.ceil(MIN_COMP_SIZE / (slots * CELL_SIZE)) * CELL_SIZE;
-
-  return slots * minSpacing;
+  return Math.ceil(MIN_COMP_SIZE / CELL_SIZE) * CELL_SIZE;
 };

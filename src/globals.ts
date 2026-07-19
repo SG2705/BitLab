@@ -5,14 +5,18 @@
  * Change these to adjust the entire grid system globally.
  */
 
+// Primary
 /** Grid cell size in pixels — the fundamental unit of the canvas grid */
-export const CELL_SIZE = 10;
-
+export const CELL_SIZE = 8;
 /** Pin spacing in grid units (actual px = PIN_SPACING_UNITS * CELL_SIZE) */
-export const PIN_SPACING_UNITS = 1;
+export const PIN_SPACING_UNITS = 2;
+/** Minimum component width/height in pixels in relative settings */
+export const MIN_COMP_SIZE_UNITS = 6;
+/** Pin offset in grid units (actual px = PIN_OFFSET_UNITS * CELL_SIZE) */
+export const PIN_OFFSET_UNITS = 1;
 
+// Secondary
 /** Minimum component width/height in pixels */
-export const MIN_COMP_SIZE = 60;
-
-/** Distance in pixels from the component edge to the pin circle center */
-export const PIN_OFFSET = 10;
+export const MIN_COMP_SIZE = MIN_COMP_SIZE_UNITS * CELL_SIZE;
+/** Pin offset in pixels — distance from component edge to pin center */
+export const PIN_OFFSET = PIN_OFFSET_UNITS * CELL_SIZE;
