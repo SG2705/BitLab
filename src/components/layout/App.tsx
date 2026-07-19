@@ -17,7 +17,7 @@ import {
   WirePath,
 } from "@/components/ui";
 import { settingsStore, useSettings } from "@/context/SettingsContext";
-import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
+import type { ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
   GATE_TYPE_BUS_INPUT4,
@@ -45,7 +45,6 @@ import {
   pinPos,
 } from "@/lib/circuit";
 import {
-  BASE_LOG,
   CONSOLE_TAB,
   DEFAULT_CLOCK,
   PIN_KIND,
@@ -54,15 +53,9 @@ import {
   TOOL,
   WIRE_TYPE,
 } from "@/lib/constants";
-import {
-  type ConsoleTab,
-  type LogEntry,
-  type PinKind,
-  type Theme,
-  type Tool,
-  type WireType,
-} from "@/lib/types";
-import { cn, getGateLabel, initializeLogger, snap } from "@/lib/utils";
+import { type PinKind, type Theme } from "@/lib/types";
+import { cn, getGateLabel, snap } from "@/lib/utils";
+import { useUIStore } from "@/stores/ui-store";
 import { type CachedRoute, type ObstacleMap, WireRouter } from "@/wirerouter";
 
 import BottomBar from "./BottomBar";
@@ -92,11 +85,38 @@ const SettingsPanel = lazy(() => import("./SettingsPanel"));
 function DigitalGateApp() {
   const intl = useIntl();
 
-  // ── Core state ──────────────────────────────────────────────────────────────
+  // ── Store state (no more prop drilling for these) ───────────────────────────
+  const {
+    selection,
+    selWires,
+    tool,
+    wireStyle,
+    snapEnabled,
+    cmdOpen,
+    settingsOpen,
+    showObstacleMap,
+    showMinimap,
+    consoleTab,
+    logs,
+    viewingCircuit,
+    setSelection,
+    setSelWires,
+    clearSelection,
+    selectAll,
+    setTool,
+    setWireStyle,
+    setSnapEnabled,
+    setCmdOpen,
+    toggleCmdOpen,
+    setSettingsOpen,
+    toggleObstacleMap,
+    setConsoleTab,
+    addLog,
+    setViewingCircuit,
+  } = useUIStore();
+
+  // ── Core engine state ───────────────────────────────────────────────────────
   const [clockSpeed, setClockSpeed] = useState(DEFAULT_CLOCK);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
-  const addLog = initializeLogger(setLogs);
 
   const {
     snapshot,
@@ -155,27 +175,12 @@ function DigitalGateApp() {
   const isRunning = status === SIMULATION_STATUS.RUNNING;
   const { tick } = stats;
 
-  // ── Selection state ─────────────────────────────────────────────────────────
-  const [selection, setSelection] = useState<Set<string>>(new Set());
-  const [selWires, setSelWires] = useState<Set<string>>(new Set());
-
-  // ── UI state ────────────────────────────────────────────────────────────────
-  const [consoleTab, setConsoleTab] = useState<ConsoleTab>(CONSOLE_TAB.LOG);
-  const [wireStyle, setWireStyle] = useState<WireType>(WIRE_TYPE.BEZIER);
-  const [snapEnabled, setSnapEnabled] = useState(true);
-  const [showMinimap] = useState(true);
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [tool, setTool] = useState<Tool>(TOOL.SELECT);
-  const [showObstacleMap, setShowObstacleMap] = useState(false);
+  // ── Local UI state (not shared with children) ───────────────────────────────
   const [obstacleMapVersion, setObstacleMapVersion] = useState(0);
   const [routedWires, setRoutedWires] = useState<Map<string, CachedRoute>>(
     new Map(),
   );
   const [dragType, setDragType] = useState<string | null>(null);
-  const [viewingCircuit, setViewingCircuit] = useState<{
-    name: string;
-    circuit: CircuitSnapshot;
-  } | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const wireRouterRef = useRef<WireRouter>(new WireRouter());
@@ -246,15 +251,21 @@ function DigitalGateApp() {
     removeWires(Array.from(wireIds));
     removeComponents(Array.from(selection));
 
-    setSelection(new Set());
-    setSelWires(new Set());
-  }, [selection, selWires, snapshot.wires, removeComponents, removeWires]);
+    clearSelection();
+  }, [
+    selection,
+    selWires,
+    snapshot.wires,
+    removeComponents,
+    removeWires,
+    clearSelection,
+  ]);
 
   const duplicateSelected = useCallback(() => {
     const idMap = duplicateComponents(Array.from(selection));
 
     setSelection(new Set(idMap.values()));
-  }, [duplicateComponents, selection]);
+  }, [duplicateComponents, selection, setSelection]);
 
   const rotateSelected = useCallback(() => {
     for (const id of selection) {
@@ -276,12 +287,11 @@ function DigitalGateApp() {
     redo,
     duplicateSelected,
     saveProjectToLocal,
-    setCmdOpen,
+    toggleCmdOpen,
     selectionSize: selection.size,
     selectAll: useCallback(() => {
-      setSelection(new Set(Object.keys(snapshot.components)));
-      setSelWires(new Set(Object.keys(snapshot.wires)));
-    }, [snapshot.components, snapshot.wires]),
+      selectAll(Object.keys(snapshot.components), Object.keys(snapshot.wires));
+    }, [snapshot.components, snapshot.wires, selectAll]),
     copySelection: useCallback(() => {
       clipboard.copySelection(Array.from(selection));
     }, [clipboard, selection]),
@@ -292,7 +302,7 @@ function DigitalGateApp() {
         setSelection(new Set(idMap.values()));
         setSelWires(new Set());
       }
-    }, [clipboard, duplicateComponents]),
+    }, [clipboard, duplicateComponents, setSelection, setSelWires]),
   });
 
   // ── Component interaction ───────────────────────────────────────────────────
@@ -336,14 +346,12 @@ function DigitalGateApp() {
       const multiSelect = e.metaKey || e.ctrlKey;
 
       if (multiSelect) {
-        setSelection((s) => {
-          const n = new Set(s);
+        const n = new Set(selection);
 
-          if (n.has(c.id)) n.delete(c.id);
-          else n.add(c.id);
+        if (n.has(c.id)) n.delete(c.id);
+        else n.add(c.id);
 
-          return n;
-        });
+        setSelection(n);
       } else if (!selection.has(c.id)) {
         setSelection(new Set([c.id]));
         setSelWires(new Set());
@@ -358,7 +366,7 @@ function DigitalGateApp() {
         moved: false,
       };
     },
-    [selection, toWorld, pendingWire],
+    [selection, toWorld, pendingWire, setSelection, setSelWires],
   );
 
   // ── Canvas drop ─────────────────────────────────────────────────────────────
@@ -414,12 +422,11 @@ function DigitalGateApp() {
         (e.target as SVGElement).classList?.contains("bg-hit")
       ) {
         if (!e.shiftKey && !e.metaKey && !e.ctrlKey) {
-          setSelection(new Set());
-          setSelWires(new Set());
+          clearSelection();
         }
       }
     },
-    [canvasMouseDown, tool, svgRef],
+    [canvasMouseDown, tool, svgRef, clearSelection],
   );
 
   const onCanvasMouseMove = useCallback(
@@ -479,7 +486,14 @@ function DigitalGateApp() {
     }
 
     if (pendingWire) setPendingWire(null);
-  }, [canvasMouseUp, snapshot, commitMove, pendingWire, setPendingWire]);
+  }, [
+    canvasMouseUp,
+    snapshot,
+    commitMove,
+    pendingWire,
+    setPendingWire,
+    setSelection,
+  ]);
 
   // ── Custom circuit wrappers ─────────────────────────────────────────────────
   const handleCreateCircuit = useCallback(
@@ -585,7 +599,7 @@ function DigitalGateApp() {
         importCircuit={() => fileInputRef.current?.click()}
         hasComponents={Object.keys(snapshot.components).length > 0}
         showObstacleMap={showObstacleMap}
-        toggleObstacleMap={() => setShowObstacleMap((v) => !v)}
+        toggleObstacleMap={toggleObstacleMap}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -705,14 +719,12 @@ function DigitalGateApp() {
                           const multi = e.metaKey || e.ctrlKey;
 
                           if (multi) {
-                            setSelWires((s) => {
-                              const n = new Set(s);
+                            const n = new Set(selWires);
 
-                              if (n.has(w.id)) n.delete(w.id);
-                              else n.add(w.id);
+                            if (n.has(w.id)) n.delete(w.id);
+                            else n.add(w.id);
 
-                              return n;
-                            });
+                            setSelWires(n);
                           } else {
                             setSelection(new Set());
                             setSelWires(new Set([w.id]));
@@ -775,16 +787,14 @@ function DigitalGateApp() {
                           const multi = e.metaKey || e.ctrlKey;
 
                           if (multi) {
-                            setSelWires((s) => {
-                              const n = new Set(s);
+                            const n = new Set(selWires);
 
-                              for (const id of group.wireIds) {
-                                if (n.has(id)) n.delete(id);
-                                else n.add(id);
-                              }
+                            for (const id of group.wireIds) {
+                              if (n.has(id)) n.delete(id);
+                              else n.add(id);
+                            }
 
-                              return n;
-                            });
+                            setSelWires(n);
                           } else {
                             setSelection(new Set());
                             setSelWires(new Set(group.wireIds));

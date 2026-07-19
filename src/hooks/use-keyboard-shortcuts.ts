@@ -10,7 +10,7 @@ export interface KeyboardShortcutDeps {
   redo: () => void;
   duplicateSelected: () => void;
   saveProjectToLocal: () => void;
-  setCmdOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleCmdOpen: () => void;
   selectAll: () => void;
   copySelection: () => void;
   pasteClipboard: () => void;
@@ -27,7 +27,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
     redo,
     duplicateSelected,
     saveProjectToLocal,
-    setCmdOpen,
+    toggleCmdOpen,
     selectAll,
     copySelection,
     pasteClipboard,
@@ -54,7 +54,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
 
       e.preventDefault();
 
-      if (meta && e.key.toLowerCase() === "k") setCmdOpen((v) => !v);
+      if (meta && e.key.toLowerCase() === "k") toggleCmdOpen();
       if (meta && e.key.toLowerCase() === "z" && !e.shiftKey) undo();
       if (meta && e.key.toLowerCase() === "d") duplicateSelected();
       if (meta && e.key.toLowerCase() === "s") saveProjectToLocal();
@@ -85,7 +85,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
     redo,
     duplicateSelected,
     saveProjectToLocal,
-    setCmdOpen,
+    toggleCmdOpen,
     selectAll,
     copySelection,
     pasteClipboard,
