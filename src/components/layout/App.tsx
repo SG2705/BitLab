@@ -1,7 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useIntl } from "react-intl";
 
-import { BusWirePath, EmptyCanvas, GateNode, WirePath } from "@/components/ui";
+import {
+  BusWirePath,
+  EmptyCanvas,
+  ErrorBoundary,
+  GateNode,
+  WirePath,
+} from "@/components/ui";
 import { settingsStore, useSettings } from "@/context/SettingsContext";
 import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
@@ -54,8 +68,6 @@ import { type CachedRoute, type ObstacleMap, WireRouter } from "@/wirerouter";
 import BottomBar from "./BottomBar";
 import CanvasToolbar from "./CanvasToolbar";
 import CategoryPanel from "./CategoryPanel";
-import CircuitViewer from "./CircuitViewer";
-import CommandPalette from "./CommandPalette";
 import ConsolePanel from "./ConsolePanel";
 import ExplorerPanel from "./ExplorerPanel";
 import GateProperties from "./GateProperties";
@@ -63,9 +75,13 @@ import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
 import ObstacleMapInfo from "./ObstacleMapInfo";
 import ObstacleMapOverlay from "./ObstacleMapOverlay";
-import SettingsPanel from "./SettingsPanel";
 import TopBar from "./TopBar";
 import WireProperties from "./WireProperties";
+
+// Lazy-loaded components (only rendered on-demand behind conditional guards)
+const CircuitViewer = lazy(() => import("./CircuitViewer"));
+const CommandPalette = lazy(() => import("./CommandPalette"));
+const SettingsPanel = lazy(() => import("./SettingsPanel"));
 
 /**
  * DigitalGateApp — main application shell.
@@ -314,6 +330,9 @@ function DigitalGateApp() {
     (e: React.MouseEvent, c: ComponentInstance) => {
       e.stopPropagation();
 
+      // If a wire is being drawn, don't initiate component drag
+      if (pendingWire) return;
+
       const multiSelect = e.metaKey || e.ctrlKey;
 
       if (multiSelect) {
@@ -339,7 +358,7 @@ function DigitalGateApp() {
         moved: false,
       };
     },
-    [selection, toWorld],
+    [selection, toWorld, pendingWire],
   );
 
   // ── Canvas drop ─────────────────────────────────────────────────────────────
@@ -581,335 +600,352 @@ function DigitalGateApp() {
         />
 
         {/* Center canvas */}
-        <main className="flex-1 relative min-w-0 bg-background">
-          <CanvasToolbar
-            tool={tool}
-            setTool={setTool}
-            snapEnabled={snapEnabled}
-            setSnapEnabled={setSnapEnabled}
-            wireStyle={wireStyle}
-            setWireStyle={setWireStyle}
-            view={view}
-            setView={setView}
-            fitToScreen={fitToScreen}
-          />
-          {showObstacleMap && (
-            <ObstacleMapInfo
-              obstacleMap={obstacleMapRef.current}
-              version={obstacleMapVersion}
+        <ErrorBoundary>
+          <main className="flex-1 relative min-w-0 bg-background">
+            <CanvasToolbar
+              tool={tool}
+              setTool={setTool}
+              snapEnabled={snapEnabled}
+              setSnapEnabled={setSnapEnabled}
+              wireStyle={wireStyle}
+              setWireStyle={setWireStyle}
+              view={view}
+              setView={setView}
+              fitToScreen={fitToScreen}
             />
-          )}
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-          <div
-            ref={canvasRef}
-            role="application"
-            aria-label={intl.formatMessage({
-              id: "tSOV46",
-              defaultMessage: "Digital Logic Simulator Canvas",
-            })}
-            className={cn(
-              "absolute inset-0 overflow-hidden select-none",
-              panning || tool === TOOL.PAN
-                ? "cursor-grabbing"
-                : "cursor-default",
-            )}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={onCanvasDrop}
-            onWheel={onWheel}
-            onMouseDown={onCanvasMouseDown}
-            onMouseMove={onCanvasMouseMove}
-            onMouseUp={onCanvasMouseUp}
-            onMouseLeave={onCanvasMouseUp}
-          >
-            <GridBackground view={view} size={size} />
             {showObstacleMap && (
-              <ObstacleMapOverlay
+              <ObstacleMapInfo
                 obstacleMap={obstacleMapRef.current}
-                view={view}
-                size={size}
                 version={obstacleMapVersion}
               />
             )}
-            <svg
-              ref={svgRef}
-              width={size.w}
-              height={size.h}
-              className="absolute inset-0 bg-hit"
-              style={{ pointerEvents: "auto" }}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+            <div
+              ref={canvasRef}
+              role="application"
+              aria-label={intl.formatMessage({
+                id: "tSOV46",
+                defaultMessage: "Digital Logic Simulator Canvas",
+              })}
+              className={cn(
+                "absolute inset-0 overflow-hidden select-none",
+                panning || tool === TOOL.PAN
+                  ? "cursor-grabbing"
+                  : "cursor-default",
+              )}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onCanvasDrop}
+              onWheel={onWheel}
+              onMouseDown={onCanvasMouseDown}
+              onMouseMove={onCanvasMouseMove}
+              onMouseUp={onCanvasMouseUp}
+              onMouseLeave={onCanvasMouseUp}
             >
-              <g transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}>
-                {Object.values(snapshot.wires).map((w) => {
-                  const a = snapshot.components[w.from.comp];
-                  const b = snapshot.components[w.to.comp];
+              <GridBackground view={view} size={size} />
+              {showObstacleMap && (
+                <ObstacleMapOverlay
+                  obstacleMap={obstacleMapRef.current}
+                  view={view}
+                  size={size}
+                  version={obstacleMapVersion}
+                />
+              )}
+              <svg
+                ref={svgRef}
+                width={size.w}
+                height={size.h}
+                className="absolute inset-0 bg-hit"
+                style={{ pointerEvents: "auto" }}
+              >
+                <g
+                  transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}
+                >
+                  {Object.values(snapshot.wires).map((w) => {
+                    const a = snapshot.components[w.from.comp];
+                    const b = snapshot.components[w.to.comp];
 
-                  if (!a || !b) return null;
-                  if (busWireIdSet.has(w.id)) return null;
-                  // Viewport culling: skip wires where both endpoints are off-screen
-                  if (
-                    !visibleComponents.has(w.from.comp) &&
-                    !visibleComponents.has(w.to.comp)
-                  )
-                    return null;
+                    if (!a || !b) return null;
+                    if (busWireIdSet.has(w.id)) return null;
+                    // Viewport culling: skip wires where both endpoints are off-screen
+                    if (
+                      !visibleComponents.has(w.from.comp) &&
+                      !visibleComponents.has(w.to.comp)
+                    )
+                      return null;
 
-                  const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
-                  const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
-                  const signal = a.outputs[w.from.pin] ?? LogicValue.ZERO;
-                  const isSignalUp = signal === LogicValue.ONE;
-                  const d1 = pinDirection(a, PIN_KIND.OUT);
-                  const d2 = pinDirection(b, PIN_KIND.IN);
+                    const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
+                    const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+                    const signal = a.outputs[w.from.pin] ?? LogicValue.ZERO;
+                    const isSignalUp = signal === LogicValue.ONE;
+                    const d1 = pinDirection(a, PIN_KIND.OUT);
+                    const d2 = pinDirection(b, PIN_KIND.IN);
 
-                  const cachedRoute = routedWires.get(w.id);
-                  const waypoints =
-                    wireStyle === WIRE_TYPE.OPTIMIZED && cachedRoute?.valid
-                      ? cachedRoute.waypoints
-                      : undefined;
-
-                  return (
-                    <WirePath
-                      key={w.id}
-                      p1={p1}
-                      p2={p2}
-                      isSignalUp={isSignalUp}
-                      signal={signal}
-                      isRunning={isRunning}
-                      wireType={wireStyle}
-                      dir1={d1}
-                      dir2={d2}
-                      isSelected={selWires.has(w.id)}
-                      waypoints={waypoints}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-
-                        const multi = e.metaKey || e.ctrlKey;
-
-                        if (multi) {
-                          setSelWires((s) => {
-                            const n = new Set(s);
-
-                            if (n.has(w.id)) n.delete(w.id);
-                            else n.add(w.id);
-
-                            return n;
-                          });
-                        } else {
-                          setSelection(new Set());
-                          setSelWires(new Set([w.id]));
-                        }
-                      }}
-                    />
-                  );
-                })}
-                {/* Bus wire groups */}
-                {busWireGroups.map((group) => {
-                  const sourceComp = snapshot.components[group.fromComp];
-                  const targetComp = snapshot.components[group.toComp];
-
-                  if (!sourceComp || !targetComp) return null;
-                  // Viewport culling: skip bus wires where both endpoints are off-screen
-                  if (
-                    !visibleComponents.has(group.fromComp) &&
-                    !visibleComponents.has(group.toComp)
-                  )
-                    return null;
-
-                  const firstWire = snapshot.wires[group.wireIds[0]];
-                  const firstFromPin = firstWire?.from.pin ?? 0;
-                  const firstToPin = firstWire?.to.pin ?? 0;
-                  const sourceDef = library.has(sourceComp.type)
-                    ? library.get(sourceComp.type)
-                    : null;
-                  const targetDef = library.has(targetComp.type)
-                    ? library.get(targetComp.type)
-                    : null;
-                  const p1 =
-                    sourceDef?.busOutputGroups && !sourceDef.isBusOutput
-                      ? pinPos(sourceComp, PIN_KIND.OUT, firstFromPin)
-                      : busPortPos(sourceComp, PIN_KIND.OUT);
-                  const p2 =
-                    targetDef?.busInputGroups && !targetDef.isBusInput
-                      ? pinPos(targetComp, PIN_KIND.IN, firstToPin)
-                      : busPortPos(targetComp, PIN_KIND.IN);
-                  const groupSelected = group.wireIds.some((id) =>
-                    selWires.has(id),
-                  );
-                  const bd1 = pinDirection(sourceComp, PIN_KIND.OUT);
-                  const bd2 = pinDirection(targetComp, PIN_KIND.IN);
-
-                  return (
-                    <BusWirePath
-                      key={group.id}
-                      p1={p1}
-                      p2={p2}
-                      width={group.width}
-                      signals={group.signals}
-                      style={wireStyle}
-                      dir1={bd1}
-                      dir2={bd2}
-                      isSelected={groupSelected}
-                      isRunning={isRunning}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-
-                        const multi = e.metaKey || e.ctrlKey;
-
-                        if (multi) {
-                          setSelWires((s) => {
-                            const n = new Set(s);
-
-                            for (const id of group.wireIds) {
-                              if (n.has(id)) n.delete(id);
-                              else n.add(id);
-                            }
-
-                            return n;
-                          });
-                        } else {
-                          setSelection(new Set());
-                          setSelWires(new Set(group.wireIds));
-                        }
-                      }}
-                    />
-                  );
-                })}
-                {pendingWire &&
-                  (() => {
-                    const src = snapshot.components[pendingWire.from.comp];
-
-                    if (!src) return null;
-
-                    if (pendingWire.isBus) {
-                      const srcDef = library.has(src.type)
-                        ? library.get(src.type)
-                        : null;
-                      const srcGroup = srcDef?.busOutputGroups?.find(
-                        ([s]) => s === pendingWire.from.pin,
-                      );
-                      const p1 =
-                        srcDef?.busOutputGroups && !srcDef.isBusOutput
-                          ? pinPos(src, PIN_KIND.OUT, pendingWire.from.pin)
-                          : busPortPos(src, PIN_KIND.OUT);
-                      const width = srcGroup
-                        ? srcGroup[1] - srcGroup[0]
-                        : srcDef
-                          ? srcDef.outputs
-                          : 4;
-                      const previewSignals: SignalValue[] = [];
-
-                      for (let idx = 0; idx < width; idx += 1)
-                        previewSignals.push(LogicValue.UNKNOWN);
-
-                      return (
-                        <BusWirePath
-                          p1={p1}
-                          p2={{ x: pendingWire.mx, y: pendingWire.my }}
-                          width={width}
-                          signals={previewSignals}
-                          style={wireStyle}
-                          isSelected={false}
-                          isPreview
-                        />
-                      );
-                    }
-
-                    const p1 = pinPos(src, PIN_KIND.OUT, pendingWire.from.pin);
+                    const cachedRoute = routedWires.get(w.id);
+                    const waypoints =
+                      wireStyle === WIRE_TYPE.OPTIMIZED && cachedRoute?.valid
+                        ? cachedRoute.waypoints
+                        : undefined;
 
                     return (
                       <WirePath
+                        key={w.id}
                         p1={p1}
-                        p2={{ x: pendingWire.mx, y: pendingWire.my }}
-                        isSignalUp={false}
-                        isRunning={false}
+                        p2={p2}
+                        isSignalUp={isSignalUp}
+                        signal={signal}
+                        isRunning={isRunning}
                         wireType={wireStyle}
-                        isPreview
+                        dir1={d1}
+                        dir2={d2}
+                        isSelected={selWires.has(w.id)}
+                        waypoints={waypoints}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+
+                          const multi = e.metaKey || e.ctrlKey;
+
+                          if (multi) {
+                            setSelWires((s) => {
+                              const n = new Set(s);
+
+                              if (n.has(w.id)) n.delete(w.id);
+                              else n.add(w.id);
+
+                              return n;
+                            });
+                          } else {
+                            setSelection(new Set());
+                            setSelWires(new Set([w.id]));
+                          }
+                        }}
                       />
                     );
-                  })()}
-                {Object.values(snapshot.components).map((c) => {
-                  // Viewport culling: skip components outside the visible area
-                  if (!visibleComponents.has(c.id)) return null;
+                  })}
+                  {/* Bus wire groups */}
+                  {busWireGroups.map((group) => {
+                    const sourceComp = snapshot.components[group.fromComp];
+                    const targetComp = snapshot.components[group.toComp];
 
-                  return (
-                    <GateNode
-                      key={c.id}
-                      comp={c}
-                      isSelected={selection.has(c.id)}
-                      onClickBody={() => handleCompClick(c)}
-                      onPointerDownBody={
-                        c.type === GATE_TYPE_BUTTON
-                          ? (e: React.PointerEvent) => {
-                              e.stopPropagation();
+                    if (!sourceComp || !targetComp) return null;
+                    // Viewport culling: skip bus wires where both endpoints are off-screen
+                    if (
+                      !visibleComponents.has(group.fromComp) &&
+                      !visibleComponents.has(group.toComp)
+                    )
+                      return null;
 
-                              (e.target as Element).setPointerCapture(
-                                e.pointerId,
-                              );
+                    const firstWire = snapshot.wires[group.wireIds[0]];
+                    const firstFromPin = firstWire?.from.pin ?? 0;
+                    const firstToPin = firstWire?.to.pin ?? 0;
+                    const sourceDef = library.has(sourceComp.type)
+                      ? library.get(sourceComp.type)
+                      : null;
+                    const targetDef = library.has(targetComp.type)
+                      ? library.get(targetComp.type)
+                      : null;
+                    const p1 =
+                      sourceDef?.busOutputGroups && !sourceDef.isBusOutput
+                        ? pinPos(sourceComp, PIN_KIND.OUT, firstFromPin)
+                        : busPortPos(sourceComp, PIN_KIND.OUT);
+                    const p2 =
+                      targetDef?.busInputGroups && !targetDef.isBusInput
+                        ? pinPos(targetComp, PIN_KIND.IN, firstToPin)
+                        : busPortPos(targetComp, PIN_KIND.IN);
+                    const groupSelected = group.wireIds.some((id) =>
+                      selWires.has(id),
+                    );
+                    const bd1 = pinDirection(sourceComp, PIN_KIND.OUT);
+                    const bd2 = pinDirection(targetComp, PIN_KIND.IN);
 
-                              setInput(c.id, { on: true });
-                            }
-                          : undefined
+                    return (
+                      <BusWirePath
+                        key={group.id}
+                        p1={p1}
+                        p2={p2}
+                        width={group.width}
+                        signals={group.signals}
+                        style={wireStyle}
+                        dir1={bd1}
+                        dir2={bd2}
+                        isSelected={groupSelected}
+                        isRunning={isRunning}
+                        onClick={(e: React.MouseEvent) => {
+                          e.stopPropagation();
+
+                          const multi = e.metaKey || e.ctrlKey;
+
+                          if (multi) {
+                            setSelWires((s) => {
+                              const n = new Set(s);
+
+                              for (const id of group.wireIds) {
+                                if (n.has(id)) n.delete(id);
+                                else n.add(id);
+                              }
+
+                              return n;
+                            });
+                          } else {
+                            setSelection(new Set());
+                            setSelWires(new Set(group.wireIds));
+                          }
+                        }}
+                      />
+                    );
+                  })}
+                  {pendingWire &&
+                    (() => {
+                      const src = snapshot.components[pendingWire.from.comp];
+
+                      if (!src) return null;
+
+                      if (pendingWire.isBus) {
+                        const srcDef = library.has(src.type)
+                          ? library.get(src.type)
+                          : null;
+                        const srcGroup = srcDef?.busOutputGroups?.find(
+                          ([s]) => s === pendingWire.from.pin,
+                        );
+                        const p1 =
+                          srcDef?.busOutputGroups && !srcDef.isBusOutput
+                            ? pinPos(src, PIN_KIND.OUT, pendingWire.from.pin)
+                            : busPortPos(src, PIN_KIND.OUT);
+                        const width = srcGroup
+                          ? srcGroup[1] - srcGroup[0]
+                          : srcDef
+                            ? srcDef.outputs
+                            : 4;
+                        const previewSignals: SignalValue[] = [];
+
+                        for (let idx = 0; idx < width; idx += 1)
+                          previewSignals.push(LogicValue.UNKNOWN);
+
+                        return (
+                          <BusWirePath
+                            p1={p1}
+                            p2={{ x: pendingWire.mx, y: pendingWire.my }}
+                            width={width}
+                            signals={previewSignals}
+                            style={wireStyle}
+                            isSelected={false}
+                            isPreview
+                          />
+                        );
                       }
-                      onPointerUpBody={
-                        c.type === GATE_TYPE_BUTTON
-                          ? (e: React.PointerEvent) => {
-                              e.stopPropagation();
 
-                              (e.target as Element).releasePointerCapture(
-                                e.pointerId,
-                              );
+                      const p1 = pinPos(
+                        src,
+                        PIN_KIND.OUT,
+                        pendingWire.from.pin,
+                      );
 
-                              setInput(c.id, { on: false });
-                            }
-                          : undefined
-                      }
-                      onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
-                      onPinDown={(
-                        e: React.MouseEvent,
-                        pin: number,
-                        kind: PinKind,
-                      ) => {
-                        if (kind === PIN_KIND.OUT)
-                          startWire(e, c, pin, toWorld);
-                      }}
-                      onPinUp={(
-                        e: React.MouseEvent,
-                        pin: number,
-                        kind: PinKind,
-                      ) => {
-                        if (kind === PIN_KIND.IN)
-                          finishWire(
-                            e,
-                            c,
-                            pin,
-                            snapshot,
-                            addWire,
-                            addLog,
-                            saveProjectToLocal,
-                          );
-                      }}
+                      return (
+                        <WirePath
+                          p1={p1}
+                          p2={{ x: pendingWire.mx, y: pendingWire.my }}
+                          isSignalUp={false}
+                          isRunning={false}
+                          wireType={wireStyle}
+                          isPreview
+                        />
+                      );
+                    })()}
+                  {Object.values(snapshot.components).map((c) => {
+                    // Viewport culling: skip components outside the visible area
+                    if (!visibleComponents.has(c.id)) return null;
+
+                    return (
+                      <GateNode
+                        key={c.id}
+                        comp={c}
+                        isSelected={selection.has(c.id)}
+                        onClickBody={() => handleCompClick(c)}
+                        onPointerDownBody={
+                          c.type === GATE_TYPE_BUTTON
+                            ? (e: React.PointerEvent) => {
+                                e.stopPropagation();
+
+                                (e.target as Element).setPointerCapture(
+                                  e.pointerId,
+                                );
+
+                                setInput(c.id, { on: true });
+                              }
+                            : undefined
+                        }
+                        onPointerUpBody={
+                          c.type === GATE_TYPE_BUTTON
+                            ? (e: React.PointerEvent) => {
+                                e.stopPropagation();
+
+                                (e.target as Element).releasePointerCapture(
+                                  e.pointerId,
+                                );
+
+                                setInput(c.id, { on: false });
+                              }
+                            : undefined
+                        }
+                        onMouseDown={(e: React.MouseEvent) =>
+                          startCompDrag(e, c)
+                        }
+                        onPinDown={(
+                          e: React.MouseEvent,
+                          pin: number,
+                          kind: PinKind,
+                        ) => {
+                          if (kind === PIN_KIND.OUT)
+                            startWire(e, c, pin, toWorld);
+                          else if (pendingWire) {
+                            // When drawing a wire and pressing on an input pin,
+                            // stop propagation so the component doesn't get
+                            // selected/dragged.
+                            e.stopPropagation();
+                            e.preventDefault();
+                          }
+                        }}
+                        onPinUp={(
+                          e: React.MouseEvent,
+                          pin: number,
+                          kind: PinKind,
+                        ) => {
+                          if (kind === PIN_KIND.IN)
+                            finishWire(
+                              e,
+                              c,
+                              pin,
+                              snapshot,
+                              addWire,
+                              addLog,
+                              saveProjectToLocal,
+                            );
+                        }}
+                      />
+                    );
+                  })}
+                  {lasso && (
+                    <rect
+                      x={Math.min(lasso.x0, lasso.x1)}
+                      y={Math.min(lasso.y0, lasso.y1)}
+                      width={Math.abs(lasso.x1 - lasso.x0)}
+                      height={Math.abs(lasso.y1 - lasso.y0)}
+                      fill="var(--color-primary)"
+                      fillOpacity={0.08}
+                      stroke="var(--color-primary)"
+                      strokeDasharray="4 4"
+                      strokeWidth={1 / view.k}
                     />
-                  );
-                })}
-                {lasso && (
-                  <rect
-                    x={Math.min(lasso.x0, lasso.x1)}
-                    y={Math.min(lasso.y0, lasso.y1)}
-                    width={Math.abs(lasso.x1 - lasso.x0)}
-                    height={Math.abs(lasso.y1 - lasso.y0)}
-                    fill="var(--color-primary)"
-                    fillOpacity={0.08}
-                    stroke="var(--color-primary)"
-                    strokeDasharray="4 4"
-                    strokeWidth={1 / view.k}
-                  />
-                )}
-              </g>
-            </svg>
+                  )}
+                </g>
+              </svg>
 
-            {showMinimap && (
-              <Minimap snapshot={snapshot} view={view} size={size} />
-            )}
-            {Object.keys(snapshot.components).length === 0 && <EmptyCanvas />}
-          </div>
-        </main>
+              {showMinimap && (
+                <Minimap snapshot={snapshot} view={view} size={size} />
+              )}
+              {Object.keys(snapshot.components).length === 0 && <EmptyCanvas />}
+            </div>
+          </main>
+        </ErrorBoundary>
 
         {/* Right properties */}
         <aside className="w-72 shrink-0 border-l border-border bg-panel/60 flex flex-col">
@@ -962,71 +998,84 @@ function DigitalGateApp() {
 
       {/* Global search */}
       {cmdOpen && (
-        <CommandPalette
-          onClose={() => setCmdOpen(false)}
-          actions={[
-            { label: "Run simulation", action: start },
-            { label: "Pause simulation", action: pause },
-            { label: "Reset simulation", action: reset },
-            {
-              label: "Toggle theme",
-              action: () =>
-                setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK),
-            },
-            { label: "Fit to screen", action: fitToScreen },
-            { label: "Save project to local", action: saveProjectToLocal },
-            { label: "Export JSON", action: exportJSON },
-            { label: "New project", action: newProject },
-            ...library.getCategories().flatMap((cat) =>
-              cat.gates.map((g) => ({
-                label: `Add ${library.has(g) ? getGateLabel(g, library.get(g).label) : g}`,
-                action: () => {
-                  if (!library.has(g)) return;
+        <Suspense fallback={null}>
+          <CommandPalette
+            onClose={() => setCmdOpen(false)}
+            actions={[
+              { label: "Run simulation", action: start },
+              { label: "Pause simulation", action: pause },
+              { label: "Reset simulation", action: reset },
+              {
+                label: "Toggle theme",
+                action: () =>
+                  setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK),
+              },
+              { label: "Fit to screen", action: fitToScreen },
+              { label: "Save project to local", action: saveProjectToLocal },
+              { label: "Export JSON", action: exportJSON },
+              { label: "New project", action: newProject },
+              ...library.getCategories().flatMap((cat) =>
+                cat.gates.map((g) => ({
+                  label: `Add ${library.has(g) ? getGateLabel(g, library.get(g).label) : g}`,
+                  action: () => {
+                    if (!library.has(g)) return;
 
-                  if (library.isCustom(g) && !library.hasValidDependencies(g)) {
-                    const meta = library.getCustomMeta(g);
+                    if (
+                      library.isCustom(g) &&
+                      !library.hasValidDependencies(g)
+                    ) {
+                      const meta = library.getCustomMeta(g);
 
-                    if (meta) {
-                      library.registerCustomCircuit(meta.name, meta.circuit, g);
+                      if (meta) {
+                        library.registerCustomCircuit(
+                          meta.name,
+                          meta.circuit,
+                          g,
+                        );
+                      }
+
+                      if (!library.hasValidDependencies(g)) {
+                        addLog(
+                          CONSOLE_TAB.ERROR,
+                          `Cannot add "${getGateLabel(g, library.get(g).label)}": missing dependency.`,
+                        );
+
+                        return;
+                      }
                     }
 
-                    if (!library.hasValidDependencies(g)) {
-                      addLog(
-                        CONSOLE_TAB.ERROR,
-                        `Cannot add "${getGateLabel(g, library.get(g).label)}": missing dependency.`,
-                      );
+                    const cx = (size.w / 2 - view.x) / view.k;
+                    const cy = (size.h / 2 - view.y) / view.k;
 
-                      return;
-                    }
-                  }
-
-                  const cx = (size.w / 2 - view.x) / view.k;
-                  const cy = (size.h / 2 - view.y) / view.k;
-
-                  addComponent(g, snap(cx), snap(cy));
-                },
-              })),
-            ),
-          ]}
-        />
+                    addComponent(g, snap(cx), snap(cy));
+                  },
+                })),
+              ),
+            ]}
+          />
+        </Suspense>
       )}
 
       {/* Circuit Viewer Modal */}
       {viewingCircuit && (
-        <CircuitViewer
-          name={viewingCircuit.name}
-          circuit={viewingCircuit.circuit}
-          onClose={() => setViewingCircuit(null)}
-        />
+        <Suspense fallback={null}>
+          <CircuitViewer
+            name={viewingCircuit.name}
+            circuit={viewingCircuit.circuit}
+            onClose={() => setViewingCircuit(null)}
+          />
+        </Suspense>
       )}
 
       {/* Settings Panel */}
       {settingsOpen && (
-        <SettingsPanel
-          onClose={() => setSettingsOpen(false)}
-          theme={theme}
-          setTheme={setTheme}
-        />
+        <Suspense fallback={null}>
+          <SettingsPanel
+            onClose={() => setSettingsOpen(false)}
+            theme={theme}
+            setTheme={setTheme}
+          />
+        </Suspense>
       )}
     </div>
   );
