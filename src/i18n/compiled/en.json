@@ -547,6 +547,24 @@
       "value": "Export JSON"
     }
   ],
+  "aNd4xQ": [
+    {
+      "type": 0,
+      "value": "AND-4"
+    }
+  ],
+  "aNd8xQ": [
+    {
+      "type": 0,
+      "value": "AND-8"
+    }
+  ],
+  "aNd16Q": [
+    {
+      "type": 0,
+      "value": "AND-16"
+    }
+  ],
   "bI5iFx": [
     {
       "type": 0,
@@ -821,10 +839,46 @@
       "value": "Running"
     }
   ],
+  "nOt2xQ": [
+    {
+      "type": 0,
+      "value": "NOT-2"
+    }
+  ],
+  "nOt4xQ": [
+    {
+      "type": 0,
+      "value": "NOT-4"
+    }
+  ],
+  "nOt8xQ": [
+    {
+      "type": 0,
+      "value": "NOT-8"
+    }
+  ],
   "o8W9TU": [
     {
       "type": 0,
       "value": "Debus 16"
+    }
+  ],
+  "oR4xxQ": [
+    {
+      "type": 0,
+      "value": "OR-4"
+    }
+  ],
+  "oR8xxQ": [
+    {
+      "type": 0,
+      "value": "OR-8"
+    }
+  ],
+  "oR16xQ": [
+    {
+      "type": 0,
+      "value": "OR-16"
     }
   ],
   "oNcdXR": [

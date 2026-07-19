@@ -24,7 +24,16 @@ export const GATE_TYPE_NOR = "NOR";
 export const GATE_TYPE_NOT = "NOT";
 export const GATE_TYPE_BUFFER = "BUFFER";
 export const GATE_TYPE_AND3 = "AND3";
+export const GATE_TYPE_AND4 = "AND4";
+export const GATE_TYPE_AND8 = "AND8";
+export const GATE_TYPE_AND16 = "AND16";
 export const GATE_TYPE_OR3 = "OR3";
+export const GATE_TYPE_OR4 = "OR4";
+export const GATE_TYPE_OR8 = "OR8";
+export const GATE_TYPE_OR16 = "OR16";
+export const GATE_TYPE_NOT2 = "NOT2";
+export const GATE_TYPE_NOT4 = "NOT4";
+export const GATE_TYPE_NOT8 = "NOT8";
 export const GATE_TYPE_TOGGLE = "TOGGLE";
 export const GATE_TYPE_BUTTON = "BUTTON";
 export const GATE_TYPE_CONST = "CONST";
@@ -152,13 +161,22 @@ export const PIN_COUNT_HEIGHT: Record<number, number> = {
 export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_AND]: "lb_and",
   [GATE_TYPE_AND3]: "lb_and_3",
+  [GATE_TYPE_AND4]: "lb_and_4",
+  [GATE_TYPE_AND8]: "lb_and_8",
+  [GATE_TYPE_AND16]: "lb_and_16",
   [GATE_TYPE_OR]: "lb_or",
   [GATE_TYPE_OR3]: "lb_or_3",
+  [GATE_TYPE_OR4]: "lb_or_4",
+  [GATE_TYPE_OR8]: "lb_or_8",
+  [GATE_TYPE_OR16]: "lb_or_16",
   [GATE_TYPE_XOR]: "lb_xor",
   [GATE_TYPE_XNOR]: "lb_xnor",
   [GATE_TYPE_NAND]: "lb_nand",
   [GATE_TYPE_NOR]: "lb_nor",
   [GATE_TYPE_NOT]: "lb_not",
+  [GATE_TYPE_NOT2]: "lb_not_2",
+  [GATE_TYPE_NOT4]: "lb_not_4",
+  [GATE_TYPE_NOT8]: "lb_not_8",
   [GATE_TYPE_BUFFER]: "lb_buffer",
   [GATE_TYPE_TOGGLE]: "lb_toggle",
   [GATE_TYPE_BUTTON]: "lb_button",

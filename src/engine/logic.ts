@@ -160,6 +160,12 @@ export const evalGateNot = (i: SignalValue[]): EvaluateResult => ({
   state: null,
 });
 
+/** Multi-channel NOT: each input is independently inverted */
+export const evalGateNotMulti = (i: SignalValue[]): EvaluateResult => ({
+  outputs: i.map((v) => NOT_TABLE[v]),
+  state: null,
+});
+
 export const evalGateBuffer = (i: SignalValue[]): EvaluateResult => ({
   outputs: [BUFFER_TABLE[i[0]]],
   state: null,

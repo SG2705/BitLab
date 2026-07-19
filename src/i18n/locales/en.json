@@ -245,6 +245,15 @@
   "aXB7Wg": {
     "defaultMessage": "Export JSON"
   },
+  "aNd4xQ": {
+    "defaultMessage": "AND-4"
+  },
+  "aNd8xQ": {
+    "defaultMessage": "AND-8"
+  },
+  "aNd16Q": {
+    "defaultMessage": "AND-16"
+  },
   "bI5iFx": {
     "defaultMessage": "BitLab v{version} · Sagar Gupta"
   },
@@ -368,8 +377,26 @@
   "nDyaq/": {
     "defaultMessage": "Running"
   },
+  "nOt2xQ": {
+    "defaultMessage": "NOT-2"
+  },
+  "nOt4xQ": {
+    "defaultMessage": "NOT-4"
+  },
+  "nOt8xQ": {
+    "defaultMessage": "NOT-8"
+  },
   "o8W9TU": {
     "defaultMessage": "Debus 16"
+  },
+  "oR4xxQ": {
+    "defaultMessage": "OR-4"
+  },
+  "oR8xxQ": {
+    "defaultMessage": "OR-8"
+  },
+  "oR16xQ": {
+    "defaultMessage": "OR-16"
   },
   "oNcdXR": {
     "defaultMessage": "Full Sub"
