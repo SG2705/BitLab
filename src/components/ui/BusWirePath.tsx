@@ -278,16 +278,18 @@ function BusWirePath({
             {hexValue}
           </text>
 
-          {/* Per-bit state boxes (right) */}
+          {/* Per-bit state boxes (right) — MSB left, LSB right */}
           {signals.map((sig, i) => {
             const bitsStartX =
               badgeWidth - 8 - signals.length * (boxSize + boxGap);
+            // Reverse: index 0 (LSB) goes to the rightmost position
+            const visualIdx = signals.length - 1 - i;
 
             return (
               <rect
                 // eslint-disable-next-line react/no-array-index-key
                 key={i}
-                x={bitsStartX + i * (boxSize + boxGap)}
+                x={bitsStartX + visualIdx * (boxSize + boxGap)}
                 y={8}
                 width={boxSize}
                 height={boxSize}
