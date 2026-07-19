@@ -472,7 +472,12 @@ function GateNode({
               textAnchor={isVertical ? "middle" : "start"}
               fill="var(--color-muted-foreground)"
               fontSize={9}
+              rx={0}
+              ry={0}
               pointerEvents="none"
+              stroke="white"
+              strokeWidth={8}
+              paintOrder="stroke"
             >
               {isCustomLabel
                 ? resolveLabel(comp.label, intl)

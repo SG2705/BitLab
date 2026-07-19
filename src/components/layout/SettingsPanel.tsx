@@ -1,4 +1,7 @@
+/* eslint-disable formatjs/no-literal-string-in-jsx */
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import { memo, useState } from "react";
+import { useIntl } from "react-intl";
 import {
   Frame,
   Moon,
@@ -48,7 +51,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
       >
         {/* Sidebar */}
         <aside className="w-52 shrink-0 border-r border-border bg-background/40 p-3 flex flex-col">
-          {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+          {}
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2 px-2">
             Settings
           </div>
@@ -70,7 +73,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
               onClick={() => settingsStore.reset()}
               className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
-              {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+              {}
               <RotateCcw className="h-3.5 w-3.5" /> Reset to defaults
             </button>
           </div>
@@ -80,7 +83,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 shrink-0 border-b border-border flex items-center justify-between px-4">
             <div className="font-semibold tracking-tight">
-              {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+              {}
               {cat === SETTINGS_CATEGORY.CANVAS ? "Canvas" : "Theme"}
             </div>
             <button
@@ -125,14 +128,21 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
                   unit="x"
                   onChange={(v) => settingsStore.set({ compGlow: v })}
                 />
+                <ColorRow
+                  label="Grid color"
+                  desc="Color of the canvas grid dots and lines."
+                  value={settings.gridColor}
+                  presets={GRID_COLOR_PRESETS}
+                  onChange={(v) => settingsStore.set({ gridColor: v })}
+                />
               </>
             )}
 
             {cat === SETTINGS_CATEGORY.THEME && (
               <div>
-                {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+                {}
                 <div className="text-sm font-medium mb-1">Theme</div>
-                {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
+                {}
                 <div className="text-xs text-muted-foreground mb-3">
                   Choose the workspace appearance.
                 </div>
@@ -244,6 +254,95 @@ function SliderRow({
           {max}
           {unit}
         </span>
+      </div>
+    </div>
+  );
+}
+
+const GRID_COLOR_PRESETS = [
+  "", // theme default
+  "#4a5568",
+  "#2d3748",
+  "#1a365d",
+  "#234e52",
+  "#22543d",
+  "#553c9a",
+  "#744210",
+  "#9b2c2c",
+];
+
+function ColorRow({
+  label,
+  desc,
+  value,
+  presets,
+  onChange,
+}: {
+  label: string;
+  desc: string;
+  value: string;
+  presets: string[];
+  onChange: (v: string) => void;
+}) {
+  const intl = useIntl();
+  // Get the computed grid color from CSS when no custom color is set
+  const displayColor =
+    value ||
+    (typeof window !== "undefined"
+      ? getComputedStyle(document.documentElement)
+          .getPropertyValue("--grid")
+          .trim() || "#4a5568"
+      : "#4a5568");
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="flex items-center gap-1.5">
+          {!value && (
+            <span className="text-[10px] text-muted-foreground">default</span>
+          )}
+          <div
+            className="h-5 w-5 rounded border border-border"
+            style={{ background: displayColor }}
+          />
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground mb-2">{desc}</div>
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1.5 flex-wrap">
+          {presets.map((color) => (
+            <button
+              key={color || "default"}
+              type="button"
+              onClick={() => onChange(color)}
+              title={color || "Theme default"}
+              className={cn(
+                "h-6 w-6 rounded-md border transition-all",
+                value === color
+                  ? "border-primary ring-1 ring-primary scale-110"
+                  : "border-border hover:scale-110",
+              )}
+              style={{
+                background: color || "var(--color-background)",
+                backgroundImage: !color
+                  ? "linear-gradient(135deg, var(--color-muted-foreground) 25%, transparent 25%, transparent 75%, var(--color-muted-foreground) 75%)"
+                  : undefined,
+                backgroundSize: !color ? "4px 4px" : undefined,
+              }}
+            />
+          ))}
+        </div>
+        <input
+          type="color"
+          value={value || "#4a5568"}
+          onChange={(e) => onChange(e.target.value)}
+          title={intl.formatMessage({
+            id: "H1pTIh",
+            defaultMessage: "Custom color",
+          })}
+          className="h-6 w-6 rounded cursor-pointer border-none p-0"
+        />
       </div>
     </div>
   );

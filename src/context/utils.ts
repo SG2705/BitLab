@@ -17,6 +17,7 @@ export interface AppSettings {
   grid: number;
   wireGlow: number;
   compGlow: number;
+  gridColor: string;
   theme: Theme;
 }
 
@@ -30,6 +31,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   grid: GRID,
   wireGlow: 1,
   compGlow: 1,
+  gridColor: "",
   theme: THEME.DARK,
 };
 
@@ -62,6 +64,12 @@ function applyCssVars(): void {
 
   root.style.setProperty("--wire-glow-intensity", String(state.wireGlow));
   root.style.setProperty("--comp-glow-intensity", String(state.compGlow));
+
+  if (state.gridColor) {
+    root.style.setProperty("--color-grid", state.gridColor);
+  } else {
+    root.style.removeProperty("--color-grid");
+  }
 }
 
 function applyTheme(): void {

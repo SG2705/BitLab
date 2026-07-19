@@ -5,7 +5,25 @@ import { FormattedMessage } from "react-intl";
 import {
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
+  GATE_TYPE_AND4,
+  GATE_TYPE_AND8,
+  GATE_TYPE_AND16,
   GATE_TYPE_BUFFER,
+  GATE_TYPE_BUS_AND4,
+  GATE_TYPE_BUS_AND8,
+  GATE_TYPE_BUS_AND16,
+  GATE_TYPE_BUS_DISPLAY,
+  GATE_TYPE_BUS_DISPLAY8,
+  GATE_TYPE_BUS_DISPLAY16,
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
+  GATE_TYPE_BUS_INPUT16,
+  GATE_TYPE_BUS_NOT4,
+  GATE_TYPE_BUS_NOT8,
+  GATE_TYPE_BUS_NOT16,
+  GATE_TYPE_BUS_OR4,
+  GATE_TYPE_BUS_OR8,
+  GATE_TYPE_BUS_OR16,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -29,6 +47,7 @@ import {
   GATE_TYPE_ENCODER4,
   GATE_TYPE_FULL_ADDER,
   GATE_TYPE_FULL_SUB,
+  GATE_TYPE_GND,
   GATE_TYPE_HALF_ADDER,
   GATE_TYPE_HALF_SUB,
   GATE_TYPE_JKFF,
@@ -39,8 +58,14 @@ import {
   GATE_TYPE_NAND,
   GATE_TYPE_NOR,
   GATE_TYPE_NOT,
+  GATE_TYPE_NOT2,
+  GATE_TYPE_NOT4,
+  GATE_TYPE_NOT8,
   GATE_TYPE_OR,
   GATE_TYPE_OR3,
+  GATE_TYPE_OR4,
+  GATE_TYPE_OR8,
+  GATE_TYPE_OR16,
   GATE_TYPE_PROBE,
   GATE_TYPE_REG4,
   GATE_TYPE_SHREG4,
@@ -50,6 +75,7 @@ import {
   GATE_TYPE_TOGGLE,
   GATE_TYPE_UREG4,
   GATE_TYPE_UREG8,
+  GATE_TYPE_VCC,
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
 } from "@/engine/constants";
@@ -882,6 +908,591 @@ export function DigitToBinIcon(p: IconProps) {
   );
 }
 
+/* ---------- Multi-input gates ---------- */
+
+function And4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5 3h7a9 9 0 0 1 0 18H5z" />
+      <path d="M2 7h3M2 10h3M2 14h3M2 17h3M19 12h3" />
+    </Svg>
+  );
+}
+
+function And8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5 3h7a9 9 0 0 1 0 18H5z" />
+      <path d="M2 5h3M2 7h3M2 9h3M2 11h3M2 13h3M2 15h3M2 17h3M2 19h3M19 12h3" />
+    </Svg>
+  );
+}
+
+function And16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M5 3h7a9 9 0 0 1 0 18H5z" />
+      <path d="M2 7h3M2 12h3M2 17h3M19 12h3" />
+      <path d="M2 7v10" strokeWidth={2.5} />
+      <text
+        x="10"
+        y="14"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+    </Svg>
+  );
+}
+
+function Or4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 3c3 2 3 16 0 18 4 0 9 0 13-9-4-9-9-9-13-9z" />
+      <path d="M2 7h3M2 10h3M2 14h3M2 17h3M19 12h3" />
+    </Svg>
+  );
+}
+
+function Or8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 3c3 2 3 16 0 18 4 0 9 0 13-9-4-9-9-9-13-9z" />
+      <path d="M2 5h3M2 7h3M2 9h3M2 11h3M2 13h3M2 15h3M2 17h3M2 19h3M19 12h3" />
+    </Svg>
+  );
+}
+
+function Or16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M4 3c3 2 3 16 0 18 4 0 9 0 13-9-4-9-9-9-13-9z" />
+      <path d="M2 7h3M2 12h3M2 17h3M19 12h3" />
+      <path d="M2 7v10" strokeWidth={2.5} />
+      <text
+        x="11"
+        y="14"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+    </Svg>
+  );
+}
+
+/* ---------- Multi-channel inverters ---------- */
+
+function Not2Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="4" y="5" width="16" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="13"
+        textAnchor="middle"
+        fontSize="6"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <path d="M1 9h3M1 15h3M20 9h3M20 15h3" />
+    </Svg>
+  );
+}
+
+function Not4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="4" y="5" width="16" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="oyHYtA" defaultMessage="4" />
+      </text>
+      <path d="M1 8h3M1 12h3M1 16h3M20 8h3M20 12h3M20 16h3" />
+    </Svg>
+  );
+}
+
+function Not8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="4" y="5" width="16" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M20 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+/* ---------- Power rails ---------- */
+
+function VccIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="10" r="5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="t5v6IX" defaultMessage="5 V" />
+      </text>
+      <path d="M12 15v9" />
+    </Svg>
+  );
+}
+
+function GndIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M12 3v9" />
+      <path d="M7 12h10" />
+      <path d="M9 15h6" />
+      <path d="M11 18h2" />
+    </Svg>
+  );
+}
+
+/* ---------- Bus displays ---------- */
+
+function BusDisplayIcon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <path d="M5 8h3v8H5zM9 8h3v8H9zM13 8h3v8h-3zM17 8h3v8h-3z" />
+    </Svg>
+  );
+}
+
+function BusDisplay8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <path d="M5 7h3v4H5zM9 7h3v4H9zM13 7h3v4h-3zM17 7h3v4h-3z" />
+      <path d="M5 13h3v4H5zM9 13h3v4H9zM13 13h3v4h-3zM17 13h3v4h-3z" />
+    </Svg>
+  );
+}
+
+function BusDisplay16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <path d="M5 6.5h2v2H5zM8 6.5h2v2H8zM11 6.5h2v2h-2zM14 6.5h2v2h-2z" />
+      <path d="M5 9.5h2v2H5zM8 9.5h2v2H8zM11 9.5h2v2h-2zM14 9.5h2v2h-2z" />
+      <path d="M5 12.5h2v2H5zM8 12.5h2v2H8zM11 12.5h2v2h-2zM14 12.5h2v2h-2z" />
+      <path d="M5 15.5h2v2H5zM8 15.5h2v2H8zM11 15.5h2v2h-2zM14 15.5h2v2h-2z" />
+    </Svg>
+  );
+}
+
+/* ---------- Bus inputs ---------- */
+
+function BusIn4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M6 12h1M10 12h1M14 12h1M18 12h1" />
+      <path d="M21 12h2" />
+      <path d="M19 10l3 2-3 2" />
+    </Svg>
+  );
+}
+
+function BusIn8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M5 12h1.5M8 12h1.5M11 12h1.5M14 12h1.5M17 12h1.5" />
+      <path d="M21 12h2" />
+      <path d="M19 10l3 2-3 2" />
+      <text
+        x="12"
+        y="11"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="vCO4sB" defaultMessage="8" />
+      </text>
+    </Svg>
+  );
+}
+
+function BusIn16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <path d="M3 8h18v8H3z" />
+      <path d="M4 12h1.5M6.5 12h1.5M9 12h1.5M11.5 12h1.5M14 12h1.5M16.5 12h1.5M19 12h1.5" />
+      <path d="M21 12h2" />
+      <path d="M19 10l3 2-3 2" />
+      <text
+        x="12"
+        y="11"
+        textAnchor="middle"
+        fontSize="3.5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+    </Svg>
+  );
+}
+
+/* ---------- Bus bitwise operations ---------- */
+
+function BusAnd4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="UGU8kA" defaultMessage="AND" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="oyHYtA" defaultMessage="4" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusAnd8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="UGU8kA" defaultMessage="AND" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="vCO4sB" defaultMessage="8" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusAnd16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="UGU8kA" defaultMessage="AND" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="3.5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusOr4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="INlWvJ" defaultMessage="OR" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="oyHYtA" defaultMessage="4" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusOr8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="INlWvJ" defaultMessage="OR" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="vCO4sB" defaultMessage="8" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusOr16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="INlWvJ" defaultMessage="OR" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="3.5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+      <path d="M2 8h1" strokeWidth={2.5} />
+      <path d="M2 16h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusNot4Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="oyHYtA" defaultMessage="4" />
+      </text>
+      <path d="M2 12h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusNot8Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="4"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="vCO4sB" defaultMessage="8" />
+      </text>
+      <path d="M2 12h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
+function BusNot16Icon(p: IconProps) {
+  return (
+    <Svg {...p}>
+      <rect x="3" y="5" width="18" height="14" rx="1.5" />
+      <text
+        x="12"
+        y="12"
+        textAnchor="middle"
+        fontSize="5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="jOgiMP" defaultMessage="NOT" />
+      </text>
+      <text
+        x="12"
+        y="16"
+        textAnchor="middle"
+        fontSize="3.5"
+        fontFamily="ui-monospace"
+        fill="currentColor"
+        stroke="none"
+      >
+        <FormattedMessage id="fHOUf6" defaultMessage="16" />
+      </text>
+      <path d="M2 12h1" strokeWidth={2.5} />
+      <path d="M21 12h1" strokeWidth={2.5} />
+    </Svg>
+  );
+}
+
 /* ---------- Registry (label -> component) ---------- */
 
 const GATE_ICON = {
@@ -894,13 +1505,27 @@ const GATE_ICON = {
   [GATE_TYPE_NOT]: NotIcon,
   [GATE_TYPE_BUFFER]: BufferIcon,
   [GATE_TYPE_AND3]: And3Icon,
+  [GATE_TYPE_AND4]: And4Icon,
+  [GATE_TYPE_AND8]: And8Icon,
+  [GATE_TYPE_AND16]: And16Icon,
   [GATE_TYPE_OR3]: Or3Icon,
+  [GATE_TYPE_OR4]: Or4Icon,
+  [GATE_TYPE_OR8]: Or8Icon,
+  [GATE_TYPE_OR16]: Or16Icon,
+  [GATE_TYPE_NOT2]: Not2Icon,
+  [GATE_TYPE_NOT4]: Not4Icon,
+  [GATE_TYPE_NOT8]: Not8Icon,
   [GATE_TYPE_TOGGLE]: ToggleIcon,
   [GATE_TYPE_BUTTON]: ButtonIcon,
   [GATE_TYPE_CONST]: ConstantIcon,
   [GATE_TYPE_CLOCK]: ClockIcon,
+  [GATE_TYPE_VCC]: VccIcon,
+  [GATE_TYPE_GND]: GndIcon,
   [GATE_TYPE_LED]: LedIcon,
   [GATE_TYPE_DISPLAY7]: SevenSegIcon,
+  [GATE_TYPE_BUS_DISPLAY]: BusDisplayIcon,
+  [GATE_TYPE_BUS_DISPLAY8]: BusDisplay8Icon,
+  [GATE_TYPE_BUS_DISPLAY16]: BusDisplay16Icon,
   [GATE_TYPE_SR_LATCH]: SrLatchIcon,
   [GATE_TYPE_DFF]: DFlipFlopIcon,
   [GATE_TYPE_JKFF]: JkFlipFlopIcon,
@@ -932,6 +1557,18 @@ const GATE_ICON = {
   [GATE_TYPE_DEBUS4]: Debus4Icon,
   [GATE_TYPE_DEBUS8]: Debus8Icon,
   [GATE_TYPE_DEBUS16]: Debus16Icon,
+  [GATE_TYPE_BUS_INPUT4]: BusIn4Icon,
+  [GATE_TYPE_BUS_INPUT8]: BusIn8Icon,
+  [GATE_TYPE_BUS_INPUT16]: BusIn16Icon,
+  [GATE_TYPE_BUS_AND4]: BusAnd4Icon,
+  [GATE_TYPE_BUS_AND8]: BusAnd8Icon,
+  [GATE_TYPE_BUS_AND16]: BusAnd16Icon,
+  [GATE_TYPE_BUS_OR4]: BusOr4Icon,
+  [GATE_TYPE_BUS_OR8]: BusOr8Icon,
+  [GATE_TYPE_BUS_OR16]: BusOr16Icon,
+  [GATE_TYPE_BUS_NOT4]: BusNot4Icon,
+  [GATE_TYPE_BUS_NOT8]: BusNot8Icon,
+  [GATE_TYPE_BUS_NOT16]: BusNot16Icon,
   [GATE_TYPE_UREG4]: UReg4Icon,
   [GATE_TYPE_UREG8]: UReg8Icon,
 } as const;
