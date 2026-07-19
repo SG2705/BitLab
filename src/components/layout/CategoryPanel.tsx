@@ -12,7 +12,7 @@ import {
 import { GateChip, Input } from "@/components/ui";
 import type { CircuitSnapshot } from "@/engine";
 import { library } from "@/engine";
-import { GATE_CATEGORY_CUSTOM } from "@/engine/constants";
+import { GATE_CATEGORY_CUSTOM, GATE_SEPARATOR } from "@/engine/constants";
 import { GATE_CATEGORY_LABELS } from "@/lib/constants";
 import { fm, getGateLabel } from "@/lib/utils";
 
@@ -117,26 +117,33 @@ function CategoryPanel({
             </button>
             {openCats[cat.name] !== false && (
               <div className="grid grid-cols-2 gap-1.5 px-1 pb-2">
-                {cat.gates.map((g) => (
-                  <GateChip
-                    key={g}
-                    type={g}
-                    onDragStart={() => onDragStart(g)}
-                    isCustom={library.isCustom(g)}
-                    onRemove={() => onRemoveCustom(g)}
-                    onInspect={
-                      library.isCustom(g)
-                        ? () => {
-                            const meta = library.getCustomMeta(g);
+                {cat.gates.map((g, idx) =>
+                  g === GATE_SEPARATOR ? (
+                    <hr
+                      // eslint-disable-next-line react/no-array-index-key
+                      key={`sep-${idx}`}
+                      className="col-span-2 border-border my-1"
+                    />
+                  ) : (
+                    <GateChip
+                      key={g}
+                      type={g}
+                      onDragStart={() => onDragStart(g)}
+                      isCustom={library.isCustom(g)}
+                      onRemove={() => onRemoveCustom(g)}
+                      onInspect={
+                        library.isCustom(g)
+                          ? () => {
+                              const meta = library.getCustomMeta(g);
 
-                            if (meta) {
-                              onInspectCustom(meta.name, meta.circuit);
+                              if (meta)
+                                onInspectCustom(meta.name, meta.circuit);
                             }
-                          }
-                        : undefined
-                    }
-                  />
-                ))}
+                          : undefined
+                      }
+                    />
+                  ),
+                )}
                 {cat.name === GATE_CATEGORY_CUSTOM &&
                   cat.gates.length === 0 && (
                     <div className="col-span-2 text-[10.5px] text-muted-foreground/80 border border-dashed border-border rounded-md p-2 leading-snug">

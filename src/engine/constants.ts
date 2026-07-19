@@ -129,6 +129,9 @@ export const CURR_CIR_KEY = "current-circuit-key";
 
 export const KEY_SEPARATOR = ":";
 
+/** Separator marker used in GATE_ORDER to insert a visual divider in the category panel */
+export const GATE_SEPARATOR = "---";
+
 // ── Pin Count Constants ──────────────────────────────────────────────────────
 
 export const PINC0 = 0;

@@ -15,6 +15,7 @@ import {
   GATE_CATEGORY_OUTPUT,
   GATE_CATEGORY_SEQUENTIAL,
   GATE_CATEGORY_UTILITY,
+  GATE_SEPARATOR,
   GATE_TYPE_AND,
   GATE_TYPE_AND3,
   GATE_TYPE_AND4,
@@ -2213,6 +2214,117 @@ export class ComponentLibrary {
       GATE_CATEGORY_ARITHMETIC,
       GATE_CATEGORY_UTILITY,
     ];
+
+    // Display order within each category — related variants are grouped
+    const GATE_ORDER: Record<string, string[]> = {
+      [GATE_CATEGORY_LOGIC]: [
+        GATE_TYPE_AND,
+        GATE_TYPE_AND3,
+        GATE_TYPE_AND4,
+        GATE_TYPE_AND8,
+        GATE_TYPE_AND16,
+        GATE_SEPARATOR,
+        GATE_TYPE_OR,
+        GATE_TYPE_OR3,
+        GATE_TYPE_OR4,
+        GATE_TYPE_OR8,
+        GATE_TYPE_OR16,
+        GATE_SEPARATOR,
+        GATE_TYPE_XOR,
+        GATE_TYPE_XNOR,
+        GATE_SEPARATOR,
+        GATE_TYPE_NAND,
+        GATE_TYPE_NOR,
+        GATE_SEPARATOR,
+        GATE_TYPE_NOT,
+        GATE_TYPE_NOT2,
+        GATE_TYPE_NOT4,
+        GATE_TYPE_NOT8,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUFFER,
+      ],
+      [GATE_CATEGORY_INPUT]: [
+        GATE_TYPE_TOGGLE,
+        GATE_TYPE_BUTTON,
+        GATE_TYPE_CONST,
+        GATE_TYPE_CLOCK,
+        GATE_SEPARATOR,
+        GATE_TYPE_DIGIT_BIN,
+        GATE_SEPARATOR,
+        GATE_TYPE_VCC,
+        GATE_TYPE_GND,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_INPUT4,
+        GATE_TYPE_BUS_INPUT8,
+        GATE_TYPE_BUS_INPUT16,
+      ],
+      [GATE_CATEGORY_OUTPUT]: [
+        GATE_TYPE_LED,
+        GATE_TYPE_DISPLAY7,
+        GATE_TYPE_PROBE,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_DISPLAY,
+        GATE_TYPE_BUS_DISPLAY8,
+        GATE_TYPE_BUS_DISPLAY16,
+      ],
+      [GATE_CATEGORY_SEQUENTIAL]: [
+        GATE_TYPE_SR_LATCH,
+        GATE_TYPE_DFF,
+        GATE_TYPE_JKFF,
+        GATE_TYPE_TIFF,
+        GATE_TYPE_DLATCH,
+        GATE_TYPE_REG4,
+        GATE_TYPE_COUNTER4,
+        GATE_TYPE_SHREG4,
+      ],
+      [GATE_CATEGORY_ARITHMETIC]: [
+        GATE_TYPE_HALF_ADDER,
+        GATE_TYPE_FULL_ADDER,
+        GATE_SEPARATOR,
+        GATE_TYPE_HALF_SUB,
+        GATE_TYPE_FULL_SUB,
+        GATE_SEPARATOR,
+        GATE_TYPE_MUX2,
+        GATE_TYPE_MUX4,
+        GATE_TYPE_MUX8,
+        GATE_TYPE_DEMUX2,
+        GATE_SEPARATOR,
+        GATE_TYPE_DECODER2,
+        GATE_TYPE_DECODER3,
+        GATE_TYPE_ENCODER4,
+        GATE_SEPARATOR,
+        GATE_TYPE_COMPARATOR,
+        GATE_TYPE_CMP4,
+      ],
+      [GATE_CATEGORY_UTILITY]: [
+        GATE_TYPE_SPLITTER,
+        GATE_TYPE_COMMENT,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS4,
+        GATE_TYPE_BUS8,
+        GATE_TYPE_BUS16,
+        GATE_SEPARATOR,
+        GATE_TYPE_DEBUS4,
+        GATE_TYPE_DEBUS8,
+        GATE_TYPE_DEBUS16,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_AND4,
+        GATE_TYPE_BUS_AND8,
+        GATE_TYPE_BUS_AND16,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_OR4,
+        GATE_TYPE_BUS_OR8,
+        GATE_TYPE_BUS_OR16,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_NOT4,
+        GATE_TYPE_BUS_NOT8,
+        GATE_TYPE_BUS_NOT16,
+        GATE_SEPARATOR,
+        GATE_TYPE_UREG4,
+        GATE_TYPE_UREG8,
+      ],
+    };
+
     const groups = new Map<string, string[]>();
     const result: Array<{ name: string; gates: string[] }> = [];
 
@@ -2223,8 +2335,45 @@ export class ComponentLibrary {
     }
 
     for (const cat of ORDER) {
-      if (groups.has(cat))
-        result.push({ name: cat, gates: groups.get(cat) ?? [] });
+      if (!groups.has(cat)) continue;
+
+      const gates = groups.get(cat) ?? [];
+      const order = GATE_ORDER[cat];
+
+      if (order) {
+        // Build ordered list with separators injected
+        const ordered: string[] = [];
+        const remaining = new Set(gates);
+
+        for (const entry of order) {
+          if (entry === GATE_SEPARATOR) {
+            // Only add separator if there's content before it
+            if (
+              ordered.length > 0 &&
+              ordered[ordered.length - 1] !== GATE_SEPARATOR
+            ) {
+              ordered.push(GATE_SEPARATOR);
+            }
+          } else if (remaining.has(entry)) {
+            ordered.push(entry);
+            remaining.delete(entry);
+          }
+        }
+
+        // Append any gates not in the order list at the end
+        for (const g of remaining) {
+          ordered.push(g);
+        }
+
+        // Remove trailing separator
+        if (ordered[ordered.length - 1] === GATE_SEPARATOR) {
+          ordered.pop();
+        }
+
+        result.push({ name: cat, gates: ordered });
+      } else {
+        result.push({ name: cat, gates });
+      }
     }
 
     for (const [cat, gates] of groups) {
