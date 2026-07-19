@@ -5,6 +5,8 @@ import { BusWirePath, EmptyCanvas, GateNode, WirePath } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
@@ -193,11 +195,40 @@ function DigitalGateApp() {
 
       let anyRegistered = false;
 
-      // First pass: register all gates, tracking name → assigned type for
-      // backward-compat migration when stored data lacks a stable type field.
+      // Topologically sort entries so dependencies are registered before
+      // the gates that use them. This ensures nested custom circuits work.
+      const typeToEntry = new Map(
+        saved.map((entry) => [entry.type ?? entry.name, entry]),
+      );
+      const sorted: typeof saved = [];
+      const visited = new Set<string>();
+
+      const visit = (entry: (typeof saved)[0]) => {
+        const key = entry.type ?? entry.name;
+
+        if (visited.has(key)) return;
+
+        visited.add(key);
+
+        // Find custom dependencies in this entry's circuit
+        for (const comp of Object.values(entry.circuit.components)) {
+          if (!comp.type.startsWith("CUSTOM_")) continue;
+
+          const dep = typeToEntry.get(comp.type);
+
+          if (dep) visit(dep);
+        }
+
+        sorted.push(entry);
+      };
+
+      for (const entry of saved) visit(entry);
+
+      // First pass: register all gates in dependency order, tracking
+      // name → assigned type for backward-compat migration.
       const nameToType = new Map<string, string>();
 
-      for (const entry of saved) {
+      for (const entry of sorted) {
         const assigned = library.registerCustomCircuit(
           entry.name,
           entry.circuit,
@@ -252,8 +283,7 @@ function DigitalGateApp() {
           }
 
           if (fixed) {
-            // Re-register with the corrected circuit
-            library.unregister(meta.type, true);
+            // Re-register with the corrected circuit (overwrites existing)
             library.registerCustomCircuit(
               meta.name,
               remappedCircuit,
@@ -263,17 +293,50 @@ function DigitalGateApp() {
           }
         }
 
-        // Final validation pass
-        for (const def of library.getAll()) {
-          if (
-            library.isCustom(def.type) &&
-            !library.hasValidDependencies(def.type)
-          ) {
+        // Final validation — report any gates with genuinely missing deps.
+        // For gates with valid deps, re-register in dependency order to
+        // ensure correct compilation (in case load order was suboptimal).
+        const allMetas = library.getCustomGates();
+        const metaByType = new Map(allMetas.map((m) => [m.type, m]));
+        const reregistered = new Set<string>();
+
+        const reregister = (type: string) => {
+          if (reregistered.has(type)) return;
+
+          reregistered.add(type);
+
+          const meta = metaByType.get(type);
+
+          if (!meta) return;
+          if (!library.hasValidDependencies(meta.type)) return;
+
+          // Ensure sub-circuit deps are re-registered first
+          for (const comp of Object.values(meta.circuit.components)) {
+            if (
+              comp.type.startsWith("CUSTOM_") &&
+              comp.type !== type &&
+              metaByType.has(comp.type)
+            ) {
+              reregister(comp.type);
+            }
+          }
+
+          // Re-register (overwrites existing entry) to recompile with
+          // all dependencies now available. No unregister needed — set() overwrites.
+          library.registerCustomCircuit(meta.name, meta.circuit, type);
+        };
+
+        for (const meta of allMetas) {
+          if (!library.hasValidDependencies(meta.type)) {
             addLog(
               CONSOLE_TAB.ERROR,
-              `Custom gate "${getGateLabel(def.type, def.label)}" has missing dependencies. Re-import the required sub-circuit.`,
+              `Custom gate "${getGateLabel(meta.type, meta.name)}" has missing dependencies. Re-import the required sub-circuit.`,
             );
+
+            continue;
           }
+
+          reregister(meta.type);
         }
 
         // If we remapped any references, persist the corrected data
@@ -326,14 +389,24 @@ function DigitalGateApp() {
 
     // Block dropping custom gates with missing dependencies
     if (library.isCustom(type) && !library.hasValidDependencies(type)) {
-      addLog(
-        CONSOLE_TAB.ERROR,
-        `Cannot add "${getGateLabel(type, library.get(type).label)}": missing dependency. Re-import the required sub-circuit first.`,
-      );
+      // Attempt to re-register to resolve stale compilation
+      const meta = library.getCustomMeta(type);
 
-      setDragType(null);
+      if (meta) {
+        library.registerCustomCircuit(meta.name, meta.circuit, type);
+      }
 
-      return;
+      // Check again after re-registration attempt
+      if (!library.hasValidDependencies(type)) {
+        addLog(
+          CONSOLE_TAB.ERROR,
+          `Cannot add "${getGateLabel(type, library.get(type).label)}": missing dependency. Re-import the required sub-circuit first.`,
+        );
+
+        setDragType(null);
+
+        return;
+      }
     }
 
     const def = library.get(type);
@@ -660,6 +733,21 @@ function DigitalGateApp() {
       setInput(c.id, { on: !c.state?.on });
     if (c.type === GATE_TYPE_DIGIT_BIN)
       setInput(c.id, { digit: (((c.state?.digit as number) ?? -1) + 1) % 10 });
+
+    if (c.type === GATE_TYPE_BUS_INPUT4 || c.type === GATE_TYPE_BUS_INPUT8) {
+      // Cycle: ZERO → ONE → UNKNOWN → HIGH_IMPEDANCE → ZERO
+      const current = (c.state?.signal as number) ?? LogicValue.ZERO;
+      const order = [
+        LogicValue.ZERO,
+        LogicValue.ONE,
+        LogicValue.UNKNOWN,
+        LogicValue.HIGH_IMPEDANCE,
+      ];
+      const idx = order.indexOf(current);
+      const next = order[(idx + 1) % order.length];
+
+      setInput(c.id, { signal: next });
+    }
   };
 
   const saveCustomCircuitToLocal = useCallback(() => {
@@ -1350,12 +1438,21 @@ function DigitalGateApp() {
                   if (!library.has(g)) return;
 
                   if (library.isCustom(g) && !library.hasValidDependencies(g)) {
-                    addLog(
-                      CONSOLE_TAB.ERROR,
-                      `Cannot add "${getGateLabel(g, library.get(g).label)}": missing dependency.`,
-                    );
+                    // Attempt to re-register to resolve stale compilation
+                    const meta = library.getCustomMeta(g);
 
-                    return;
+                    if (meta) {
+                      library.registerCustomCircuit(meta.name, meta.circuit, g);
+                    }
+
+                    if (!library.hasValidDependencies(g)) {
+                      addLog(
+                        CONSOLE_TAB.ERROR,
+                        `Cannot add "${getGateLabel(g, library.get(g).label)}": missing dependency.`,
+                      );
+
+                      return;
+                    }
                   }
 
                   const cx = (size.w / 2 - view.x) / view.k;

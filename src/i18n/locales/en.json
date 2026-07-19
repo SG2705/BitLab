@@ -8,8 +8,8 @@
   "+VMoL/": {
     "defaultMessage": "Outputs"
   },
-  "+qEqKV": {
-    "defaultMessage": "{i}: {o}"
+  "/UnJ3S": {
+    "defaultMessage": "Zoom out"
   },
   "/VTiBR": {
     "defaultMessage": "Encoder 4:2"
@@ -26,6 +26,9 @@
   "1iDGfg": {
     "defaultMessage": "{count} components"
   },
+  "2BUZ/h": {
+    "defaultMessage": "{gateLabel} : {gateState}"
+  },
   "2I9fUV": {
     "defaultMessage": "Comparator 4"
   },
@@ -41,8 +44,11 @@
   "4fHiNl": {
     "defaultMessage": "Duplicate"
   },
-  "73Dt+K": {
-    "defaultMessage": "BitLab v{version} · Event-Driven"
+  "6IeE6J": {
+    "defaultMessage": "({s})"
+  },
+  "6JZETj": {
+    "defaultMessage": "5V (VCC)"
   },
   "753yX5": {
     "defaultMessage": "Label"
@@ -53,8 +59,14 @@
   "8vtLM0": {
     "defaultMessage": "The page you're looking for doesn't exist or has been moved"
   },
+  "91pVwu": {
+    "defaultMessage": "Signal"
+  },
   "97i0f9": {
     "defaultMessage": "HIGH (1)"
+  },
+  "9j3hXO": {
+    "defaultMessage": "To"
   },
   "9nolIL": {
     "defaultMessage": "This page didn't load"
@@ -74,11 +86,20 @@
   "DRXWXB": {
     "defaultMessage": "404"
   },
+  "DVOUgX": {
+    "defaultMessage": "Bus Display"
+  },
   "DYWVqY": {
     "defaultMessage": "Mux 4:1"
   },
   "DyaKi9": {
     "defaultMessage": "Debus 8"
+  },
+  "EiGY9t": {
+    "defaultMessage": "GND"
+  },
+  "FH7+Uk": {
+    "defaultMessage": "Transform"
   },
   "FJad6C": {
     "defaultMessage": "Digit→Bin"
@@ -89,14 +110,14 @@
   "FazwRl": {
     "defaultMessage": "Try again"
   },
+  "FvwS8K": {
+    "defaultMessage": "Bus In 8"
+  },
   "G3+QfR": {
     "defaultMessage": "Constant"
   },
   "Gab3IF": {
     "defaultMessage": "Digit (0-9)"
-  },
-  "Gnd0Vx": {
-    "defaultMessage": "GND"
   },
   "Gb5Mf2": {
     "defaultMessage": "/{busWidth}"
@@ -122,6 +143,9 @@
   "KWFusF": {
     "defaultMessage": "Sequential"
   },
+  "KgwdBM": {
+    "defaultMessage": "Circuit Viewer: {name}"
+  },
   "KiXNvz": {
     "defaultMessage": "Run"
   },
@@ -146,11 +170,17 @@
   "N2HbmZ": {
     "defaultMessage": "Fit"
   },
+  "OdPyqE": {
+    "defaultMessage": "View internal circuit"
+  },
   "PJTLiq": {
     "defaultMessage": "D Flip-Flop"
   },
   "QRccCM": {
     "defaultMessage": "Page not found"
+  },
+  "QbDcBb": {
+    "defaultMessage": "Bus"
   },
   "Qu+roW": {
     "defaultMessage": "7 Seg"
@@ -182,11 +212,17 @@
   "UVS4sK": {
     "defaultMessage": "Decoder 2:4"
   },
+  "UoljwI": {
+    "defaultMessage": "Rotate 90° CW"
+  },
+  "V+xjJQ": {
+    "defaultMessage": "LOW"
+  },
   "VAZneg": {
     "defaultMessage": "Comparator"
   },
-  "Vcc5Vx": {
-    "defaultMessage": "5V (VCC)"
+  "VVkJRv": {
+    "defaultMessage": "Wire"
   },
   "X/SJAt": {
     "defaultMessage": "Half Sub"
@@ -206,14 +242,23 @@
   "aUbg5p": {
     "defaultMessage": "Full Adder"
   },
-  "bDsp4x": {
-    "defaultMessage": "Bus Display"
+  "aXB7Wg": {
+    "defaultMessage": "Export JSON"
+  },
+  "bI5iFx": {
+    "defaultMessage": "BitLab v{version} · Sagar Gupta"
   },
   "cpOWpz": {
     "defaultMessage": "⌘K"
   },
   "cwHYMN": {
     "defaultMessage": "NOR"
+  },
+  "dM+p3/": {
+    "defaultMessage": "From"
+  },
+  "djNL6D": {
+    "defaultMessage": "Read-only"
   },
   "e+L5nJ": {
     "defaultMessage": "LOW (0)"
@@ -224,8 +269,14 @@
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
+  "fqn+07": {
+    "defaultMessage": "Bus In 4"
+  },
   "g8kf2o": {
     "defaultMessage": "Bus 4"
+  },
+  "gjQsdg": {
+    "defaultMessage": "{fromLabel} [{fromPinLabel}]"
   },
   "hxKJOS": {
     "defaultMessage": "T Flip-Flop"
@@ -239,8 +290,14 @@
   "jOgiMP": {
     "defaultMessage": "NOT"
   },
+  "k46aB2": {
+    "defaultMessage": "UNKNOWN (X)"
+  },
   "k5fiSA": {
     "defaultMessage": "Buffer"
+  },
+  "kCQ84U": {
+    "defaultMessage": "Circuit: {name}"
   },
   "kR4Dpg": {
     "defaultMessage": "{num}"
@@ -305,11 +362,17 @@
   "qEOrHH": {
     "defaultMessage": "Arithmetic"
   },
+  "qNPjsN": {
+    "defaultMessage": "Hi-Z (Z)"
+  },
   "qnonu0": {
     "defaultMessage": "{percentage}%"
   },
   "rS8jJE": {
     "defaultMessage": "XNOR"
+  },
+  "rbrahO": {
+    "defaultMessage": "Close"
   },
   "sCV/Bb": {
     "defaultMessage": "U-Reg 8"
@@ -319,6 +382,9 @@
   },
   "sNY4nx": {
     "defaultMessage": "Idle"
+  },
+  "sOyh5x": {
+    "defaultMessage": "Bit"
   },
   "sPjOJQ": {
     "defaultMessage": "LED"
@@ -341,8 +407,20 @@
   "uPTSs/": {
     "defaultMessage": "AND-3"
   },
+  "uTM3YG": {
+    "defaultMessage": "UNKNOWN"
+  },
   "uizmax": {
     "defaultMessage": "Press"
+  },
+  "vSpLrC": {
+    "defaultMessage": "{toLabel} [{toPinLabel}]"
+  },
+  "wC1xUk": {
+    "defaultMessage": "{deg}°"
+  },
+  "wGeGIk": {
+    "defaultMessage": "Live Inputs"
   },
   "wS/QCK": {
     "defaultMessage": "Inputs"
@@ -350,8 +428,14 @@
   "wgnt2g": {
     "defaultMessage": "Palette"
   },
+  "wyLK6M": {
+    "defaultMessage": "HIGH IMPEDENCE"
+  },
   "xXqJUI": {
     "defaultMessage": "Probe"
+  },
+  "xbi38c": {
+    "defaultMessage": "Zoom in"
   },
   "xissZQ": {
     "defaultMessage": "Remove this custom circuit"
@@ -359,8 +443,14 @@
   "xqZM36": {
     "defaultMessage": "— no signal —"
   },
+  "xsfBZ4": {
+    "defaultMessage": "HIGH"
+  },
   "xu5aZu": {
     "defaultMessage": "Splitter"
+  },
+  "yjnzeu": {
+    "defaultMessage": "{resolvedLabel} · {ipc}→{opc}"
   },
   "zsr0Bz": {
     "defaultMessage": "EN"

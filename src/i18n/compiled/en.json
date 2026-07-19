@@ -17,18 +17,10 @@
       "value": "Outputs"
     }
   ],
-  "+qEqKV": [
-    {
-      "type": 1,
-      "value": "i"
-    },
+  "/UnJ3S": [
     {
       "type": 0,
-      "value": ": "
-    },
-    {
-      "type": 1,
-      "value": "o"
+      "value": "Zoom out"
     }
   ],
   "/VTiBR": [
@@ -65,6 +57,20 @@
       "value": " components"
     }
   ],
+  "2BUZ/h": [
+    {
+      "type": 1,
+      "value": "gateLabel"
+    },
+    {
+      "type": 0,
+      "value": " : "
+    },
+    {
+      "type": 1,
+      "value": "gateState"
+    }
+  ],
   "2I9fUV": [
     {
       "type": 0,
@@ -99,18 +105,24 @@
       "value": "Duplicate"
     }
   ],
-  "73Dt+K": [
+  "6IeE6J": [
     {
       "type": 0,
-      "value": "BitLab v"
+      "value": "("
     },
     {
       "type": 1,
-      "value": "version"
+      "value": "s"
     },
     {
       "type": 0,
-      "value": " · Event-Driven"
+      "value": ")"
+    }
+  ],
+  "6JZETj": [
+    {
+      "type": 0,
+      "value": "5V (VCC)"
     }
   ],
   "753yX5": [
@@ -131,10 +143,22 @@
       "value": "The page you're looking for doesn't exist or has been moved"
     }
   ],
+  "91pVwu": [
+    {
+      "type": 0,
+      "value": "Signal"
+    }
+  ],
   "97i0f9": [
     {
       "type": 0,
       "value": "HIGH (1)"
+    }
+  ],
+  "9j3hXO": [
+    {
+      "type": 0,
+      "value": "To"
     }
   ],
   "9nolIL": [
@@ -197,6 +221,12 @@
       "value": "404"
     }
   ],
+  "DVOUgX": [
+    {
+      "type": 0,
+      "value": "Bus Display"
+    }
+  ],
   "DYWVqY": [
     {
       "type": 0,
@@ -207,6 +237,18 @@
     {
       "type": 0,
       "value": "Debus 8"
+    }
+  ],
+  "EiGY9t": [
+    {
+      "type": 0,
+      "value": "GND"
+    }
+  ],
+  "FH7+Uk": [
+    {
+      "type": 0,
+      "value": "Transform"
     }
   ],
   "FJad6C": [
@@ -225,6 +267,12 @@
     {
       "type": 0,
       "value": "Try again"
+    }
+  ],
+  "FvwS8K": [
+    {
+      "type": 0,
+      "value": "Bus In 8"
     }
   ],
   "G3+QfR": [
@@ -247,12 +295,6 @@
     {
       "type": 1,
       "value": "busWidth"
-    }
-  ],
-  "Gnd0Vx": [
-    {
-      "type": 0,
-      "value": "GND"
     }
   ],
   "GkBxYy": [
@@ -295,6 +337,16 @@
     {
       "type": 0,
       "value": "Sequential"
+    }
+  ],
+  "KgwdBM": [
+    {
+      "type": 0,
+      "value": "Circuit Viewer: "
+    },
+    {
+      "type": 1,
+      "value": "name"
     }
   ],
   "KiXNvz": [
@@ -345,6 +397,12 @@
       "value": "Fit"
     }
   ],
+  "OdPyqE": [
+    {
+      "type": 0,
+      "value": "View internal circuit"
+    }
+  ],
   "PJTLiq": [
     {
       "type": 0,
@@ -355,6 +413,12 @@
     {
       "type": 0,
       "value": "Page not found"
+    }
+  ],
+  "QbDcBb": [
+    {
+      "type": 0,
+      "value": "Bus"
     }
   ],
   "Qu+roW": [
@@ -417,16 +481,28 @@
       "value": "Decoder 2:4"
     }
   ],
+  "UoljwI": [
+    {
+      "type": 0,
+      "value": "Rotate 90° CW"
+    }
+  ],
+  "V+xjJQ": [
+    {
+      "type": 0,
+      "value": "LOW"
+    }
+  ],
   "VAZneg": [
     {
       "type": 0,
       "value": "Comparator"
     }
   ],
-  "Vcc5Vx": [
+  "VVkJRv": [
     {
       "type": 0,
-      "value": "5V (VCC)"
+      "value": "Wire"
     }
   ],
   "X/SJAt": [
@@ -465,10 +541,24 @@
       "value": "Full Adder"
     }
   ],
-  "bDsp4x": [
+  "aXB7Wg": [
     {
       "type": 0,
-      "value": "Bus Display"
+      "value": "Export JSON"
+    }
+  ],
+  "bI5iFx": [
+    {
+      "type": 0,
+      "value": "BitLab v"
+    },
+    {
+      "type": 1,
+      "value": "version"
+    },
+    {
+      "type": 0,
+      "value": " · Sagar Gupta"
     }
   ],
   "cpOWpz": [
@@ -481,6 +571,18 @@
     {
       "type": 0,
       "value": "NOR"
+    }
+  ],
+  "dM+p3/": [
+    {
+      "type": 0,
+      "value": "From"
+    }
+  ],
+  "djNL6D": [
+    {
+      "type": 0,
+      "value": "Read-only"
     }
   ],
   "e+L5nJ": [
@@ -505,10 +607,34 @@
       "value": " wires"
     }
   ],
+  "fqn+07": [
+    {
+      "type": 0,
+      "value": "Bus In 4"
+    }
+  ],
   "g8kf2o": [
     {
       "type": 0,
       "value": "Bus 4"
+    }
+  ],
+  "gjQsdg": [
+    {
+      "type": 1,
+      "value": "fromLabel"
+    },
+    {
+      "type": 0,
+      "value": " ["
+    },
+    {
+      "type": 1,
+      "value": "fromPinLabel"
+    },
+    {
+      "type": 0,
+      "value": "]"
     }
   ],
   "hxKJOS": [
@@ -535,10 +661,26 @@
       "value": "NOT"
     }
   ],
+  "k46aB2": [
+    {
+      "type": 0,
+      "value": "UNKNOWN (X)"
+    }
+  ],
   "k5fiSA": [
     {
       "type": 0,
       "value": "Buffer"
+    }
+  ],
+  "kCQ84U": [
+    {
+      "type": 0,
+      "value": "Circuit: "
+    },
+    {
+      "type": 1,
+      "value": "name"
     }
   ],
   "kR4Dpg": [
@@ -671,6 +813,12 @@
       "value": "Arithmetic"
     }
   ],
+  "qNPjsN": [
+    {
+      "type": 0,
+      "value": "Hi-Z (Z)"
+    }
+  ],
   "qnonu0": [
     {
       "type": 1,
@@ -685,6 +833,12 @@
     {
       "type": 0,
       "value": "XNOR"
+    }
+  ],
+  "rbrahO": [
+    {
+      "type": 0,
+      "value": "Close"
     }
   ],
   "sCV/Bb": [
@@ -703,6 +857,12 @@
     {
       "type": 0,
       "value": "Idle"
+    }
+  ],
+  "sOyh5x": [
+    {
+      "type": 0,
+      "value": "Bit"
     }
   ],
   "sPjOJQ": [
@@ -755,10 +915,50 @@
       "value": "AND-3"
     }
   ],
+  "uTM3YG": [
+    {
+      "type": 0,
+      "value": "UNKNOWN"
+    }
+  ],
   "uizmax": [
     {
       "type": 0,
       "value": "Press"
+    }
+  ],
+  "vSpLrC": [
+    {
+      "type": 1,
+      "value": "toLabel"
+    },
+    {
+      "type": 0,
+      "value": " ["
+    },
+    {
+      "type": 1,
+      "value": "toPinLabel"
+    },
+    {
+      "type": 0,
+      "value": "]"
+    }
+  ],
+  "wC1xUk": [
+    {
+      "type": 1,
+      "value": "deg"
+    },
+    {
+      "type": 0,
+      "value": "°"
+    }
+  ],
+  "wGeGIk": [
+    {
+      "type": 0,
+      "value": "Live Inputs"
     }
   ],
   "wS/QCK": [
@@ -773,10 +973,22 @@
       "value": "Palette"
     }
   ],
+  "wyLK6M": [
+    {
+      "type": 0,
+      "value": "HIGH IMPEDENCE"
+    }
+  ],
   "xXqJUI": [
     {
       "type": 0,
       "value": "Probe"
+    }
+  ],
+  "xbi38c": [
+    {
+      "type": 0,
+      "value": "Zoom in"
     }
   ],
   "xissZQ": [
@@ -791,10 +1003,38 @@
       "value": "— no signal —"
     }
   ],
+  "xsfBZ4": [
+    {
+      "type": 0,
+      "value": "HIGH"
+    }
+  ],
   "xu5aZu": [
     {
       "type": 0,
       "value": "Splitter"
+    }
+  ],
+  "yjnzeu": [
+    {
+      "type": 1,
+      "value": "resolvedLabel"
+    },
+    {
+      "type": 0,
+      "value": " · "
+    },
+    {
+      "type": 1,
+      "value": "ipc"
+    },
+    {
+      "type": 0,
+      "value": "→"
+    },
+    {
+      "type": 1,
+      "value": "opc"
     }
   ],
   "zsr0Bz": [

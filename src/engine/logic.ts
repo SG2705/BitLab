@@ -185,6 +185,19 @@ export const evalGnd = (): EvaluateResult => ({
   state: { on: false },
 });
 
+export const evalBusInput = (
+  _i: SignalValue[],
+  s: Record<string, unknown> | null,
+): EvaluateResult => {
+  const signal = (s?.signal as SignalValue) ?? Z;
+  const width = (s?.width as number) ?? 4;
+
+  return {
+    outputs: new Array<SignalValue>(width).fill(signal),
+    state: s,
+  };
+};
+
 export const evalClockTick = (
   state: Record<string, unknown> | null,
 ): EvaluateResult => {

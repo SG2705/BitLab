@@ -13,6 +13,8 @@ import {
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
   GATE_TYPE_BUS_DISPLAY,
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -126,6 +128,8 @@ export const MESSAGES = defineMessages({
   lb_bus_display: { id: "DVOUgX", defaultMessage: "Bus Display" },
   lb_vcc: { id: "6JZETj", defaultMessage: "5V (VCC)" },
   lb_gnd: { id: "EiGY9t", defaultMessage: "GND" },
+  lb_bus_input4: { id: "fqn+07", defaultMessage: "Bus In 4" },
+  lb_bus_input8: { id: "FvwS8K", defaultMessage: "Bus In 8" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -232,4 +236,6 @@ export const GATE_TYPE_LABELS: Record<
   [GATE_TYPE_BUS_DISPLAY]: { en: "Bus Display", messageKey: "lb_bus_display" },
   [GATE_TYPE_VCC]: { en: "5V (VCC)", messageKey: "lb_vcc" },
   [GATE_TYPE_GND]: { en: "GND", messageKey: "lb_gnd" },
+  [GATE_TYPE_BUS_INPUT4]: { en: "Bus In 4", messageKey: "lb_bus_input4" },
+  [GATE_TYPE_BUS_INPUT8]: { en: "Bus In 8", messageKey: "lb_bus_input8" },
 };

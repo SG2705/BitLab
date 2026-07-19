@@ -67,6 +67,8 @@ export const GATE_TYPE_UREG8 = "UREG8";
 export const GATE_TYPE_BUS_DISPLAY = "BUS_DISPLAY";
 export const GATE_TYPE_VCC = "VCC";
 export const GATE_TYPE_GND = "GND";
+export const GATE_TYPE_BUS_INPUT4 = "BUS_INPUT4";
+export const GATE_TYPE_BUS_INPUT8 = "BUS_INPUT8";
 
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
@@ -188,4 +190,6 @@ export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_BUS_DISPLAY]: "lb_bus_display",
   [GATE_TYPE_VCC]: "lb_vcc",
   [GATE_TYPE_GND]: "lb_gnd",
+  [GATE_TYPE_BUS_INPUT4]: "lb_bus_input4",
+  [GATE_TYPE_BUS_INPUT8]: "lb_bus_input8",
 } as const;

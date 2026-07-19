@@ -19,6 +19,8 @@ import {
   GATE_TYPE_AND3,
   GATE_TYPE_BUFFER,
   GATE_TYPE_BUS_DISPLAY,
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -83,6 +85,7 @@ import {
 } from "./constants";
 import {
   evalBusDisplay,
+  evalBusInput,
   evalClockTick,
   evalCmp4,
   evalComment,
@@ -428,6 +431,44 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     initialState: () => ({ on: false }),
     evaluate: evalGnd,
+  }),
+
+  // ── Bus Inputs ────────────────────────────────────────────────────────────────
+  hw({
+    type: GATE_TYPE_BUS_INPUT4,
+    label: "",
+    category: GATE_CATEGORY_INPUT,
+    inputs: PINC0,
+    outputs: PINC4,
+    width: 80,
+    height: 80,
+    symbol: "⇐4",
+    isBusOutput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    initialState: () => ({ signal: 0, width: 4 }),
+    evaluate: evalBusInput,
+  }),
+  hw({
+    type: GATE_TYPE_BUS_INPUT8,
+    label: "",
+    category: GATE_CATEGORY_INPUT,
+    inputs: PINC0,
+    outputs: PINC8,
+    width: 80,
+    height: 110,
+    symbol: "⇐8",
+    isBusOutput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    initialState: () => ({ signal: 0, width: 8 }),
+    evaluate: evalBusInput,
   }),
 
   // ── Outputs ──────────────────────────────────────────────────────────────────
@@ -1496,6 +1537,9 @@ export class ComponentLibrary {
       isInput: false,
       isOutput: false,
       isBusOutput: sinkComps.some(({ def: sinkDef }) => sinkDef.isBusInput),
+      isBusInput: nonClockSourceComps.some(
+        ({ def: srcDef }) => srcDef.isBusOutput,
+      ),
       inputLabels,
       outputLabels,
       initialState: () => {
