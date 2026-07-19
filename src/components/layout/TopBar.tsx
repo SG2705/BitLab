@@ -244,18 +244,6 @@ function TopBar({
         ) : null}
       </div>
       <div className="ml-auto flex items-center gap-1">
-        <button
-          type="button"
-          onClick={openCmd}
-          className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md border border-border bg-background/40 hover:bg-secondary transition-colors text-muted-foreground"
-        >
-          <Command className="h-3 w-3" />
-          <FormattedMessage id="wgnt2g" defaultMessage="Palette " />
-          &nbsp;
-          <kbd className="ml-1 px-1 py-0.5 text-[10px] rounded bg-secondary border border-border">
-            <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
-          </kbd>
-        </button>
         <TBBtn
           onClick={() =>
             setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK)
@@ -269,6 +257,18 @@ function TopBar({
           }
           label="Theme"
         />
+        <button
+          type="button"
+          onClick={openCmd}
+          className="flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-md border border-border bg-background/40 hover:bg-secondary transition-colors text-muted-foreground"
+        >
+          <Command className="h-3 w-3" />
+          <FormattedMessage id="wgnt2g" defaultMessage="Palette " />
+          &nbsp;
+          <kbd className="ml-1 px-1 py-0.5 text-[10px] rounded bg-secondary border border-border">
+            <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
+          </kbd>
+        </button>
       </div>
     </header>
   );

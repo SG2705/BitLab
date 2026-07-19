@@ -23,21 +23,21 @@ function CommandPalette({ actions, onClose }: CommandPaletteProps) {
   const [i, setI] = useState(0);
   const filtered = actions
     .filter((a) => a.label.toLowerCase().includes(q.toLowerCase()))
-    .slice(0, 20);
+    .slice(0, 50);
 
   return (
     <div
       className="fixed inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-start justify-center pt-24"
       role="button"
       tabIndex={0}
-      onKeyDown={() => {}}
+      onKeyDown={() => { }}
       onClick={onClose}
     >
       <div
         className="w-[520px] glass-panel rounded-xl shadow-2xl overflow-hidden animate-scale-in"
         role="button"
         tabIndex={0}
-        onKeyDown={() => {}}
+        onKeyDown={() => { }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 px-3 border-b border-border">
