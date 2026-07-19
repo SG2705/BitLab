@@ -475,7 +475,7 @@ function GateNode({
               rx={0}
               ry={0}
               pointerEvents="none"
-              stroke="white"
+              stroke="var(--background)"
               strokeWidth={8}
               paintOrder="stroke"
             >
