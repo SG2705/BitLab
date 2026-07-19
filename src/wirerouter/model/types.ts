@@ -44,6 +44,10 @@ export interface RouterConfig {
   turnPenalty: number;
   /** Corner radius in pixels for rounded bends (0 = sharp corners) */
   bendRadius: number;
+  /** Cost multiplier per existing wire in a cell (higher = more spreading) */
+  wireCost: number;
+  /** Padding in cells around each wire path for soft obstacle marking */
+  wirePadding: number;
 }
 
 /** The state of a single cell in the obstacle grid. */

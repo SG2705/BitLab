@@ -177,12 +177,20 @@ export class WireRouter {
 
   /**
    * Route all wires in the snapshot.
-   * Useful for initial computation after a full rebuild.
+   * Routes sequentially — each routed wire is marked as a soft obstacle
+   * so subsequent wires prefer not overlapping.
    */
   routeAll(snapshot: CircuitSnapshot): Map<string, CachedRoute> {
+    this.obstacleMap.clearWireCosts();
+    this.cache.clear();
+
     for (const wire of Object.values(snapshot.wires)) {
-      if (!this.cache.has(wire.id)) {
-        this.routeWire(wire, snapshot);
+      const route = this.computeRoute(wire, snapshot);
+
+      this.cache.set(wire.id, route);
+
+      if (route.valid && route.gridPath.length > 0) {
+        this.obstacleMap.markWirePath(route.gridPath);
       }
     }
 

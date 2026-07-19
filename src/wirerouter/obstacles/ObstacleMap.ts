@@ -24,10 +24,12 @@ import {
 /** Default router configuration */
 export const DEFAULT_ROUTER_CONFIG: RouterConfig = {
   cellSize: CELL_SIZE,
-  obstaclePadding: 2, // 3 grid cells padding
-  stubLength: 2, // 3 grid cells stub
-  turnPenalty: 50, // strong preference for fewer bends
-  bendRadius: 0, // 4px rounded corners at bends
+  obstaclePadding: 2,
+  stubLength: 2,
+  turnPenalty: 50,
+  bendRadius: 0,
+  wireCost: 15,
+  wirePadding: 1,
 };
 
 export class ObstacleMap {
@@ -39,6 +41,9 @@ export class ObstacleMap {
 
   /** The grid buffer — flat array indexed as [row * cols + col] */
   private grid: Uint8Array = new Uint8Array(0);
+
+  /** Wire cost layer — tracks how many wires pass through each cell */
+  private wireCosts: Uint8Array = new Uint8Array(0);
 
   /** Tracked obstacles by component ID */
   private obstacles: Map<string, Obstacle> = new Map();
@@ -98,6 +103,40 @@ export class ObstacleMap {
     return state === 0 || state === 2; // FREE or PADDED
   }
 
+  /** Get the wire congestion cost for a cell */
+  getWireCost(col: number, row: number): number {
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return 0;
+
+    return this.wireCosts[row * this.cols + col];
+  }
+
+  /** Mark a wire path as a soft obstacle with configurable padding */
+  markWirePath(path: GridCell[]): void {
+    const padding = this.config.wirePadding;
+
+    for (const cell of path) {
+      for (let dr = -padding; dr <= padding; dr += 1) {
+        for (let dc = -padding; dc <= padding; dc += 1) {
+          const c = cell.col + dc;
+          const r = cell.row + dr;
+
+          if (c >= 0 && c < this.cols && r >= 0 && r < this.rows) {
+            const idx = r * this.cols + c;
+
+            if (this.wireCosts[idx] < 255) {
+              this.wireCosts[idx] += 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /** Clear all wire costs (call before full re-route) */
+  clearWireCosts(): void {
+    this.wireCosts.fill(0);
+  }
+
   /** Convert a world-coordinate point to a grid cell */
   worldToGrid(p: Point): GridCell {
     const col = Math.floor((p.x - this.bounds.x) / this.config.cellSize);
@@ -132,7 +171,8 @@ export class ObstacleMap {
     // 2. Allocate grid
     this.cols = Math.ceil(this.bounds.width / this.config.cellSize) + 1;
     this.rows = Math.ceil(this.bounds.height / this.config.cellSize) + 1;
-    this.grid = new Uint8Array(this.cols * this.rows); // all FREE (0)
+    this.grid = new Uint8Array(this.cols * this.rows);
+    this.wireCosts = new Uint8Array(this.cols * this.rows);
 
     // 3. Register each component as an obstacle
     this.obstacles.clear();

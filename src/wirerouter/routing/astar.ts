@@ -419,6 +419,13 @@ function runAstar(
         moveCost += 10;
       }
 
+      // Wire congestion: prefer cells without existing wires
+      const wireCongestion = obstacleMap.getWireCost(nc, nr);
+
+      if (wireCongestion > 0) {
+        moveCost += wireCongestion * config.wireCost;
+      }
+
       // Turn penalty: changing direction costs extra
       // Bias toward turning near the midpoint (lower penalty at center)
       if (dir !== currentDir) {
