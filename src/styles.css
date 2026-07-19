@@ -128,33 +128,57 @@
 }
 
 @utility signal-glow {
-  filter: drop-shadow(0 0 3px var(--color-signal-on))
-    drop-shadow(0 0 6px var(--color-signal-on));
+  filter: drop-shadow(
+      0 0 calc(3px * var(--wire-glow-intensity, 1)) var(--color-signal-on)
+    )
+    drop-shadow(
+      0 0 calc(6px * var(--wire-glow-intensity, 1)) var(--color-signal-on)
+    );
 }
 
 @utility signal-glow-unknown {
-  filter: drop-shadow(0 0 3px var(--color-signal-unknown))
-    drop-shadow(0 0 6px var(--color-signal-unknown));
+  filter: drop-shadow(
+      0 0 calc(3px * var(--wire-glow-intensity, 1)) var(--color-signal-unknown)
+    )
+    drop-shadow(
+      0 0 calc(6px * var(--wire-glow-intensity, 1)) var(--color-signal-unknown)
+    );
 }
 
 @utility signal-glow-highz {
-  filter: drop-shadow(0 0 3px var(--color-signal-highz))
-    drop-shadow(0 0 6px var(--color-signal-highz));
+  filter: drop-shadow(
+      0 0 calc(3px * var(--wire-glow-intensity, 1)) var(--color-signal-highz)
+    )
+    drop-shadow(
+      0 0 calc(6px * var(--wire-glow-intensity, 1)) var(--color-signal-highz)
+    );
 }
 
 @utility comp-glow {
-  filter: drop-shadow(0 0 4px var(--color-signal-on))
-    drop-shadow(0 0 8px var(--color-signal-on));
+  filter: drop-shadow(
+      0 0 calc(4px * var(--comp-glow-intensity, 1)) var(--color-signal-on)
+    )
+    drop-shadow(
+      0 0 calc(8px * var(--comp-glow-intensity, 1)) var(--color-signal-on)
+    );
 }
 
 @utility comp-glow-unknown {
-  filter: drop-shadow(0 0 4px var(--color-signal-unknown))
-    drop-shadow(0 0 8px var(--color-signal-unknown));
+  filter: drop-shadow(
+      0 0 calc(4px * var(--comp-glow-intensity, 1)) var(--color-signal-unknown)
+    )
+    drop-shadow(
+      0 0 calc(8px * var(--comp-glow-intensity, 1)) var(--color-signal-unknown)
+    );
 }
 
 @utility comp-glow-highz {
-  filter: drop-shadow(0 0 4px var(--color-signal-highz))
-    drop-shadow(0 0 8px var(--color-signal-highz));
+  filter: drop-shadow(
+      0 0 calc(4px * var(--comp-glow-intensity, 1)) var(--color-signal-highz)
+    )
+    drop-shadow(
+      0 0 calc(8px * var(--comp-glow-intensity, 1)) var(--color-signal-highz)
+    );
 }
 
 @keyframes dash-flow {

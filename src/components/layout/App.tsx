@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
 import { BusWirePath, EmptyCanvas, GateNode, WirePath } from "@/components/ui";
+import { SettingsActions, useSettings } from "@/context/SettingsContext";
 import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
@@ -53,6 +54,7 @@ import ExplorerPanel from "./ExplorerPanel";
 import GateProperties from "./GateProperties";
 import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
+import SettingsPanel from "./SettingsPanel";
 import TopBar from "./TopBar";
 import WireProperties from "./WireProperties";
 
@@ -63,8 +65,8 @@ function DigitalGateApp() {
   const intl = useIntl();
 
   // States
-  const [theme, setTheme] = useState<Theme>(THEME.LIGHT);
   const [clockSpeed, setClockSpeed] = useState(DEFAULT_CLOCK);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([BASE_LOG]);
 
   const addLog = initializeLogger(setLogs);
@@ -364,10 +366,12 @@ function DigitalGateApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("light", theme === THEME.LIGHT);
-    document.documentElement.classList.toggle("dark", theme === THEME.DARK);
-  }, [theme]);
+  // Theme is managed by SettingsContext (applies classes automatically)
+  const {
+    state: { theme },
+    dispatch: settingsDispatch,
+  } = useSettings();
+  const setTheme = (t: Theme) => settingsDispatch(SettingsActions.setTheme(t));
 
   const toWorld = useCallback(
     (sx: number, sy: number) => {
@@ -1104,8 +1108,7 @@ function DigitalGateApp() {
         redo={redo}
         canUndo={canUndo}
         canRedo={canRedo}
-        theme={theme}
-        setTheme={setTheme}
+        openSettings={() => setSettingsOpen(true)}
         saveProjectToLocal={saveProjectToLocal}
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
@@ -1540,6 +1543,9 @@ function DigitalGateApp() {
           onClose={() => setViewingCircuit(null)}
         />
       )}
+
+      {/* Settings Panel */}
+      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
     </div>
   );
 }

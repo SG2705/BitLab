@@ -4,7 +4,6 @@ import {
   Clock,
   Command,
   FolderOpen,
-  Moon,
   Package,
   Pause,
   Play,
@@ -12,16 +11,14 @@ import {
   Redo2,
   RotateCcw,
   Save,
+  Settings,
   Square,
   StepForward,
-  Sun,
   Undo2,
   Upload,
 } from "lucide-react";
 
 import { Button } from "@/components/ui";
-import { THEME } from "@/lib/constants";
-import { type Theme } from "@/lib/types";
 
 interface TopBarProps {
   isRunning: boolean;
@@ -35,8 +32,7 @@ interface TopBarProps {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  theme: Theme;
-  setTheme: (t: Theme) => void;
+  openSettings: () => void;
   saveProjectToLocal: () => void;
   loadProjectFromLocal: () => void;
   exportProject: () => void;
@@ -85,8 +81,7 @@ function TopBar({
   redo,
   canUndo,
   canRedo,
-  theme,
-  setTheme,
+  openSettings,
   saveProjectToLocal,
   loadProjectFromLocal,
   exportProject,
@@ -245,17 +240,9 @@ function TopBar({
       </div>
       <div className="ml-auto flex items-center gap-1">
         <TBBtn
-          onClick={() =>
-            setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK)
-          }
-          icon={
-            theme === THEME.DARK ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )
-          }
-          label="Theme"
+          onClick={openSettings}
+          icon={<Settings className="h-4 w-4" />}
+          label="Settings"
         />
         <button
           type="button"
