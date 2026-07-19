@@ -277,7 +277,7 @@ export function findPath(
     waypoints[waypoints.length - 1] = endWorld;
 
     // Align second waypoint with start pin (stub is horizontal or vertical)
-    if (waypoints.length >= 2) {
+    if (waypoints.length >= 3) {
       const exitDc = DIR_DC[exitDir];
       const exitDr = DIR_DR[exitDir];
 
@@ -291,7 +291,7 @@ export function findPath(
     }
 
     // Align second-to-last waypoint with end pin
-    if (waypoints.length >= 3) {
+    if (waypoints.length >= 4) {
       const approachDc = DIR_DC[approachDir];
       const approachDr = DIR_DR[approachDir];
       const idx = waypoints.length - 2;

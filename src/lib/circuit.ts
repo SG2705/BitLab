@@ -8,7 +8,7 @@
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import { KEY_SEPARATOR } from "@/engine/constants";
-import { CELL_SIZE } from "@/globals";
+import { CELL_SIZE, PIN_OFFSET, PIN_SPACING_UNITS } from "@/globals";
 import { PIN_DIR, PIN_KIND } from "@/lib/constants";
 import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 
@@ -29,7 +29,7 @@ export function busPortPos(
   const rw = r === 90 || r === 270 ? def.height : def.width;
   const rh = r === 90 || r === 270 ? def.width : def.height;
 
-  // Bus port sits 12px away from the edge, centered
+  // Bus port sits PIN_OFFSET away from the edge, centered
   // Same edge logic as regular pins: IN edge and OUT edge depend on rotation
   const isOutput = kind === PIN_KIND.OUT;
 
@@ -37,17 +37,17 @@ export function busPortPos(
   let y: number;
 
   if (r === 0) {
-    x = isOutput ? comp.x + rw + 12 : comp.x - 12;
+    x = isOutput ? comp.x + rw + PIN_OFFSET : comp.x - PIN_OFFSET;
     y = comp.y + rh / 2;
   } else if (r === 90) {
     x = comp.x + rw / 2;
-    y = isOutput ? comp.y + rh + 12 : comp.y - 12;
+    y = isOutput ? comp.y + rh + PIN_OFFSET : comp.y - PIN_OFFSET;
   } else if (r === 180) {
-    x = isOutput ? comp.x - 12 : comp.x + rw + 12;
+    x = isOutput ? comp.x - PIN_OFFSET : comp.x + rw + PIN_OFFSET;
     y = comp.y + rh / 2;
   } else {
     x = comp.x + rw / 2;
-    y = isOutput ? comp.y - 12 : comp.y + rh + 12;
+    y = isOutput ? comp.y - PIN_OFFSET : comp.y + rh + PIN_OFFSET;
   }
 
   return { x, y };
@@ -108,8 +108,56 @@ export function pinPos(
   }
 
   const sizeAxis = isVertical ? rh : rw;
-  const spacing = sizeAxis / (slotCount + 1);
-  const pos = Math.round((spacing * (slotIndex + 1)) / CELL_SIZE) * CELL_SIZE;
+
+  // Center pins: fixed spacing, bus ports get double spacing
+  const pinSpacing = PIN_SPACING_UNITS * CELL_SIZE;
+
+  // Determine if each slot is a bus port (needs double spacing)
+  let isBusSlot: boolean[] = [];
+
+  if (busGroups && busGroups.length > 0) {
+    const groupStartSet = new Set(busGroups.map((g) => g[0]));
+    const groupEndMap = new Map(busGroups.map((g) => [g[0], g[1]]));
+    let pi = 0;
+
+    while (pi < totalPins) {
+      if (groupStartSet.has(pi)) {
+        isBusSlot.push(true);
+        const end = groupEndMap.get(pi);
+
+        pi = end ?? pi + 1;
+      } else {
+        isBusSlot.push(false);
+        pi += 1;
+      }
+    }
+  } else {
+    isBusSlot = Array.from({ length: slotCount }, () => false);
+  }
+
+  // Calculate total span accounting for bus port double spacing
+  let totalSpan = 0;
+
+  for (let i = 1; i < slotCount; i += 1) {
+    // Gap before slot i is the max of current and previous slot size
+    const prevBus = isBusSlot[i - 1];
+    const curBus = isBusSlot[i];
+
+    totalSpan += prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+  }
+
+  const startOffset =
+    Math.round((sizeAxis - totalSpan) / 2 / CELL_SIZE) * CELL_SIZE;
+
+  // Calculate position for our specific slot
+  let pos = startOffset;
+
+  for (let i = 1; i <= slotIndex; i += 1) {
+    const prevBus = isBusSlot[i - 1];
+    const curBus = isBusSlot[i];
+
+    pos += prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+  }
 
   let x: number;
   let y: number;
@@ -118,7 +166,7 @@ export function pinPos(
     const isLeftEdge =
       (r === 0 && kind === PIN_KIND.IN) || (r === 180 && kind === PIN_KIND.OUT);
 
-    x = isLeftEdge ? comp.x : comp.x + rw;
+    x = isLeftEdge ? comp.x - PIN_OFFSET : comp.x + rw + PIN_OFFSET;
     y = comp.y + pos;
   } else {
     const isTopEdge =
@@ -126,7 +174,7 @@ export function pinPos(
       (r === 270 && kind === PIN_KIND.OUT);
 
     x = comp.x + pos;
-    y = isTopEdge ? comp.y : comp.y + rh;
+    y = isTopEdge ? comp.y - PIN_OFFSET : comp.y + rh + PIN_OFFSET;
   }
 
   return { x, y };

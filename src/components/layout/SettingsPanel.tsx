@@ -99,16 +99,6 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
             {cat === SETTINGS_CATEGORY.CANVAS && (
               <>
                 <SliderRow
-                  label="Grid size"
-                  desc="Spacing of the canvas grid dots and component snap step."
-                  min={5}
-                  max={40}
-                  step={5}
-                  value={settings.grid}
-                  unit="px"
-                  onChange={(v) => settingsStore.set({ grid: v })}
-                />
-                <SliderRow
                   label="Wire glow"
                   desc="Halo intensity of energized wires."
                   min={0}

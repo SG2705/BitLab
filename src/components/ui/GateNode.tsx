@@ -14,7 +14,7 @@ import {
   GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
-import { CELL_SIZE } from "@/globals";
+import { CELL_SIZE, PIN_OFFSET, PIN_SPACING_UNITS } from "@/globals";
 import { PIN_KIND } from "@/lib/constants";
 import { type PinKind } from "@/lib/types";
 import { cn, getGateLabel, resolveLabel } from "@/lib/utils";
@@ -628,11 +628,35 @@ function GateNode({
                   const slotCount = slots.length;
                   const sizeAxis = isVertical ? rh : rw;
 
+                  // Calculate positions with bus ports getting double spacing
+                  const pinSpacing = PIN_SPACING_UNITS * CELL_SIZE;
+                  let totalSpan = 0;
+
+                  for (let i = 1; i < slotCount; i += 1) {
+                    const prevBus = slots[i - 1].kind === "bus";
+                    const curBus = slots[i].kind === "bus";
+
+                    totalSpan +=
+                      prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+                  }
+
+                  const startOffset =
+                    Math.round((sizeAxis - totalSpan) / 2 / CELL_SIZE) *
+                    CELL_SIZE;
+
+                  // Build position array
+                  const positions: number[] = [startOffset];
+
+                  for (let i = 1; i < slotCount; i += 1) {
+                    const prevBus = slots[i - 1].kind === "bus";
+                    const curBus = slots[i].kind === "bus";
+                    const gap = prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+
+                    positions.push(positions[i - 1] + gap);
+                  }
+
                   return slots.map((slot, si) => {
-                    const pos =
-                      Math.round(
-                        ((sizeAxis / (slotCount + 1)) * (si + 1)) / CELL_SIZE,
-                      ) * CELL_SIZE;
+                    const pos = positions[si];
 
                     if (slot.kind === "bus") {
                       // Render bus port square
@@ -729,23 +753,23 @@ function GateNode({
                     let ly: number;
 
                     if (r === 0) {
-                      cx = -8;
+                      cx = -PIN_OFFSET;
                       cy = pos;
                       lx = 0;
                       ly = pos;
                     } else if (r === 90) {
                       cx = pos;
-                      cy = -8;
+                      cy = -PIN_OFFSET;
                       lx = pos;
                       ly = 0;
                     } else if (r === 180) {
-                      cx = rw + 8;
+                      cx = rw + PIN_OFFSET;
                       cy = pos;
                       lx = rw;
                       ly = pos;
                     } else {
                       cx = pos;
-                      cy = rh + 8;
+                      cy = rh + PIN_OFFSET;
                       lx = pos;
                       ly = rh;
                     }
@@ -906,11 +930,35 @@ function GateNode({
                   const slotCount = slots.length;
                   const sizeAxis = isVertical ? rh : rw;
 
+                  // Calculate positions with bus ports getting double spacing
+                  const pinSpacing = PIN_SPACING_UNITS * CELL_SIZE;
+                  let totalSpan = 0;
+
+                  for (let i = 1; i < slotCount; i += 1) {
+                    const prevBus = slots[i - 1].kind === "bus";
+                    const curBus = slots[i].kind === "bus";
+
+                    totalSpan +=
+                      prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+                  }
+
+                  const startOffset =
+                    Math.round((sizeAxis - totalSpan) / 2 / CELL_SIZE) *
+                    CELL_SIZE;
+
+                  // Build position array
+                  const positions: number[] = [startOffset];
+
+                  for (let i = 1; i < slotCount; i += 1) {
+                    const prevBus = slots[i - 1].kind === "bus";
+                    const curBus = slots[i].kind === "bus";
+                    const gap = prevBus || curBus ? pinSpacing * 2 : pinSpacing;
+
+                    positions.push(positions[i - 1] + gap);
+                  }
+
                   return slots.map((slot, si) => {
-                    const pos =
-                      Math.round(
-                        ((sizeAxis / (slotCount + 1)) * (si + 1)) / CELL_SIZE,
-                      ) * CELL_SIZE;
+                    const pos = positions[si];
 
                     if (slot.kind === "bus") {
                       const bx =
@@ -1004,23 +1052,23 @@ function GateNode({
                     let ly: number;
 
                     if (r === 0) {
-                      cx = rw + 8;
+                      cx = rw + PIN_OFFSET;
                       cy = pos;
                       lx = rw;
                       ly = pos;
                     } else if (r === 90) {
                       cx = pos;
-                      cy = rh + 8;
+                      cy = rh + PIN_OFFSET;
                       lx = pos;
                       ly = rh;
                     } else if (r === 180) {
-                      cx = -8;
+                      cx = -PIN_OFFSET;
                       cy = pos;
                       lx = 0;
                       ly = pos;
                     } else {
                       cx = pos;
-                      cy = -8;
+                      cy = -PIN_OFFSET;
                       lx = pos;
                       ly = 0;
                     }

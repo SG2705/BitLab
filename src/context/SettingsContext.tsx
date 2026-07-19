@@ -7,7 +7,6 @@
 
 export {
   type AppSettings,
-  getGridSize,
   getTheme,
   type SettingsPatch,
   settingsStore,

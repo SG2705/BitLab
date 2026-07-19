@@ -8,14 +8,12 @@
 import { useSyncExternalStore } from "react";
 
 import { VERSION } from "@/engine/constants";
-import { CELL_SIZE } from "@/globals";
 import { THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface AppSettings {
-  grid: number;
   wireGlow: number;
   compGlow: number;
   gridColor: string;
@@ -29,7 +27,6 @@ export type SettingsPatch = Partial<AppSettings>;
 const SETTINGS_KEY = `bitlab-settings-v${VERSION}`;
 
 const DEFAULT_SETTINGS: AppSettings = {
-  grid: CELL_SIZE,
   wireGlow: 1,
   compGlow: 1,
   gridColor: "",
@@ -134,10 +131,6 @@ export function useSettings(): AppSettings {
 }
 
 // ── Convenience getters ──────────────────────────────────────────────────────
-
-export const getGridSize = (): number => {
-  return state.grid;
-};
 
 export const getTheme = (): Theme => {
   return state.theme;

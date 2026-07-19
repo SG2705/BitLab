@@ -440,8 +440,8 @@ function DigitalGateApp() {
 
     const def = library.get(type);
     const { x, y } = toWorld(e.clientX, e.clientY);
-    const nx = snapEnabled ? snap(x - def.width / 2) : x - def.width / 2;
-    const ny = snapEnabled ? snap(y - def.height / 2) : y - def.height / 2;
+    const nx = snap(x - def.width / 2);
+    const ny = snap(y - def.height / 2);
     const comp = addComponent(type, nx, ny);
 
     addLog(
@@ -522,8 +522,8 @@ function DigitalGateApp() {
     if (dragCompRef.current) {
       const { id, ox, oy } = dragCompRef.current;
       const p = toWorld(e.clientX, e.clientY);
-      const nx = snapEnabled ? snap(p.x - ox) : p.x - ox;
-      const ny = snapEnabled ? snap(p.y - oy) : p.y - oy;
+      const nx = snap(p.x - ox);
+      const ny = snap(p.y - oy);
 
       dragCompRef.current.moved = true;
 

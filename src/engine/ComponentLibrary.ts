@@ -178,15 +178,17 @@ export interface CustomGateMeta {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const H_OVERRIDES = [GATE_TYPE_PROBE];
+const H_OVERRIDES = [GATE_TYPE_PROBE, GATE_TYPE_DISPLAY7, GATE_TYPE_DIGIT_BIN];
 
 const hw = (c: ComponentDefinition): ComponentDefinition => {
+  const skipResize = H_OVERRIDES.includes(c.type);
+
   return {
     ...c,
     label: LB_MAP[c.type],
-    width: Math.max(MIN_COMP_SIZE, c.width),
-    height: H_OVERRIDES.includes(c.type)
-      ? Math.max(MIN_COMP_SIZE, c.height)
+    width: skipResize ? c.width : Math.max(MIN_COMP_SIZE, c.width),
+    height: skipResize
+      ? c.height
       : getHeightForPinCount(Math.max(c.inputs, c.outputs)),
   };
 };

@@ -42,9 +42,21 @@ export const stateEqual = (
 
 /**
  * Returns the component height for a given max pin count.
- * height = max(MIN_COMP_SIZE, (pinCount + 1) * PIN_SPACING_UNITS * CELL_SIZE)
- * This ensures pin spacing is always grid-aligned.
+ * Ensures that height / (pinCount + 1) is always a multiple of CELL_SIZE,
+ * so pins are evenly spaced on grid points.
  */
 export const getHeightForPinCount = (maxPins: number): number => {
-  return Math.max(MIN_COMP_SIZE, (maxPins + 1) * PIN_SPACING_UNITS * CELL_SIZE);
+  const slots = maxPins + 1;
+  const pinSpacing = PIN_SPACING_UNITS * CELL_SIZE;
+  const naturalHeight = slots * pinSpacing;
+
+  if (naturalHeight >= MIN_COMP_SIZE) {
+    return naturalHeight;
+  }
+
+  // MIN_COMP_SIZE is larger — round up to the nearest multiple of (slots * CELL_SIZE)
+  // so that height / slots is still a multiple of CELL_SIZE
+  const minSpacing = Math.ceil(MIN_COMP_SIZE / (slots * CELL_SIZE)) * CELL_SIZE;
+
+  return slots * minSpacing;
 };
