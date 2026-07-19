@@ -1,6 +1,11 @@
 /**
- * Settings context utilities — persistence, side effects, and constants.
+ * Settings store — external store pattern with useSyncExternalStore.
+ *
+ * No React provider needed. Settings are global, persisted to localStorage,
+ * and CSS variables are applied immediately on change.
  */
+
+import { useSyncExternalStore } from "react";
 
 import { GRID, THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
@@ -15,79 +20,115 @@ export interface AppSettings {
 }
 
 export type SettingsPatch = Partial<AppSettings>;
-export type SettingsAction =
-  SettingsPatch | ((state: AppSettings) => SettingsPatch);
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-export const SETTINGS_KEY = "bitlab-settings";
+const SETTINGS_KEY = "bitlab-settings-v1";
 
-export const DEFAULT_SETTINGS: AppSettings = {
+const DEFAULT_SETTINGS: AppSettings = {
   grid: GRID,
   wireGlow: 1,
   compGlow: 1,
   theme: THEME.DARK,
 };
 
-// ── Persistence helpers ──────────────────────────────────────────────────────
+// ── Internal state ───────────────────────────────────────────────────────────
 
-export const loadFromStorage = (): AppSettings => {
+let state: AppSettings = { ...DEFAULT_SETTINGS };
+const listeners = new Set<() => void>();
+
+// Load from localStorage on module init
+if (typeof window !== "undefined") {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
 
-    if (!raw) return DEFAULT_SETTINGS;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<AppSettings>;
 
-    const parsed = JSON.parse(raw) as Partial<AppSettings>;
-
-    return { ...DEFAULT_SETTINGS, ...parsed };
+      state = { ...state, ...parsed };
+    }
   } catch {
-    return DEFAULT_SETTINGS;
+    // corrupt storage — use defaults
   }
-};
-
-export const saveToStorage = (settings: AppSettings): void => {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch {
-    // localStorage unavailable
-  }
-};
+}
 
 // ── Side effects ─────────────────────────────────────────────────────────────
 
-/** Apply glow intensity CSS variables to the document root */
-export const applyGlowSettings = (wireGlow: number, compGlow: number): void => {
+function applyCssVars(): void {
+  if (typeof document === "undefined") return;
+
   const root = document.documentElement;
 
-  root.style.setProperty("--wire-glow-intensity", String(wireGlow));
-  root.style.setProperty("--comp-glow-intensity", String(compGlow));
+  root.style.setProperty("--wire-glow-intensity", String(state.wireGlow));
+  root.style.setProperty("--comp-glow-intensity", String(state.compGlow));
+}
+
+function applyTheme(): void {
+  if (typeof document === "undefined") return;
+
+  document.documentElement.classList.toggle(
+    "light",
+    state.theme === THEME.LIGHT,
+  );
+  document.documentElement.classList.toggle("dark", state.theme === THEME.DARK);
+}
+
+function applyAll(): void {
+  applyCssVars();
+  applyTheme();
+}
+
+// Apply on initial load
+if (typeof window !== "undefined") applyAll();
+
+// ── Store ────────────────────────────────────────────────────────────────────
+
+export const settingsStore = {
+  get: (): AppSettings => state,
+
+  set: (partial: SettingsPatch): void => {
+    state = { ...state, ...partial };
+
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state));
+    } catch {
+      // localStorage unavailable
+    }
+
+    applyAll();
+    listeners.forEach((l) => l());
+  },
+
+  reset: (): void => {
+    settingsStore.set(DEFAULT_SETTINGS);
+  },
+
+  subscribe: (listener: () => void): (() => void) => {
+    listeners.add(listener);
+
+    return () => {
+      listeners.delete(listener);
+    };
+  },
 };
 
-/** Apply theme classes to document */
-export const applyTheme = (theme: Theme): void => {
-  document.documentElement.classList.toggle("light", theme === THEME.LIGHT);
-  document.documentElement.classList.toggle("dark", theme === THEME.DARK);
+// ── React hook ───────────────────────────────────────────────────────────────
+
+/** Subscribe to the settings store from React components. */
+export function useSettings(): AppSettings {
+  return useSyncExternalStore(
+    settingsStore.subscribe,
+    settingsStore.get,
+    settingsStore.get,
+  );
+}
+
+// ── Convenience getters ──────────────────────────────────────────────────────
+
+export const getGridSize = (): number => {
+  return state.grid;
 };
 
-// ── Reducer ──────────────────────────────────────────────────────────────────
-
-export const settingsReducer = (
-  state: AppSettings,
-  action: SettingsAction,
-): AppSettings => {
-  const patch = typeof action === "function" ? action(state) : action;
-
-  return { ...state, ...patch };
-};
-
-// ── Action creators ──────────────────────────────────────────────────────────
-
-export const SettingsActions = {
-  setGrid: (grid: number): SettingsPatch => ({ grid }),
-  setWireGlow: (wireGlow: number): SettingsPatch => ({ wireGlow }),
-  setCompGlow: (compGlow: number): SettingsPatch => ({ compGlow }),
-  setTheme: (theme: Theme): SettingsPatch => ({ theme }),
-  toggleTheme: (state: AppSettings): SettingsPatch => ({
-    theme: state.theme === THEME.DARK ? THEME.LIGHT : THEME.DARK,
-  }),
+export const getTheme = (): Theme => {
+  return state.theme;
 };

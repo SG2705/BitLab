@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 
 import { BusWirePath, EmptyCanvas, GateNode, WirePath } from "@/components/ui";
-import { SettingsActions, useSettings } from "@/context/SettingsContext";
+import { settingsStore, useSettings } from "@/context/SettingsContext";
 import type { CircuitSnapshot, ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
@@ -366,12 +366,9 @@ function DigitalGateApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Theme is managed by SettingsContext (applies classes automatically)
-  const {
-    state: { theme },
-    dispatch: settingsDispatch,
-  } = useSettings();
-  const setTheme = (t: Theme) => settingsDispatch(SettingsActions.setTheme(t));
+  // Theme is managed by settings store (applies classes automatically)
+  const { theme } = useSettings();
+  const setTheme = (t: Theme) => settingsStore.set({ theme: t });
 
   const toWorld = useCallback(
     (sx: number, sy: number) => {
