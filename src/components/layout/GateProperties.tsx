@@ -12,6 +12,7 @@ import {
   GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
+import { GRID } from "@/lib/constants";
 import { cn, getGateLabel } from "@/lib/utils";
 
 interface PropertiesPanelProps {
@@ -85,6 +86,7 @@ function GateProperties({
             <Input
               type="number"
               value={comp.x}
+              step={GRID}
               onChange={(e) => onUpdate(comp.id, { x: Number(e.target.value) })}
               className="h-8 mt-1 bg-background/60"
             />
@@ -96,6 +98,7 @@ function GateProperties({
             <Input
               type="number"
               value={comp.y}
+              step={GRID}
               onChange={(e) => onUpdate(comp.id, { y: Number(e.target.value) })}
               className="h-8 mt-1 bg-background/60"
             />

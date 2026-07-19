@@ -1,20 +1,43 @@
 /**
- * CircuitViewer — read-only modal showing a custom gate's internal circuit.
+ * CircuitViewer — interactive read-only modal showing a custom gate's internal circuit.
  *
  * Features:
  *   - Renders all components and wires from the stored CircuitSnapshot
  *   - Pan and zoom support
+ *   - Input components are clickable (Toggle, Button, Const, Digit→Bin, Bus Input)
+ *   - Simulation runs live so outputs update based on inputs
+ *   - Reset button to restore all inputs to initial state
+ *   - Clock controls (play/pause/step)
  *   - Export as JSON
- *   - No editing, no simulation, no clock
+ *   - Components and wires are NOT editable
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
-import { Download, X, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  Download,
+  Pause,
+  Play,
+  RotateCcw,
+  StepForward,
+  X,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 
 import { BusWirePath, GateNode, WirePath } from "@/components/ui";
-import { library } from "@/engine";
-import type { CircuitSnapshot } from "@/engine/types";
+import { CircuitManager, library } from "@/engine";
+import {
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
+  GATE_TYPE_BUS_INPUT16,
+  GATE_TYPE_BUTTON,
+  GATE_TYPE_CONST,
+  GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_TOGGLE,
+} from "@/engine/constants";
+import type { CircuitSnapshot, SignalValue } from "@/engine/types";
+import { LogicValue } from "@/engine/types";
 import {
   busPortPos,
   computeBusWireGroups,
@@ -28,12 +51,6 @@ interface CircuitViewerProps {
   circuit: CircuitSnapshot;
   onClose: () => void;
 }
-
-const NOOP = () => {};
-
-const NOOP_MOUSE = () => {};
-
-const NOOP_PIN = () => {};
 
 /**
  * CircuitViewer
@@ -50,6 +67,34 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
     vx: number;
     vy: number;
   } | null>(null);
+
+  // Create a standalone simulation engine for this circuit
+  const managerRef = useRef<CircuitManager | null>(null);
+  const [snapshot, setSnapshot] = useState<CircuitSnapshot>(circuit);
+  const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    const mgr = new CircuitManager();
+
+    mgr.loadSnapshot(structuredClone(circuit));
+    managerRef.current = mgr;
+    setSnapshot(mgr.getSnapshot());
+
+    // Listen for state changes
+    const unsub = mgr.on((event) => {
+      if (event.type === "snapshot-changed") {
+        setSnapshot(mgr.getSnapshot());
+      }
+
+      if (event.type === "started") setIsRunning(true);
+      if (event.type === "paused") setIsRunning(false);
+    });
+
+    return () => {
+      unsub();
+      mgr.stopSimulation();
+    };
+  }, [circuit]);
 
   // Resize observer
   useEffect(() => {
@@ -161,6 +206,86 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
     panStartRef.current = null;
   };
 
+  // Input interaction handlers
+  const handleCompClick = useCallback((compId: string) => {
+    const mgr = managerRef.current;
+
+    if (!mgr) return;
+
+    const comp = mgr.getComponent(compId);
+
+    if (!comp) return;
+
+    if (comp.type === GATE_TYPE_TOGGLE || comp.type === GATE_TYPE_CONST) {
+      mgr.setInput(compId, { on: !comp.state?.on });
+    } else if (comp.type === GATE_TYPE_DIGIT_BIN) {
+      mgr.setInput(compId, {
+        digit: (((comp.state?.digit as number) ?? -1) + 1) % 10,
+      });
+    } else if (
+      comp.type === GATE_TYPE_BUS_INPUT4 ||
+      comp.type === GATE_TYPE_BUS_INPUT8 ||
+      comp.type === GATE_TYPE_BUS_INPUT16
+    ) {
+      const current = (comp.state?.signal as number) ?? LogicValue.ZERO;
+      const order = [
+        LogicValue.ZERO,
+        LogicValue.ONE,
+        LogicValue.UNKNOWN,
+        LogicValue.HIGH_IMPEDANCE,
+      ];
+      const idx = order.indexOf(current);
+      const next = order[(idx + 1) % order.length];
+
+      mgr.setInput(compId, { signal: next });
+    }
+
+    setSnapshot(mgr.getSnapshot());
+  }, []);
+
+  const handleButtonDown = useCallback((compId: string) => {
+    const mgr = managerRef.current;
+
+    if (!mgr) return;
+
+    mgr.setInput(compId, { on: true });
+    setSnapshot(mgr.getSnapshot());
+  }, []);
+
+  const handleButtonUp = useCallback((compId: string) => {
+    const mgr = managerRef.current;
+
+    if (!mgr) return;
+
+    mgr.setInput(compId, { on: false });
+    setSnapshot(mgr.getSnapshot());
+  }, []);
+
+  // Simulation controls
+  const handleStart = () => {
+    managerRef.current?.startSimulation();
+  };
+
+  const handlePause = () => {
+    managerRef.current?.pauseSimulation();
+  };
+
+  const handleStep = () => {
+    managerRef.current?.stepSimulation();
+    setSnapshot(managerRef.current?.getSnapshot() ?? snapshot);
+  };
+
+  const handleReset = () => {
+    const mgr = managerRef.current;
+
+    if (!mgr) return;
+
+    mgr.stopSimulation();
+    mgr.loadSnapshot(structuredClone(circuit));
+    setIsRunning(false);
+    setSnapshot(mgr.getSnapshot());
+  };
+
   const exportJSON = () => {
     const json = JSON.stringify(circuit, null, 2);
     const blob = new Blob([json], { type: "application/json" });
@@ -173,6 +298,16 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
 
     URL.revokeObjectURL(url);
   };
+
+  // Determine if a component is an interactive input
+  const isInputComp = (type: string): boolean =>
+    type === GATE_TYPE_TOGGLE ||
+    type === GATE_TYPE_CONST ||
+    type === GATE_TYPE_BUTTON ||
+    type === GATE_TYPE_DIGIT_BIN ||
+    type === GATE_TYPE_BUS_INPUT4 ||
+    type === GATE_TYPE_BUS_INPUT8 ||
+    type === GATE_TYPE_BUS_INPUT16;
 
   return (
     <div
@@ -198,6 +333,56 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Simulation controls */}
+          <button
+            type="button"
+            onClick={handleReset}
+            className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title={intl.formatMessage({
+              id: "jm/spn",
+              defaultMessage: "Reset",
+            })}
+          >
+            <RotateCcw className="h-4 w-4" />
+          </button>
+          {isRunning ? (
+            <button
+              type="button"
+              onClick={handlePause}
+              className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              title={intl.formatMessage({
+                id: "tFFMkF",
+                defaultMessage: "Pause",
+              })}
+            >
+              <Pause className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStart}
+              className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+              title={intl.formatMessage({
+                id: "KiXNvz",
+                defaultMessage: "Run",
+              })}
+            >
+              <Play className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleStep}
+            className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title={intl.formatMessage({
+              id: "p7+Jxw",
+              defaultMessage: "Tick",
+            })}
+          >
+            <StepForward className="h-4 w-4" />
+          </button>
+          <div className="w-px h-5 bg-border mx-1" />
+          {/* Zoom & export */}
           <button
             type="button"
             onClick={() =>
@@ -262,17 +447,17 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
           <g transform={`translate(${view.x}, ${view.y}) scale(${view.k})`}>
             {/* Wires */}
             {(() => {
-              const busGroups = computeBusWireGroups(circuit);
+              const busGroups = computeBusWireGroups(snapshot);
               const busWireIds = new Set(busGroups.flatMap((g) => g.wireIds));
 
               return (
                 <>
                   {/* Regular wires (not part of bus groups) */}
-                  {Object.values(circuit.wires).map((w) => {
+                  {Object.values(snapshot.wires).map((w) => {
                     if (busWireIds.has(w.id)) return null;
 
-                    const a = circuit.components[w.from.comp];
-                    const b = circuit.components[w.to.comp];
+                    const a = snapshot.components[w.from.comp];
+                    const b = snapshot.components[w.to.comp];
 
                     if (!a || !b) return null;
                     if (!library.has(a.type) || !library.has(b.type))
@@ -280,6 +465,8 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
 
                     const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                     const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+                    const signal: SignalValue =
+                      a.outputs[w.from.pin] ?? LogicValue.ZERO;
                     const d1 = pinDirection(a, PIN_KIND.OUT);
                     const d2 = pinDirection(b, PIN_KIND.IN);
 
@@ -288,8 +475,8 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                         key={w.id}
                         p1={p1}
                         p2={p2}
-                        isSignalUp={false}
-                        isRunning={false}
+                        isSignalUp={signal === LogicValue.ONE}
+                        isRunning={isRunning}
                         wireType="bezier"
                         dir1={d1}
                         dir2={d2}
@@ -298,12 +485,12 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                   })}
                   {/* Bus wires */}
                   {busGroups.map((group) => {
-                    const sourceComp = circuit.components[group.fromComp];
-                    const targetComp = circuit.components[group.toComp];
+                    const sourceComp = snapshot.components[group.fromComp];
+                    const targetComp = snapshot.components[group.toComp];
 
                     if (!sourceComp || !targetComp) return null;
 
-                    const firstWire = circuit.wires[group.wireIds[0]];
+                    const firstWire = snapshot.wires[group.wireIds[0]];
                     const firstFromPin = firstWire?.from.pin ?? 0;
                     const firstToPin = firstWire?.to.pin ?? 0;
                     const sourceDef = library.has(sourceComp.type)
@@ -334,6 +521,7 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
                         dir1={bd1}
                         dir2={bd2}
                         isSelected={false}
+                        isRunning={isRunning}
                       />
                     );
                   })}
@@ -341,18 +529,30 @@ function CircuitViewer({ name, circuit, onClose }: CircuitViewerProps) {
               );
             })()}
             {/* Components */}
-            {Object.values(circuit.components).map((c) => {
+            {Object.values(snapshot.components).map((c) => {
               if (!library.has(c.type)) return null;
+
+              const isInput = isInputComp(c.type);
 
               return (
                 <GateNode
                   key={c.id}
                   comp={c}
                   isSelected={false}
-                  onMouseDown={NOOP_MOUSE}
-                  onClickBody={NOOP}
-                  onPinDown={NOOP_PIN}
-                  onPinUp={NOOP_PIN}
+                  onMouseDown={() => {}}
+                  onClickBody={isInput ? () => handleCompClick(c.id) : () => {}}
+                  onPointerDownBody={
+                    c.type === GATE_TYPE_BUTTON
+                      ? () => handleButtonDown(c.id)
+                      : undefined
+                  }
+                  onPointerUpBody={
+                    c.type === GATE_TYPE_BUTTON
+                      ? () => handleButtonUp(c.id)
+                      : undefined
+                  }
+                  onPinDown={() => {}}
+                  onPinUp={() => {}}
                 />
               );
             })}

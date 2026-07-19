@@ -128,15 +128,33 @@
 }
 
 @utility signal-glow {
-  filter: none;
+  filter: drop-shadow(0 0 3px var(--color-signal-on))
+    drop-shadow(0 0 6px var(--color-signal-on));
 }
 
 @utility signal-glow-unknown {
-  filter: none;
+  filter: drop-shadow(0 0 3px var(--color-signal-unknown))
+    drop-shadow(0 0 6px var(--color-signal-unknown));
 }
 
 @utility signal-glow-highz {
-  filter: none;
+  filter: drop-shadow(0 0 3px var(--color-signal-highz))
+    drop-shadow(0 0 6px var(--color-signal-highz));
+}
+
+@utility comp-glow {
+  filter: drop-shadow(0 0 4px var(--color-signal-on))
+    drop-shadow(0 0 8px var(--color-signal-on));
+}
+
+@utility comp-glow-unknown {
+  filter: drop-shadow(0 0 4px var(--color-signal-unknown))
+    drop-shadow(0 0 8px var(--color-signal-unknown));
+}
+
+@utility comp-glow-highz {
+  filter: drop-shadow(0 0 4px var(--color-signal-highz))
+    drop-shadow(0 0 8px var(--color-signal-highz));
 }
 
 @keyframes dash-flow {

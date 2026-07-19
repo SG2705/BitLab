@@ -155,7 +155,9 @@ function WirePath({
         strokeDasharray={isPreview ? "5 5" : undefined}
         className={cn(
           isActive && isRunning && "wire-flow",
-          isActive && "signal-glow",
+          effectiveSignal === LogicValue.ONE && "signal-glow",
+          effectiveSignal === LogicValue.UNKNOWN && "signal-glow-unknown",
+          effectiveSignal === LogicValue.HIGH_IMPEDANCE && "signal-glow-highz",
         )}
         style={{ opacity: isPreview ? 0.7 : 1 }}
       />

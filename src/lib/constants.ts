@@ -204,7 +204,7 @@ export const BASE_LOG = {
   kind: CONSOLE_TAB.LOG,
   msg: "BitLab ready. Drag components from the toolbox to get started.",
 };
-export const GRID = 20;
+export const GRID = 5;
 export const TOOL = { SELECT: "select", PAN: "pan" };
 
 // ── Labels ───────────────────────────────────────────────────────────────────

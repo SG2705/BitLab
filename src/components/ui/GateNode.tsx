@@ -81,6 +81,21 @@ function glowClass(signal: SignalValue): string {
   }
 }
 
+function compGlowClass(signal: SignalValue): string {
+  switch (signal) {
+    case LogicValue.ONE:
+      return "comp-glow";
+    case LogicValue.UNKNOWN:
+      return "comp-glow-unknown";
+    case LogicValue.HIGH_IMPEDANCE:
+      return "comp-glow-highz";
+    case LogicValue.ZERO:
+      return "";
+    default:
+      return "";
+  }
+}
+
 function SevenSegDisplay({ value }: { value: number }) {
   // eslint-disable-next-line no-bitwise
   const pattern = SEG7[value & 0xf] ?? SEG7[0];
@@ -281,9 +296,9 @@ function GateNode({
     dominantOutput !== LogicValue.ZERO || Boolean(comp.state?.on);
   const bodyGlow =
     dominantOutput !== LogicValue.ZERO
-      ? glowClass(dominantOutput)
+      ? compGlowClass(dominantOutput)
       : comp.state?.on
-        ? "signal-glow"
+        ? "comp-glow"
         : "";
   const isIO = [
     GATE_TYPE_TOGGLE,
