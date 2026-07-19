@@ -7,6 +7,7 @@
 
 import { useSyncExternalStore } from "react";
 
+import { VERSION } from "@/engine/constants";
 import { GRID, THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 
@@ -23,7 +24,7 @@ export type SettingsPatch = Partial<AppSettings>;
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const SETTINGS_KEY = "bitlab-settings-v1";
+const SETTINGS_KEY = `bitlab-settings-v${VERSION}`;
 
 const DEFAULT_SETTINGS: AppSettings = {
   grid: GRID,

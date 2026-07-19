@@ -13,7 +13,12 @@ import { THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Category = "canvas" | "theme";
+const SETTINGS_CATEGORY = {
+  CANVAS: "canvas",
+  THEME: "theme",
+} as const;
+
+type Category = (typeof SETTINGS_CATEGORY)[keyof typeof SETTINGS_CATEGORY];
 
 interface SettingsPanelProps {
   onClose: () => void;
@@ -23,7 +28,7 @@ interface SettingsPanelProps {
 
 function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
   const settings = useSettings();
-  const [cat, setCat] = useState<Category>("canvas");
+  const [cat, setCat] = useState<Category>(SETTINGS_CATEGORY.CANVAS);
 
   return (
     <div
@@ -48,14 +53,14 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
             Settings
           </div>
           <SideItem
-            active={cat === "canvas"}
-            onClick={() => setCat("canvas")}
+            active={cat === SETTINGS_CATEGORY.CANVAS}
+            onClick={() => setCat(SETTINGS_CATEGORY.CANVAS)}
             icon={<Frame className="h-4 w-4" />}
             label="Canvas"
           />
           <SideItem
-            active={cat === "theme"}
-            onClick={() => setCat("theme")}
+            active={cat === SETTINGS_CATEGORY.THEME}
+            onClick={() => setCat(SETTINGS_CATEGORY.THEME)}
             icon={<PaletteIcon className="h-4 w-4" />}
             label="Theme"
           />
@@ -76,7 +81,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
           <header className="h-12 shrink-0 border-b border-border flex items-center justify-between px-4">
             <div className="font-semibold tracking-tight">
               {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
-              {cat === "canvas" ? "Canvas" : "Theme"}
+              {cat === SETTINGS_CATEGORY.CANVAS ? "Canvas" : "Theme"}
             </div>
             <button
               type="button"
@@ -88,7 +93,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
           </header>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {cat === "canvas" && (
+            {cat === SETTINGS_CATEGORY.CANVAS && (
               <>
                 <SliderRow
                   label="Grid size"
@@ -123,7 +128,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
               </>
             )}
 
-            {cat === "theme" && (
+            {cat === SETTINGS_CATEGORY.THEME && (
               <div>
                 {/* eslint-disable-next-line formatjs/no-literal-string-in-jsx */}
                 <div className="text-sm font-medium mb-1">Theme</div>
