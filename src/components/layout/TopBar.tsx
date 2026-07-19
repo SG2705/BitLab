@@ -4,6 +4,7 @@ import {
   Clock,
   Command,
   FolderOpen,
+  Layers,
   Package,
   Pause,
   Play,
@@ -42,6 +43,8 @@ interface TopBarProps {
   importCircuit: () => void;
   createCircuitFromGates: () => void;
   hasComponents: boolean;
+  showObstacleMap: boolean;
+  toggleObstacleMap: () => void;
 }
 
 interface TBBtnProps {
@@ -91,6 +94,8 @@ function TopBar({
   createCircuitFromGates,
   importCircuit,
   hasComponents,
+  showObstacleMap,
+  toggleObstacleMap,
 }: TopBarProps) {
   const intl = useIntl();
 
@@ -239,6 +244,15 @@ function TopBar({
         ) : null}
       </div>
       <div className="ml-auto flex items-center gap-1">
+        <TBBtn
+          onClick={toggleObstacleMap}
+          icon={
+            <Layers
+              className={`h-4 w-4 ${showObstacleMap ? "text-primary" : ""}`}
+            />
+          }
+          label="Toggle obstacle map"
+        />
         <TBBtn
           onClick={openSettings}
           icon={<Settings className="h-4 w-4" />}

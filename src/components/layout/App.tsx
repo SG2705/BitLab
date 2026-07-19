@@ -43,6 +43,7 @@ import {
   type WireType,
 } from "@/lib/types";
 import { cn, getGateLabel, initializeLogger, snap } from "@/lib/utils";
+import { ObstacleMap } from "@/wirerouter";
 
 import BottomBar from "./BottomBar";
 import CanvasToolbar from "./CanvasToolbar";
@@ -54,6 +55,8 @@ import ExplorerPanel from "./ExplorerPanel";
 import GateProperties from "./GateProperties";
 import GridBackground from "./GridBackground";
 import Minimap from "./Minimap";
+import ObstacleMapInfo from "./ObstacleMapInfo";
+import ObstacleMapOverlay from "./ObstacleMapOverlay";
 import SettingsPanel from "./SettingsPanel";
 import TopBar from "./TopBar";
 import WireProperties from "./WireProperties";
@@ -130,6 +133,10 @@ function DigitalGateApp() {
     y1: number;
   } | null>(null);
   const [tool, setTool] = useState<Tool>(TOOL.SELECT);
+  const [showObstacleMap, setShowObstacleMap] = useState(false);
+  const [obstacleMapVersion, setObstacleMapVersion] = useState(0);
+
+  const obstacleMapRef = useRef<ObstacleMap>(new ObstacleMap());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -183,6 +190,12 @@ function DigitalGateApp() {
     // eslint-disable-next-line consistent-return
     return () => ro.disconnect();
   }, []);
+
+  // Rebuild obstacle map whenever the circuit snapshot changes
+  useEffect(() => {
+    obstacleMapRef.current.buildFromSnapshot(snapshot);
+    setObstacleMapVersion((v) => v + 1);
+  }, [snapshot]);
 
   useEffect(() => {
     try {
@@ -1127,6 +1140,8 @@ function DigitalGateApp() {
         createCircuitFromGates={createCircuitFromGates}
         importCircuit={() => fileInputRef.current?.click()}
         hasComponents={Object.keys(snapshot.components).length > 0}
+        showObstacleMap={showObstacleMap}
+        toggleObstacleMap={() => setShowObstacleMap((v) => !v)}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -1154,6 +1169,12 @@ function DigitalGateApp() {
             setView={setView}
             fitToScreen={fitToScreen}
           />
+          {showObstacleMap && (
+            <ObstacleMapInfo
+              obstacleMap={obstacleMapRef.current}
+              version={obstacleMapVersion}
+            />
+          )}
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             ref={canvasRef}
@@ -1177,6 +1198,14 @@ function DigitalGateApp() {
             onMouseLeave={onCanvasMouseUp}
           >
             <GridBackground view={view} size={size} />
+            {showObstacleMap && (
+              <ObstacleMapOverlay
+                obstacleMap={obstacleMapRef.current}
+                view={view}
+                size={size}
+                version={obstacleMapVersion}
+              />
+            )}
             {/* Wires and components */}
             <svg
               ref={svgRef}
