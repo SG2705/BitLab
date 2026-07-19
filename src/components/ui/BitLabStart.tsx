@@ -1,7 +1,7 @@
 /**
- * BitLabLogo
+ * BitLabStart
  */
-function BitLabLogo() {
+function BitLabStart() {
   return (
     <div className="relative mx-auto h-28 w-28">
       {/* Rotating glow ring */}
@@ -91,4 +91,4 @@ function BitLabLogo() {
   );
 }
 
-export default BitLabLogo;
+export default BitLabStart;

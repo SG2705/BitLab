@@ -1,6 +1,7 @@
 export { default as Input } from "./Input";
 export { default as Button, buttonVariants } from "./Button";
-export { default as BitLabLogo } from "./BitLabLogo";
+export { default as BitLabStart } from "./BitLabStart";
+export { default as BitLabLoader } from "./BitLabLoader";
 export { default as GATE_ICON } from "./GateIcon";
 export { default as BusWirePath } from "./BusWirePath";
 export { default as GateChip } from "./GateChip";

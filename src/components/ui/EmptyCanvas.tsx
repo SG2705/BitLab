@@ -1,6 +1,6 @@
 import { FormattedMessage } from "react-intl";
 
-import BitLabLogo from "./BitLabLogo";
+import BitLabStart from "./BitLabStart";
 
 /**
  * EmptyCanvas
@@ -9,7 +9,7 @@ function EmptyCanvas() {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
       <div className="text-center">
-        <BitLabLogo />
+        <BitLabStart />
         <div className="text-lg font-semibold">
           <FormattedMessage id="GkBxYy" defaultMessage="Start designing" />
         </div>

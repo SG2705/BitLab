@@ -1542,7 +1542,13 @@ function DigitalGateApp() {
       )}
 
       {/* Settings Panel */}
-      {settingsOpen && <SettingsPanel onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && (
+        <SettingsPanel
+          onClose={() => setSettingsOpen(false)}
+          theme={theme}
+          setTheme={setTheme}
+        />
+      )}
     </div>
   );
 }
