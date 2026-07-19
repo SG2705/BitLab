@@ -8,7 +8,8 @@
 import { useSyncExternalStore } from "react";
 
 import { VERSION } from "@/engine/constants";
-import { GRID, THEME } from "@/lib/constants";
+import { CELL_SIZE } from "@/globals";
+import { THEME } from "@/lib/constants";
 import { type Theme } from "@/lib/types";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ export type SettingsPatch = Partial<AppSettings>;
 const SETTINGS_KEY = `bitlab-settings-v${VERSION}`;
 
 const DEFAULT_SETTINGS: AppSettings = {
-  grid: GRID,
+  grid: CELL_SIZE,
   wireGlow: 1,
   compGlow: 1,
   gridColor: "",

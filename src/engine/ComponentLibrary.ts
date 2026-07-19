@@ -7,6 +7,8 @@
  */
 import { v4 as uuidv4 } from "uuid";
 
+import { MIN_COMP_SIZE } from "@/globals";
+
 import {
   GATE_CATEGORY_ARITHMETIC,
   GATE_CATEGORY_CUSTOM,
@@ -182,8 +184,9 @@ const hw = (c: ComponentDefinition): ComponentDefinition => {
   return {
     ...c,
     label: LB_MAP[c.type],
+    width: Math.max(MIN_COMP_SIZE, c.width),
     height: H_OVERRIDES.includes(c.type)
-      ? c.height
+      ? Math.max(MIN_COMP_SIZE, c.height)
       : getHeightForPinCount(Math.max(c.inputs, c.outputs)),
   };
 };

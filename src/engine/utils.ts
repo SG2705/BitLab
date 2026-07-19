@@ -3,7 +3,7 @@
  * No UI or framework dependencies.
  */
 
-import { PIN_COUNT_HEIGHT } from "./constants";
+import { CELL_SIZE, MIN_COMP_SIZE, PIN_SPACING_UNITS } from "@/globals";
 
 /**
  * Shallow equality check for component state objects.
@@ -41,28 +41,10 @@ export const stateEqual = (
 };
 
 /**
- * Returns the standardized component height for a given max pin count.
- * If the exact count isn't in PIN_COUNT_HEIGHT, returns the height of the
- * nearest key (rounding up on ties).
+ * Returns the component height for a given max pin count.
+ * height = max(MIN_COMP_SIZE, (pinCount + 1) * PIN_SPACING_UNITS * CELL_SIZE)
+ * This ensures pin spacing is always grid-aligned.
  */
 export const getHeightForPinCount = (maxPins: number): number => {
-  const keys = Object.keys(PIN_COUNT_HEIGHT)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  if (maxPins in PIN_COUNT_HEIGHT) return PIN_COUNT_HEIGHT[maxPins];
-
-  let closest = keys[0];
-  let minDist = Math.abs(maxPins - closest);
-
-  for (const k of keys) {
-    const dist = Math.abs(maxPins - k);
-
-    if (dist < minDist || (dist === minDist && k > closest)) {
-      closest = k;
-      minDist = dist;
-    }
-  }
-
-  return PIN_COUNT_HEIGHT[closest];
+  return Math.max(MIN_COMP_SIZE, (maxPins + 1) * PIN_SPACING_UNITS * CELL_SIZE);
 };

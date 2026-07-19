@@ -43,7 +43,7 @@ import {
   type WireType,
 } from "@/lib/types";
 import { cn, getGateLabel, initializeLogger, snap } from "@/lib/utils";
-import { ObstacleMap } from "@/wirerouter";
+import { type CachedRoute, type ObstacleMap, WireRouter } from "@/wirerouter";
 
 import BottomBar from "./BottomBar";
 import CanvasToolbar from "./CanvasToolbar";
@@ -135,8 +135,14 @@ function DigitalGateApp() {
   const [tool, setTool] = useState<Tool>(TOOL.SELECT);
   const [showObstacleMap, setShowObstacleMap] = useState(false);
   const [obstacleMapVersion, setObstacleMapVersion] = useState(0);
+  const [routedWires, setRoutedWires] = useState<Map<string, CachedRoute>>(
+    new Map(),
+  );
 
-  const obstacleMapRef = useRef<ObstacleMap>(new ObstacleMap());
+  const wireRouterRef = useRef<WireRouter>(new WireRouter());
+  const obstacleMapRef = useRef<ObstacleMap>(
+    wireRouterRef.current.getObstacleMap(),
+  );
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -191,11 +197,19 @@ function DigitalGateApp() {
     return () => ro.disconnect();
   }, []);
 
-  // Rebuild obstacle map whenever the circuit snapshot changes
+  // Rebuild obstacle map and re-route wires whenever the circuit snapshot changes
   useEffect(() => {
-    obstacleMapRef.current.buildFromSnapshot(snapshot);
+    wireRouterRef.current.rebuild(snapshot);
+    obstacleMapRef.current = wireRouterRef.current.getObstacleMap();
     setObstacleMapVersion((v) => v + 1);
-  }, [snapshot]);
+
+    // Compute routes for all wires when in OPTIMIZED mode
+    if (wireStyle === WIRE_TYPE.OPTIMIZED) {
+      const routes = wireRouterRef.current.routeAll(snapshot);
+
+      setRoutedWires(routes);
+    }
+  }, [snapshot, wireStyle]);
 
   useEffect(() => {
     try {
@@ -1229,6 +1243,13 @@ function DigitalGateApp() {
                   const d1 = pinDirection(a, PIN_KIND.OUT);
                   const d2 = pinDirection(b, PIN_KIND.IN);
 
+                  // Get cached waypoints for optimized mode
+                  const cachedRoute = routedWires.get(w.id);
+                  const waypoints =
+                    wireStyle === WIRE_TYPE.OPTIMIZED && cachedRoute?.valid
+                      ? cachedRoute.waypoints
+                      : undefined;
+
                   return (
                     <WirePath
                       key={w.id}
@@ -1241,6 +1262,7 @@ function DigitalGateApp() {
                       dir1={d1}
                       dir2={d2}
                       isSelected={selWires.has(w.id)}
+                      waypoints={waypoints}
                       onClick={(e: React.MouseEvent) => {
                         e.stopPropagation();
 

@@ -1,6 +1,13 @@
 import { memo } from "react";
 import { FormattedMessage } from "react-intl";
-import { Activity, Grid3x3, Hand, MousePointer2 } from "lucide-react";
+import {
+  Activity,
+  Grid3x3,
+  Hand,
+  MousePointer2,
+  Route,
+  Spline,
+} from "lucide-react";
 
 import { ToolBtn } from "@/components/ui";
 import { TOOL, WIRE_TYPE } from "@/lib/constants";
@@ -52,17 +59,24 @@ function CanvasToolbar({
           icon={<Grid3x3 className="h-4 w-4" />}
           label="Snap to grid"
         />
+        <div className="w-px h-5 bg-border mx-1" />
+        <ToolBtn
+          active={wireStyle === WIRE_TYPE.BEZIER}
+          onClick={() => setWireStyle(WIRE_TYPE.BEZIER)}
+          icon={<Spline className="h-4 w-4" />}
+          label="Wire: Bezier"
+        />
         <ToolBtn
           active={wireStyle === WIRE_TYPE.ORTHO}
-          onClick={() =>
-            setWireStyle(
-              wireStyle === WIRE_TYPE.ORTHO
-                ? WIRE_TYPE.BEZIER
-                : WIRE_TYPE.ORTHO,
-            )
-          }
+          onClick={() => setWireStyle(WIRE_TYPE.ORTHO)}
           icon={<Activity className="h-4 w-4" />}
-          label={`Wire: ${wireStyle}`}
+          label="Wire: Ortho"
+        />
+        <ToolBtn
+          active={wireStyle === WIRE_TYPE.OPTIMIZED}
+          onClick={() => setWireStyle(WIRE_TYPE.OPTIMIZED)}
+          icon={<Route className="h-4 w-4" />}
+          label="Wire: Optimized"
         />
       </div>
 

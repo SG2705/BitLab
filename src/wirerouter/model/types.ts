@@ -34,7 +34,7 @@ export interface GridCell {
 
 /** Configuration for the obstacle map and router. */
 export interface RouterConfig {
-  /** Grid cell size in pixels (derived from app GRID constant) */
+  /** Grid cell size in pixels (derived from app CELL_SIZE constant) */
   cellSize: number;
   /** Padding around obstacles in grid units */
   obstaclePadding: number;
@@ -42,6 +42,8 @@ export interface RouterConfig {
   stubLength: number;
   /** Cost multiplier for changing direction (higher = fewer bends) */
   turnPenalty: number;
+  /** Corner radius in pixels for rounded bends (0 = sharp corners) */
+  bendRadius: number;
 }
 
 /** The state of a single cell in the obstacle grid. */

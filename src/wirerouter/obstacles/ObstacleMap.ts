@@ -10,7 +10,7 @@
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { GRID } from "@/lib/constants";
+import { CELL_SIZE } from "@/globals";
 
 import {
   CellState,
@@ -23,10 +23,11 @@ import {
 
 /** Default router configuration */
 export const DEFAULT_ROUTER_CONFIG: RouterConfig = {
-  cellSize: GRID,
+  cellSize: CELL_SIZE,
   obstaclePadding: 3, // 3 grid cells padding
   stubLength: 3, // 3 grid cells stub
   turnPenalty: 50, // strong preference for fewer bends
+  bendRadius: 0, // 4px rounded corners at bends
 };
 
 export class ObstacleMap {
@@ -77,7 +78,7 @@ export class ObstacleMap {
   }
 
   /** Get the state of a specific grid cell */
-  getCellState(col: number, row: number): CellState {
+  getCellState(col: number, row: number): number {
     if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) {
       return CellState.BLOCKED; // out of bounds = blocked
     }
@@ -87,14 +88,14 @@ export class ObstacleMap {
 
   /** Check if a cell is walkable (FREE only — PADDED cells are avoided) */
   isFree(col: number, row: number): boolean {
-    return this.getCellState(col, row) === CellState.FREE;
+    return this.getCellState(col, row) === 0; // CellState.FREE
   }
 
   /** Check if a cell is walkable for routing (FREE or PADDED are both passable) */
   isPassable(col: number, row: number): boolean {
     const state = this.getCellState(col, row);
 
-    return state === CellState.FREE || state === CellState.PADDED;
+    return state === 0 || state === 2; // FREE or PADDED
   }
 
   /** Convert a world-coordinate point to a grid cell */

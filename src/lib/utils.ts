@@ -5,12 +5,8 @@ import { twMerge } from "tailwind-merge";
 
 import type { SignalValue } from "@/engine";
 import { LogicValue } from "@/engine";
-import {
-  GATE_TYPE_LABELS,
-  GRID,
-  MESSAGES,
-  type Messages,
-} from "@/lib/constants";
+import { CELL_SIZE } from "@/globals";
+import { GATE_TYPE_LABELS, MESSAGES, type Messages } from "@/lib/constants";
 import { type ConsoleTab, type LogEntry } from "@/lib/types";
 
 export const cn = (...inputs: ClassValue[]) => {
@@ -64,7 +60,7 @@ export const initializeLogger = (
 };
 
 export const snap = (v: number) => {
-  return Math.round(v / GRID) * GRID;
+  return Math.round(v / CELL_SIZE) * CELL_SIZE;
 };
 
 /** Convert signals array to hex string (index 0 = LSB) */

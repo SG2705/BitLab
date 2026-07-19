@@ -14,6 +14,7 @@ import {
   GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
+import { CELL_SIZE } from "@/globals";
 import { PIN_KIND } from "@/lib/constants";
 import { type PinKind } from "@/lib/types";
 import { cn, getGateLabel, resolveLabel } from "@/lib/utils";
@@ -628,7 +629,10 @@ function GateNode({
                   const sizeAxis = isVertical ? rh : rw;
 
                   return slots.map((slot, si) => {
-                    const pos = (sizeAxis / (slotCount + 1)) * (si + 1);
+                    const pos =
+                      Math.round(
+                        ((sizeAxis / (slotCount + 1)) * (si + 1)) / CELL_SIZE,
+                      ) * CELL_SIZE;
 
                     if (slot.kind === "bus") {
                       // Render bus port square
@@ -903,7 +907,10 @@ function GateNode({
                   const sizeAxis = isVertical ? rh : rw;
 
                   return slots.map((slot, si) => {
-                    const pos = (sizeAxis / (slotCount + 1)) * (si + 1);
+                    const pos =
+                      Math.round(
+                        ((sizeAxis / (slotCount + 1)) * (si + 1)) / CELL_SIZE,
+                      ) * CELL_SIZE;
 
                     if (slot.kind === "bus") {
                       const bx =

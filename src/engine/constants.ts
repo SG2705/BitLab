@@ -146,20 +146,6 @@ export const PINC9 = 9;
 export const PINC11 = 11;
 export const PINC16 = 16;
 
-export const PIN_COUNT_HEIGHT: Record<number, number> = {
-  [PINC0]: 35,
-  [PINC1]: 50,
-  [PINC2]: 65,
-  [PINC3]: 70,
-  [PINC4]: 85,
-  [PINC5]: 95,
-  [PINC6]: 90,
-  [PINC8]: 115,
-  [PINC9]: 130,
-  [PINC11]: 160,
-  [PINC16]: 200,
-};
-
 // ── Label map ──────────────────────────────────────────────────────
 export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_AND]: "lb_and",

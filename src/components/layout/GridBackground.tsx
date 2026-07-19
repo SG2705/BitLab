@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-import { GRID } from "@/lib/constants";
+import { CELL_SIZE } from "@/globals";
 
 interface GridBackgroundProps {
   view: { x: number; y: number; k: number };
@@ -8,7 +8,7 @@ interface GridBackgroundProps {
 }
 
 function GridBackground({ view, size }: GridBackgroundProps) {
-  const step = GRID * view.k;
+  const step = CELL_SIZE * view.k;
   const offX = view.x % step;
   const offY = view.y % step;
 

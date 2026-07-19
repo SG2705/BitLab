@@ -8,6 +8,7 @@
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import { KEY_SEPARATOR } from "@/engine/constants";
+import { CELL_SIZE } from "@/globals";
 import { PIN_DIR, PIN_KIND } from "@/lib/constants";
 import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 
@@ -108,7 +109,7 @@ export function pinPos(
 
   const sizeAxis = isVertical ? rh : rw;
   const spacing = sizeAxis / (slotCount + 1);
-  const pos = spacing * (slotIndex + 1);
+  const pos = Math.round((spacing * (slotIndex + 1)) / CELL_SIZE) * CELL_SIZE;
 
   let x: number;
   let y: number;

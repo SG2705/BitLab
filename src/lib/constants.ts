@@ -178,7 +178,11 @@ export type Messages = keyof typeof MESSAGES;
 
 // ── UI-only Constants ────────────────────────────────────────────────────────
 
-export const WIRE_TYPE = { BEZIER: "bezier", ORTHO: "ortho" };
+export const WIRE_TYPE = {
+  BEZIER: "bezier",
+  ORTHO: "ortho",
+  OPTIMIZED: "optimized",
+};
 export const PIN_KIND = { IN: "in", OUT: "out" };
 export const PIN_DIR = {
   LEFT: "left",
@@ -204,7 +208,6 @@ export const BASE_LOG = {
   kind: CONSOLE_TAB.LOG,
   msg: "BitLab ready. Drag components from the toolbox to get started.",
 };
-export const GRID = 5;
 export const TOOL = { SELECT: "select", PAN: "pan" };
 
 // ── Labels ───────────────────────────────────────────────────────────────────

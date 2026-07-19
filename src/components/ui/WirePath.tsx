@@ -5,6 +5,7 @@ import { LogicValue } from "@/engine";
 import { PIN_DIR, WIRE_TYPE } from "@/lib/constants";
 import { type PinDir, type WireType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { waypointsToPath } from "@/wirerouter";
 
 interface Point {
   x: number;
@@ -41,6 +42,10 @@ interface WirePathProps {
   dir2?: PinDir;
   isSelected?: boolean;
   isPreview?: boolean;
+  /** Pre-computed waypoints for OPTIMIZED wire routing */
+  waypoints?: Point[];
+  /** Corner radius for bends in OPTIMIZED mode */
+  bendRadius?: number;
   onClick?: (e: React.MouseEvent) => void;
 }
 
@@ -119,6 +124,8 @@ WirePath.defaultProps = {
   signal: LogicValue.ZERO,
   dir1: PIN_DIR.RIGHT,
   dir2: PIN_DIR.LEFT,
+  waypoints: undefined,
+  bendRadius: undefined,
 };
 
 function WirePath({
@@ -132,12 +139,21 @@ function WirePath({
   dir2 = PIN_DIR.LEFT,
   isSelected,
   isPreview,
+  waypoints,
+  bendRadius,
   onClick,
 }: WirePathProps) {
-  const d =
-    wireType === WIRE_TYPE.ORTHO
-      ? orthoPath(p1, p2, dir1, dir2)
-      : bezierPath(p1, p2, dir1, dir2);
+  let d: string;
+
+  if (wireType === WIRE_TYPE.OPTIMIZED && waypoints && waypoints.length >= 2) {
+    d = waypointsToPath(waypoints, bendRadius);
+  } else if (wireType === WIRE_TYPE.ORTHO || wireType === WIRE_TYPE.OPTIMIZED) {
+    // OPTIMIZED without waypoints (e.g. preview) falls back to ortho
+    d = orthoPath(p1, p2, dir1, dir2);
+  } else {
+    d = bezierPath(p1, p2, dir1, dir2);
+  }
+
   // Use four-state signal if provided, otherwise fall back to boolean isSignalUp
   const effectiveSignal =
     signal ?? (isSignalUp ? LogicValue.ONE : LogicValue.ZERO);
