@@ -7,6 +7,7 @@ import { library, LogicValue } from "@/engine";
 import {
   GATE_TYPE_BUS_INPUT4,
   GATE_TYPE_BUS_INPUT8,
+  GATE_TYPE_BUS_INPUT16,
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
@@ -734,7 +735,11 @@ function DigitalGateApp() {
     if (c.type === GATE_TYPE_DIGIT_BIN)
       setInput(c.id, { digit: (((c.state?.digit as number) ?? -1) + 1) % 10 });
 
-    if (c.type === GATE_TYPE_BUS_INPUT4 || c.type === GATE_TYPE_BUS_INPUT8) {
+    if (
+      c.type === GATE_TYPE_BUS_INPUT4 ||
+      c.type === GATE_TYPE_BUS_INPUT8 ||
+      c.type === GATE_TYPE_BUS_INPUT16
+    ) {
       // Cycle: ZERO → ONE → UNKNOWN → HIGH_IMPEDANCE → ZERO
       const current = (c.state?.signal as number) ?? LogicValue.ZERO;
       const order = [

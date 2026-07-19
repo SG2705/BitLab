@@ -65,10 +65,22 @@ export const GATE_TYPE_DEBUS16 = "DEBUS16";
 export const GATE_TYPE_UREG4 = "UREG4";
 export const GATE_TYPE_UREG8 = "UREG8";
 export const GATE_TYPE_BUS_DISPLAY = "BUS_DISPLAY";
+export const GATE_TYPE_BUS_DISPLAY8 = "BUS_DISPLAY8";
+export const GATE_TYPE_BUS_DISPLAY16 = "BUS_DISPLAY16";
 export const GATE_TYPE_VCC = "VCC";
 export const GATE_TYPE_GND = "GND";
 export const GATE_TYPE_BUS_INPUT4 = "BUS_INPUT4";
 export const GATE_TYPE_BUS_INPUT8 = "BUS_INPUT8";
+export const GATE_TYPE_BUS_INPUT16 = "BUS_INPUT16";
+export const GATE_TYPE_BUS_AND4 = "BUS_AND4";
+export const GATE_TYPE_BUS_AND8 = "BUS_AND8";
+export const GATE_TYPE_BUS_AND16 = "BUS_AND16";
+export const GATE_TYPE_BUS_OR4 = "BUS_OR4";
+export const GATE_TYPE_BUS_OR8 = "BUS_OR8";
+export const GATE_TYPE_BUS_OR16 = "BUS_OR16";
+export const GATE_TYPE_BUS_NOT4 = "BUS_NOT4";
+export const GATE_TYPE_BUS_NOT8 = "BUS_NOT8";
+export const GATE_TYPE_BUS_NOT16 = "BUS_NOT16";
 
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
@@ -187,9 +199,21 @@ export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_DEBUS16]: "lb_debus16",
   [GATE_TYPE_UREG4]: "lb_ureg4",
   [GATE_TYPE_UREG8]: "lb_ureg8",
-  [GATE_TYPE_BUS_DISPLAY]: "lb_bus_display",
   [GATE_TYPE_VCC]: "lb_vcc",
   [GATE_TYPE_GND]: "lb_gnd",
   [GATE_TYPE_BUS_INPUT4]: "lb_bus_input4",
   [GATE_TYPE_BUS_INPUT8]: "lb_bus_input8",
+  [GATE_TYPE_BUS_INPUT16]: "lb_bus_input16",
+  [GATE_TYPE_BUS_AND4]: "lb_bus_and4",
+  [GATE_TYPE_BUS_AND8]: "lb_bus_and8",
+  [GATE_TYPE_BUS_AND16]: "lb_bus_and16",
+  [GATE_TYPE_BUS_OR4]: "lb_bus_or4",
+  [GATE_TYPE_BUS_OR8]: "lb_bus_or8",
+  [GATE_TYPE_BUS_OR16]: "lb_bus_or16",
+  [GATE_TYPE_BUS_NOT4]: "lb_bus_not4",
+  [GATE_TYPE_BUS_NOT8]: "lb_bus_not8",
+  [GATE_TYPE_BUS_NOT16]: "lb_bus_not16",
+  [GATE_TYPE_BUS_DISPLAY]: "lb_bus_display",
+  [GATE_TYPE_BUS_DISPLAY8]: "lb_bus_display8",
+  [GATE_TYPE_BUS_DISPLAY16]: "lb_bus_display16",
 } as const;

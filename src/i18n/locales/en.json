@@ -248,6 +248,42 @@
   "bI5iFx": {
     "defaultMessage": "BitLab v{version} · Sagar Gupta"
   },
+  "bIn16Q": {
+    "defaultMessage": "Bus In 16"
+  },
+  "bAn4xQ": {
+    "defaultMessage": "Bus AND 4"
+  },
+  "bAn8xQ": {
+    "defaultMessage": "Bus AND 8"
+  },
+  "bAn16Q": {
+    "defaultMessage": "Bus AND 16"
+  },
+  "bOr4xQ": {
+    "defaultMessage": "Bus OR 4"
+  },
+  "bOr8xQ": {
+    "defaultMessage": "Bus OR 8"
+  },
+  "bOr16Q": {
+    "defaultMessage": "Bus OR 16"
+  },
+  "bNo4xQ": {
+    "defaultMessage": "Bus NOT 4"
+  },
+  "bNo8xQ": {
+    "defaultMessage": "Bus NOT 8"
+  },
+  "bNo16Q": {
+    "defaultMessage": "Bus NOT 16"
+  },
+  "bDs8xQ": {
+    "defaultMessage": "Bus Display 8"
+  },
+  "bDs16Q": {
+    "defaultMessage": "Bus Display 16"
+  },
   "cpOWpz": {
     "defaultMessage": "⌘K"
   },

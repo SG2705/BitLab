@@ -561,6 +561,78 @@
       "value": " · Sagar Gupta"
     }
   ],
+  "bIn16Q": [
+    {
+      "type": 0,
+      "value": "Bus In 16"
+    }
+  ],
+  "bAn4xQ": [
+    {
+      "type": 0,
+      "value": "Bus AND 4"
+    }
+  ],
+  "bAn8xQ": [
+    {
+      "type": 0,
+      "value": "Bus AND 8"
+    }
+  ],
+  "bAn16Q": [
+    {
+      "type": 0,
+      "value": "Bus AND 16"
+    }
+  ],
+  "bOr4xQ": [
+    {
+      "type": 0,
+      "value": "Bus OR 4"
+    }
+  ],
+  "bOr8xQ": [
+    {
+      "type": 0,
+      "value": "Bus OR 8"
+    }
+  ],
+  "bOr16Q": [
+    {
+      "type": 0,
+      "value": "Bus OR 16"
+    }
+  ],
+  "bNo4xQ": [
+    {
+      "type": 0,
+      "value": "Bus NOT 4"
+    }
+  ],
+  "bNo8xQ": [
+    {
+      "type": 0,
+      "value": "Bus NOT 8"
+    }
+  ],
+  "bNo16Q": [
+    {
+      "type": 0,
+      "value": "Bus NOT 16"
+    }
+  ],
+  "bDs8xQ": [
+    {
+      "type": 0,
+      "value": "Bus Display 8"
+    }
+  ],
+  "bDs16Q": [
+    {
+      "type": 0,
+      "value": "Bus Display 16"
+    }
+  ],
   "cpOWpz": [
     {
       "type": 0,

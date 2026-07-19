@@ -165,6 +165,40 @@ export const evalGateBuffer = (i: SignalValue[]): EvaluateResult => ({
   state: null,
 });
 
+// ── Bus Logic Gates ─────────────────────────────────────────────────────────
+
+/** Bus AND: inputs [A0..An-1, B0..Bn-1], outputs [Y0..Yn-1] where Yi = AND(Ai, Bi) */
+export const evalBusAnd = (i: SignalValue[]): EvaluateResult => {
+  const width = i.length / 2;
+
+  return {
+    outputs: Array.from(
+      { length: width },
+      (_, idx) => AND_TABLE[i[idx]][i[idx + width]],
+    ),
+    state: null,
+  };
+};
+
+/** Bus OR: inputs [A0..An-1, B0..Bn-1], outputs [Y0..Yn-1] where Yi = OR(Ai, Bi) */
+export const evalBusOr = (i: SignalValue[]): EvaluateResult => {
+  const width = i.length / 2;
+
+  return {
+    outputs: Array.from(
+      { length: width },
+      (_, idx) => OR_TABLE[i[idx]][i[idx + width]],
+    ),
+    state: null,
+  };
+};
+
+/** Bus NOT: inputs [A0..An-1], outputs [Y0..Yn-1] where Yi = NOT(Ai) */
+export const evalBusNot = (i: SignalValue[]): EvaluateResult => ({
+  outputs: i.map((v) => NOT_TABLE[v]),
+  state: null,
+});
+
 // ── Inputs ───────────────────────────────────────────────────────────────────
 
 export const evalInput = (
