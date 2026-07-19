@@ -52,7 +52,7 @@ export class SimulationEngine {
 
   constructor(
     private readonly components: Record<string, ComponentInstance>,
-    private readonly _: GraphManager,
+    _graph: GraphManager,
     private readonly library: ComponentLibrary,
     private readonly propagator: SignalPropagator,
     options: SimulationEngineOptions = {},

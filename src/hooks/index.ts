@@ -5,6 +5,7 @@ export { useWireDrawing } from "./use-wire-drawing";
 export { useKeyboardShortcuts } from "./use-keyboard-shortcuts";
 export { useClipboard } from "./use-clipboard";
 export { useCustomCircuits } from "./use-custom-circuits";
+export { useViewportCulling } from "./use-viewport-culling";
 
 // Types
 export type { DigitalEngineControls } from "./use-digitalengine";

@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { FormattedMessage } from "react-intl";
 import {
   ChevronDown,

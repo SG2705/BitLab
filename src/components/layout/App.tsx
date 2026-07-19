@@ -21,6 +21,7 @@ import {
   useCustomCircuits,
   useDigitalEngine,
   useKeyboardShortcuts,
+  useViewportCulling,
   useWireDrawing,
 } from "@/hooks";
 import {
@@ -132,6 +133,7 @@ function DigitalGateApp() {
     importCustomCircuitFromFile: importCustomRaw,
     removeCustomCircuit: removeCustomRaw,
   } = useCustomCircuits(addLog);
+  const visibleComponents = useViewportCulling(snapshot, view, size);
   const { theme } = useSettings();
 
   const isRunning = status === SIMULATION_STATUS.RUNNING;
@@ -642,6 +644,12 @@ function DigitalGateApp() {
 
                   if (!a || !b) return null;
                   if (busWireIdSet.has(w.id)) return null;
+                  // Viewport culling: skip wires where both endpoints are off-screen
+                  if (
+                    !visibleComponents.has(w.from.comp) &&
+                    !visibleComponents.has(w.to.comp)
+                  )
+                    return null;
 
                   const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                   const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
@@ -697,6 +705,12 @@ function DigitalGateApp() {
                   const targetComp = snapshot.components[group.toComp];
 
                   if (!sourceComp || !targetComp) return null;
+                  // Viewport culling: skip bus wires where both endpoints are off-screen
+                  if (
+                    !visibleComponents.has(group.fromComp) &&
+                    !visibleComponents.has(group.toComp)
+                  )
+                    return null;
 
                   const firstWire = snapshot.wires[group.wireIds[0]];
                   const firstFromPin = firstWire?.from.pin ?? 0;
@@ -810,64 +824,70 @@ function DigitalGateApp() {
                       />
                     );
                   })()}
-                {Object.values(snapshot.components).map((c) => (
-                  <GateNode
-                    key={c.id}
-                    comp={c}
-                    isSelected={selection.has(c.id)}
-                    onClickBody={() => handleCompClick(c)}
-                    onPointerDownBody={
-                      c.type === GATE_TYPE_BUTTON
-                        ? (e: React.PointerEvent) => {
-                            e.stopPropagation();
+                {Object.values(snapshot.components).map((c) => {
+                  // Viewport culling: skip components outside the visible area
+                  if (!visibleComponents.has(c.id)) return null;
 
-                            (e.target as Element).setPointerCapture(
-                              e.pointerId,
-                            );
+                  return (
+                    <GateNode
+                      key={c.id}
+                      comp={c}
+                      isSelected={selection.has(c.id)}
+                      onClickBody={() => handleCompClick(c)}
+                      onPointerDownBody={
+                        c.type === GATE_TYPE_BUTTON
+                          ? (e: React.PointerEvent) => {
+                              e.stopPropagation();
 
-                            setInput(c.id, { on: true });
-                          }
-                        : undefined
-                    }
-                    onPointerUpBody={
-                      c.type === GATE_TYPE_BUTTON
-                        ? (e: React.PointerEvent) => {
-                            e.stopPropagation();
+                              (e.target as Element).setPointerCapture(
+                                e.pointerId,
+                              );
 
-                            (e.target as Element).releasePointerCapture(
-                              e.pointerId,
-                            );
+                              setInput(c.id, { on: true });
+                            }
+                          : undefined
+                      }
+                      onPointerUpBody={
+                        c.type === GATE_TYPE_BUTTON
+                          ? (e: React.PointerEvent) => {
+                              e.stopPropagation();
 
-                            setInput(c.id, { on: false });
-                          }
-                        : undefined
-                    }
-                    onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
-                    onPinDown={(
-                      e: React.MouseEvent,
-                      pin: number,
-                      kind: PinKind,
-                    ) => {
-                      if (kind === PIN_KIND.OUT) startWire(e, c, pin, toWorld);
-                    }}
-                    onPinUp={(
-                      e: React.MouseEvent,
-                      pin: number,
-                      kind: PinKind,
-                    ) => {
-                      if (kind === PIN_KIND.IN)
-                        finishWire(
-                          e,
-                          c,
-                          pin,
-                          snapshot,
-                          addWire,
-                          addLog,
-                          saveProjectToLocal,
-                        );
-                    }}
-                  />
-                ))}
+                              (e.target as Element).releasePointerCapture(
+                                e.pointerId,
+                              );
+
+                              setInput(c.id, { on: false });
+                            }
+                          : undefined
+                      }
+                      onMouseDown={(e: React.MouseEvent) => startCompDrag(e, c)}
+                      onPinDown={(
+                        e: React.MouseEvent,
+                        pin: number,
+                        kind: PinKind,
+                      ) => {
+                        if (kind === PIN_KIND.OUT)
+                          startWire(e, c, pin, toWorld);
+                      }}
+                      onPinUp={(
+                        e: React.MouseEvent,
+                        pin: number,
+                        kind: PinKind,
+                      ) => {
+                        if (kind === PIN_KIND.IN)
+                          finishWire(
+                            e,
+                            c,
+                            pin,
+                            snapshot,
+                            addWire,
+                            addLog,
+                            saveProjectToLocal,
+                          );
+                      }}
+                    />
+                  );
+                })}
                 {lasso && (
                   <rect
                     x={Math.min(lasso.x0, lasso.x1)}

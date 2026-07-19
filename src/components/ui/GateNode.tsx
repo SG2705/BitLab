@@ -274,6 +274,11 @@ interface GateNodeProps {
   onPinUp: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
 }
 
+GateNode.defaultProps = {
+  onPointerDownBody: undefined,
+  onPointerUpBody: undefined,
+};
+
 function GateNode({
   comp,
   isSelected,
@@ -1145,9 +1150,45 @@ function GateNode({
   );
 }
 
-GateNode.defaultProps = {
-  onPointerDownBody: undefined,
-  onPointerUpBody: undefined,
-};
+/**
+ * Custom memo comparator for GateNode.
+ * Function props (onClickBody, onMouseDown, onPinDown, onPinUp, etc.) are
+ * always new arrow functions in the render loop. We skip comparing them and
+ * only re-render when the component data or selection state changes.
+ * This is safe because the functions close over stable refs/callbacks.
+ */
+function arePropsEqual(prev: GateNodeProps, next: GateNodeProps): boolean {
+  if (prev.isSelected !== next.isSelected) return false;
 
-export default memo(GateNode);
+  // Deep-compare the component instance fields that affect rendering
+  const a = prev.comp;
+  const b = next.comp;
+
+  if (a.id !== b.id) return false;
+  if (a.type !== b.type) return false;
+  if (a.x !== b.x || a.y !== b.y) return false;
+  if (a.rotation !== b.rotation) return false;
+  if (a.label !== b.label) return false;
+  if (a.color !== b.color) return false;
+
+  // Compare outputs array (signal state)
+  if (a.outputs.length !== b.outputs.length) return false;
+
+  for (let i = 0; i < a.outputs.length; i += 1) {
+    if (a.outputs[i] !== b.outputs[i]) return false;
+  }
+
+  // Compare inputs array
+  if (a.inputs.length !== b.inputs.length) return false;
+
+  for (let i = 0; i < a.inputs.length; i += 1) {
+    if (a.inputs[i] !== b.inputs[i]) return false;
+  }
+
+  // Compare state (shallow — state object identity changes on mutation)
+  if (a.state !== b.state) return false;
+
+  return true;
+}
+
+export default memo(GateNode, arePropsEqual);
