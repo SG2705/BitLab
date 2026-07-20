@@ -498,28 +498,48 @@ function DigitalGateApp() {
     (newType: string) => {
       if (!ctxMenu) return;
 
-      const comp = snapshot.components[ctxMenu.compId];
+      const oldComp = snapshot.components[ctxMenu.compId];
 
-      if (!comp || !library.has(newType)) return;
+      if (!oldComp || !library.has(newType)) return;
 
-      const newDef = library.get(newType);
-
-      // Reset state and pin arrays to match the new definition
-      const initialState = newDef.initialState();
-      const defaultInputs = new Array<SignalValue>(newDef.inputs).fill(
-        LogicValue.HIGH_IMPEDANCE,
+      // 1. Collect all wires connected to this component
+      const connectedWires = Object.values(snapshot.wires).filter(
+        (w) => w.from.comp === ctxMenu.compId || w.to.comp === ctxMenu.compId,
       );
-      const { outputs } = newDef.evaluate(defaultInputs, initialState);
 
-      updateComponent(ctxMenu.compId, {
-        type: newType,
-        label: newDef.label,
-        state: initialState,
-        outputs,
-        inputs: defaultInputs,
-      });
+      // 2. Remove the old component and its wires
+      const wireIds = connectedWires.map((w) => w.id);
+
+      removeWires(wireIds);
+      removeComponents([ctxMenu.compId]);
+
+      // 3. Add a new component of the replacement type at the same position
+      const newComp = addComponent(newType, oldComp.x, oldComp.y);
+
+      // 4. Reconnect all wires, substituting the old comp ID with the new one
+      for (const w of connectedWires) {
+        const fromComp =
+          w.from.comp === ctxMenu.compId ? newComp.id : w.from.comp;
+        const fromPin = w.from.pin;
+        const toComp = w.to.comp === ctxMenu.compId ? newComp.id : w.to.comp;
+        const toPin = w.to.pin;
+
+        addWire(fromComp, fromPin, toComp, toPin);
+      }
+
+      // Select the new component
+      setSelection(new Set([newComp.id]));
     },
-    [ctxMenu, snapshot.components, updateComponent],
+    [
+      ctxMenu,
+      snapshot.components,
+      snapshot.wires,
+      removeWires,
+      removeComponents,
+      addComponent,
+      addWire,
+      setSelection,
+    ],
   );
 
   const handleCtxDuplicate = useCallback(() => {
