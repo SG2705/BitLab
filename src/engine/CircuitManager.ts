@@ -244,7 +244,15 @@ export class CircuitManager {
     if (target) {
       const inputs = [...target.inputs];
 
-      inputs[wire.to.pin] = U;
+      // Output components (LED, Probe, Display) default to ZERO when disconnected
+      if (
+        this.library.has(target.type) &&
+        this.library.get(target.type).isOutput
+      ) {
+        inputs[wire.to.pin] = LogicValue.ZERO;
+      } else {
+        inputs[wire.to.pin] = U;
+      }
 
       // Re-evaluate the target with updated inputs so outputs reflect the change
       if (this.library.has(target.type)) {
@@ -397,7 +405,12 @@ export class CircuitManager {
     if (!this.library.has(type)) return [];
 
     const def = this.library.get(type);
-    const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(U);
+    // Output components (LED, Probe, Display) default to ZERO when unconnected.
+    // All other components default to HIGH_IMPEDANCE for unconnected pins.
+    const defaultVal = def.isOutput ? LogicValue.ZERO : U;
+    const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+      defaultVal,
+    );
 
     for (let pin = 0; pin < def.inputs; pin += 1) {
       const wire = this.graph.getInputWire(compId, pin);
