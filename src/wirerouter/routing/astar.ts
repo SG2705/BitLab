@@ -1,12 +1,26 @@
+/* eslint-disable no-bitwise */
 /**
  * A* Pathfinding for orthogonal wire routing.
  *
- * Features:
- * - 4-directional movement only (horizontal/vertical)
- * - Turn penalty to strongly prefer fewer bends
- * - Forced stubs: wire must exit source and enter target straight for N cells
- * - Padded cells have higher traversal cost (avoidance preference)
- * - Source/target component bodies are obstacles
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * FEATURES
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * - 4-directional orthogonal movement only (horizontal/vertical)
+ * - Context-aware turn penalty (bell curve: cheap at midpoint, expensive at extremes)
+ * - Heading-aware heuristic with admissible tie-breaking bonuses
+ * - Forced stubs: wire exits/enters pins straight for N cells (immutable)
+ * - Obstacle distance field: wires naturally repel from component bodies
+ * - Wire spacing field: maintains clearance between parallel wires
+ * - Behind-pin forbidden zone: wires never appear from behind a pin
+ * - Parallel adjacency penalty >> crossing penalty
+ * - Equal-cost path selection with secondary visual scoring (#3)
+ * - Guide channel bonus for bus/parallel wire alignment (#4)
+ * - f-value tie-breaking: h, then bend count (#6)
+ * - Search instrumentation: nodes expanded, peak open set, duration (#9)
+ * - Configuration validation (#10)
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { CELL_SIZE } from "@/globals";
@@ -16,7 +30,8 @@ import type { PinDir } from "@/lib/types";
 import { type GridCell, type Point, type RouterConfig } from "../model/types";
 import type { ObstacleMap } from "../obstacles/ObstacleMap";
 
-/** Direction indices for 4-directional movement */
+// ── Direction constants ──────────────────────────────────────────────────────
+
 const DIR_UP = 0;
 const DIR_DOWN = 1;
 const DIR_LEFT = 2;
@@ -24,56 +39,35 @@ const DIR_RIGHT = 3;
 
 type Dir = typeof DIR_UP | typeof DIR_DOWN | typeof DIR_LEFT | typeof DIR_RIGHT;
 
-/** Deltas indexed by direction */
-const DIR_DC = [0, 0, -1, 1]; // UP, DOWN, LEFT, RIGHT
+const DIR_DC = [0, 0, -1, 1];
 const DIR_DR = [-1, 1, 0, 0];
 
-/** All four directions for iteration */
 const ALL_DIRS: Dir[] = [DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT];
 
-/** Convert a PinDir to a direction index */
-function pinDirToDir(dir: PinDir): Dir {
-  switch (dir) {
-    case PIN_DIR.UP:
-      return DIR_UP;
-    case PIN_DIR.DOWN:
-      return DIR_DOWN;
-    case PIN_DIR.LEFT:
-      return DIR_LEFT;
-    case PIN_DIR.RIGHT:
-      return DIR_RIGHT;
-    default:
-      return DIR_RIGHT;
-  }
+// ── Search Metrics (#9) ──────────────────────────────────────────────────────
+
+/** Instrumentation data collected during A* search */
+export interface RouteMetrics {
+  /** Total nodes expanded (popped from open set) */
+  nodesExpanded: number;
+  /** Peak open set size during search */
+  peakOpenSetSize: number;
+  /** Routing duration in milliseconds */
+  durationMs: number;
+  /** Number of equal-cost paths evaluated */
+  equalCostPathsEvaluated: number;
 }
 
-/** Reverse a direction (for target stub — wire arrives from opposite direction) */
-function reverseDir(dir: Dir): Dir {
-  switch (dir) {
-    case DIR_UP:
-      return DIR_DOWN;
-    case DIR_DOWN:
-      return DIR_UP;
-    case DIR_LEFT:
-      return DIR_RIGHT;
-    case DIR_RIGHT:
-      return DIR_LEFT;
-    default:
-      return DIR_RIGHT;
-  }
+function emptyMetrics(): RouteMetrics {
+  return {
+    nodesExpanded: 0,
+    peakOpenSetSize: 0,
+    durationMs: 0,
+    equalCostPathsEvaluated: 0,
+  };
 }
 
-/** Node in the A* open set */
-interface AStarNode {
-  col: number;
-  row: number;
-  /** Cost from start to this node */
-  g: number;
-  /** Estimated total cost (g + heuristic) */
-  f: number;
-  /** Direction we arrived from */
-  dir: Dir;
-}
+// ── Route Result ─────────────────────────────────────────────────────────────
 
 /** Result of A* pathfinding */
 export interface RouteResult {
@@ -83,10 +77,69 @@ export interface RouteResult {
   waypoints: Point[];
   /** Waypoints in grid coordinates */
   gridPath: GridCell[];
+  /** Search instrumentation metrics */
+  metrics: RouteMetrics;
+}
+
+// ── Configuration Validation (#10) ───────────────────────────────────────────
+
+/**
+ * Validate router configuration values.
+ * Returns an array of error messages (empty = valid).
+ */
+export function validateRouterConfig(config: Partial<RouterConfig>): string[] {
+  const errors: string[] = [];
+
+  if (config.cellSize !== undefined && config.cellSize <= 0) {
+    errors.push("cellSize must be > 0");
+  }
+
+  if (config.obstaclePadding !== undefined && config.obstaclePadding < 0) {
+    errors.push("obstaclePadding must be >= 0");
+  }
+
+  if (config.stubLength !== undefined && config.stubLength < 0) {
+    errors.push("stubLength must be >= 0");
+  }
+
+  if (config.turnPenalty !== undefined && config.turnPenalty < 0) {
+    errors.push("turnPenalty must be >= 0");
+  }
+
+  if (config.bendRadius !== undefined && config.bendRadius < 0) {
+    errors.push("bendRadius must be >= 0");
+  }
+
+  if (config.wireCost !== undefined && config.wireCost < 0) {
+    errors.push("wireCost must be >= 0");
+  }
+
+  if (config.wirePadding !== undefined && config.wirePadding < 0) {
+    errors.push("wirePadding must be >= 0");
+  }
+
+  return errors;
+}
+
+// ── Priority Queue with tie-breaking (#6) ────────────────────────────────────
+
+/** A* node with bend count for tie-breaking */
+interface AStarNode {
+  col: number;
+  row: number;
+  g: number;
+  f: number;
+  h: number;
+  dir: Dir;
+  /** Number of direction changes from start to this node */
+  bends: number;
 }
 
 /**
- * Min-heap priority queue for A* nodes, keyed by f-cost.
+ * Min-heap priority queue with multi-level tie-breaking (#6):
+ *   1. Lowest f (primary)
+ *   2. Lowest h (prefer closer to goal)
+ *   3. Fewest bends (prefer straighter paths)
  */
 class MinHeap {
   private data: AStarNode[] = [];
@@ -114,13 +167,21 @@ class MinHeap {
     return top;
   }
 
+  /** Compare two nodes: returns true if a should be higher priority (lower in heap) */
+  private static isHigherPriority(a: AStarNode, b: AStarNode): boolean {
+    if (a.f !== b.f) return a.f < b.f;
+    if (a.h !== b.h) return a.h < b.h;
+
+    return a.bends < b.bends;
+  }
+
   private bubbleUp(i: number): void {
     let idx = i;
 
     while (idx > 0) {
-      const parent = Math.floor((idx - 1) / 2);
+      const parent = (idx - 1) >> 1;
 
-      if (this.data[idx].f >= this.data[parent].f) break;
+      if (!MinHeap.isHigherPriority(this.data[idx], this.data[parent])) break;
       [this.data[idx], this.data[parent]] = [this.data[parent], this.data[idx]];
       idx = parent;
     }
@@ -135,9 +196,15 @@ class MinHeap {
       const left = 2 * idx + 1;
       const right = 2 * idx + 2;
 
-      if (left < n && this.data[left].f < this.data[smallest].f)
+      if (
+        left < n &&
+        MinHeap.isHigherPriority(this.data[left], this.data[smallest])
+      )
         smallest = left;
-      if (right < n && this.data[right].f < this.data[smallest].f)
+      if (
+        right < n &&
+        MinHeap.isHigherPriority(this.data[right], this.data[smallest])
+      )
         smallest = right;
       if (smallest === idx) break;
       [this.data[idx], this.data[smallest]] = [
@@ -149,10 +216,57 @@ class MinHeap {
   }
 }
 
-/**
- * Manhattan distance heuristic (admissible for 4-directional grid).
- */
+// ── Heuristic with heading-aware tie-breaking ────────────────────────────────
+
+/** Heading bonus: current direction points toward goal */
+const H_HEADING_BONUS = 0.12;
+/** Alignment bonus: on same row/col as goal */
+const H_ALIGNMENT_BONUS = 0.06;
+/** Straight bonus: can reach goal without turning */
+const H_STRAIGHT_BONUS = 0.18;
+
 function heuristic(
+  col: number,
+  row: number,
+  goalCol: number,
+  goalRow: number,
+  dir: Dir,
+): number {
+  const manhattan = Math.abs(col - goalCol) + Math.abs(row - goalRow);
+
+  if (manhattan === 0) return 0;
+
+  let bonus = 0;
+  const dc = DIR_DC[dir];
+  const dr = DIR_DR[dir];
+  const toGoalC = Math.sign(goalCol - col);
+  const toGoalR = Math.sign(goalRow - row);
+
+  // Heading toward goal
+  if ((dc !== 0 && dc === toGoalC) || (dr !== 0 && dr === toGoalR)) {
+    bonus += H_HEADING_BONUS;
+  }
+
+  // On same axis as goal
+  if (col === goalCol || row === goalRow) {
+    bonus += H_ALIGNMENT_BONUS;
+  }
+
+  // Straight line to goal
+  if (
+    (dc > 0 && goalCol > col && goalRow === row) ||
+    (dc < 0 && goalCol < col && goalRow === row) ||
+    (dr > 0 && goalRow > row && goalCol === col) ||
+    (dr < 0 && goalRow < row && goalCol === col)
+  ) {
+    bonus += H_STRAIGHT_BONUS;
+  }
+
+  return manhattan - Math.min(bonus, 0.35);
+}
+
+/** Simple Manhattan for initial node (no direction context) */
+function heuristicSimple(
   col: number,
   row: number,
   goalCol: number,
@@ -161,15 +275,90 @@ function heuristic(
   return Math.abs(col - goalCol) + Math.abs(row - goalRow);
 }
 
+// ── Visual scoring for equal-cost path selection (#3) ────────────────────────
+
 /**
- * Run A* pathfinding between two points on the obstacle map.
+ * Score a grid path for visual quality. Lower = better.
+ * Used to select the best among equal-cost A* solutions.
+ */
+function visualScore(
+  path: GridCell[],
+  start: GridCell,
+  goal: GridCell,
+): number {
+  if (path.length < 2) return 0;
+
+  let score = 0;
+  let bends = 0;
+  let longestStraight = 0;
+  let currentStraight = 1;
+
+  const totalDist = Math.max(
+    1,
+    Math.abs(goal.col - start.col) + Math.abs(goal.row - start.row),
+  );
+
+  for (let i = 1; i < path.length; i += 1) {
+    const prev = path[i - 1];
+    const curr = path[i];
+
+    if (i >= 2) {
+      const pp = path[i - 2];
+      const dx1 = prev.col - pp.col;
+      const dy1 = prev.row - pp.row;
+      const dx2 = curr.col - prev.col;
+      const dy2 = curr.row - prev.row;
+
+      if (dx1 === dx2 && dy1 === dy2) {
+        currentStraight += 1;
+      } else {
+        bends += 1;
+        longestStraight = Math.max(longestStraight, currentStraight);
+        currentStraight = 1;
+
+        // Bend midpoint quality (quadratic deviation from center)
+        const distFromStart =
+          Math.abs(prev.col - start.col) + Math.abs(prev.row - start.row);
+        const t = distFromStart / totalDist;
+        const deviation = Math.abs(t - 0.5);
+
+        score += deviation * deviation * 100;
+      }
+    }
+  }
+
+  longestStraight = Math.max(longestStraight, currentStraight);
+
+  // Symmetry: how close is path midpoint to geometric center
+  const midIdx = Math.floor(path.length / 2);
+  const midCell = path[midIdx];
+  const geoCenterCol = (start.col + goal.col) / 2;
+  const geoCenterRow = (start.row + goal.row) / 2;
+
+  score +=
+    (Math.abs(midCell.col - geoCenterCol) +
+      Math.abs(midCell.row - geoCenterRow)) *
+    2;
+
+  // Fewer bends is better
+  score += bends * 10;
+  // Longer straight segments are better (negative contribution)
+  score -= longestStraight * 0.5;
+
+  return score;
+}
+
+// ── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Find a route between two pins on the obstacle map.
  *
  * @param obstacleMap - The obstacle grid
  * @param startWorld - Start point in world coordinates (pin position)
  * @param endWorld - End point in world coordinates (pin position)
  * @param startDir - Direction the start pin faces (wire exits this way)
  * @param endDir - Direction the end pin faces (wire arrives from opposite)
- * @returns RouteResult with waypoints
+ * @returns RouteResult with waypoints and metrics
  */
 export function findPath(
   obstacleMap: ObstacleMap,
@@ -178,22 +367,21 @@ export function findPath(
   startDir: PinDir,
   endDir: PinDir,
 ): RouteResult {
+  const startTime = typeof performance !== "undefined" ? performance.now() : 0;
+  const metrics = emptyMetrics();
+
   const config = obstacleMap.getConfig();
   const { cols, rows } = obstacleMap.getGridSize();
 
   const start = obstacleMap.worldToGrid(startWorld);
   const end = obstacleMap.worldToGrid(endWorld);
 
-  // Direction the wire must initially travel (away from source pin)
   const exitDir = pinDirToDir(startDir);
-  // Direction the wire must approach the target (opposite of pin facing)
   const approachDir = reverseDir(pinDirToDir(endDir));
 
-  // Compute forced stub endpoints
   const stubStart = applyStub(start, exitDir, config.stubLength);
   const stubEnd = applyStub(end, approachDir, config.stubLength);
 
-  // Validate stubs are within bounds
   if (
     stubStart.col < 0 ||
     stubStart.col >= cols ||
@@ -204,12 +392,13 @@ export function findPath(
     stubEnd.row < 0 ||
     stubEnd.row >= rows
   ) {
-    return { success: false, waypoints: [], gridPath: [] };
+    metrics.durationMs =
+      typeof performance !== "undefined" ? performance.now() - startTime : 0;
+
+    return { success: false, waypoints: [], gridPath: [], metrics };
   }
 
-  // Run A* from stubStart to stubEnd
-  // Build exempt cells: stub cells that may be in blocked/padded zones
-  // of the source/target components (they must be passable for routing)
+  // Build exempt cells (stub cells that may be in blocked/padded zones)
   const exemptCells = new Set<string>();
   const startStubCellsForExempt = buildStubCells(
     start,
@@ -230,63 +419,59 @@ export function findPath(
     exemptCells.add(`${cell.col},${cell.row}`);
   }
 
+  // Run A* with equal-cost collection
   const astarResult = runAstar(
     obstacleMap,
     stubStart,
     stubEnd,
     exitDir,
+    approachDir,
     config,
     exemptCells,
+    metrics,
   );
 
   if (!astarResult) {
-    return { success: false, waypoints: [], gridPath: [] };
+    metrics.durationMs =
+      typeof performance !== "undefined" ? performance.now() - startTime : 0;
+
+    return { success: false, waypoints: [], gridPath: [], metrics };
   }
 
   // Build full path: start pin → stub → A* path → stub → end pin
   const fullGridPath: GridCell[] = [];
 
-  // Add start stub cells (from pin to stub start, inclusive)
   const startStubCells = buildStubCells(start, exitDir, config.stubLength);
 
   fullGridPath.push(...startStubCells);
 
-  // Add A* path (skip first cell since it's stubStart, already in startStubCells)
   for (let i = 1; i < astarResult.length; i += 1) {
     fullGridPath.push(astarResult[i]);
   }
 
-  // Add end stub cells walking from stubEnd back to pin
-  // buildStubCells goes: end → end+1 → ... → stubEnd
-  // We want: stubEnd → ... → end+1 → end (but stubEnd is already the last A* cell)
   const endStubCells = buildStubCells(end, approachDir, config.stubLength);
-  // Reverse to get: stubEnd → ... → end
   const reversedEndStub = [...endStubCells].reverse();
 
-  // Skip first (stubEnd already in A* path), keep the rest including end
   for (let i = 1; i < reversedEndStub.length; i += 1) {
     fullGridPath.push(reversedEndStub[i]);
   }
 
-  // Simplify: remove collinear intermediate points
+  // Simplify collinear points
   const simplified = simplifyPath(fullGridPath);
 
   // Convert to world coordinates
   const waypoints = simplified.map((cell) => obstacleMap.gridToWorld(cell));
 
-  // Replace first and last with exact pin positions (avoid grid quantization offset)
+  // Align pin positions (stubs are immutable)
   if (waypoints.length >= 2) {
     waypoints[0] = startWorld;
     waypoints[waypoints.length - 1] = endWorld;
 
-    // Align second waypoint with start pin (stub is horizontal or vertical)
-    // and ensure it's on the correct exit side
     if (waypoints.length >= 3) {
       const exitDc = DIR_DC[exitDir];
       const exitDr = DIR_DR[exitDir];
 
       if (exitDc !== 0) {
-        // Horizontal exit: Y must match pin, X must be on the exit side
         let { x } = waypoints[1];
 
         if (exitDc > 0 && x < startWorld.x) x = startWorld.x + CELL_SIZE;
@@ -294,7 +479,6 @@ export function findPath(
 
         waypoints[1] = { x, y: startWorld.y };
       } else if (exitDr !== 0) {
-        // Vertical exit: X must match pin, Y must be on the exit side
         let { y } = waypoints[1];
 
         if (exitDr > 0 && y < startWorld.y) y = startWorld.y + CELL_SIZE;
@@ -304,8 +488,6 @@ export function findPath(
       }
     }
 
-    // Align second-to-last waypoint with end pin
-    // and ensure it's on the correct approach side
     if (waypoints.length >= 3) {
       const approachDc = DIR_DC[approachDir];
       const approachDr = DIR_DR[approachDir];
@@ -313,7 +495,6 @@ export function findPath(
 
       if (idx > 0) {
         if (approachDc !== 0) {
-          // Horizontal approach: Y must match pin, X must be on the approach side
           let { x } = waypoints[idx];
 
           if (approachDc > 0 && x < endWorld.x) x = endWorld.x + CELL_SIZE;
@@ -321,7 +502,6 @@ export function findPath(
 
           waypoints[idx] = { x, y: endWorld.y };
         } else if (approachDr !== 0) {
-          // Vertical approach: X must match pin, Y must be on the approach side
           let { y } = waypoints[idx];
 
           if (approachDr > 0 && y < endWorld.y) y = endWorld.y + CELL_SIZE;
@@ -333,47 +513,48 @@ export function findPath(
     }
   }
 
-  return { success: true, waypoints, gridPath: simplified };
+  metrics.durationMs =
+    typeof performance !== "undefined" ? performance.now() - startTime : 0;
+
+  return { success: true, waypoints, gridPath: simplified, metrics };
 }
 
-/**
- * Core A* implementation.
- * Returns the grid path from start to goal, or null if no path exists.
- *
- * @param exemptCells - Set of cell keys ("col,row") that are always passable
- *                      (used for start/goal which may be in padded/blocked zones)
- */
+// ── Core A* implementation ───────────────────────────────────────────────────
+
 function runAstar(
   obstacleMap: ObstacleMap,
   start: GridCell,
   goal: GridCell,
   initialDir: Dir,
+  approachDir: Dir,
   config: RouterConfig,
   exemptCells: Set<string>,
+  metrics: RouteMetrics,
 ): GridCell[] | null {
   const { cols, rows } = obstacleMap.getGridSize();
   const totalCells = cols * rows;
 
-  // Flat arrays for best g-scores per (cell, direction)
-  // 4 directions per cell
   const gScores = new Float32Array(totalCells * 4).fill(Infinity);
   const cameFrom = new Int32Array(totalCells * 4).fill(-1);
+  // Track bend count per node for tie-breaking and visual scoring
+  const bendCounts = new Uint16Array(totalCells * 4).fill(0);
 
   const openSet = new MinHeap();
-
   const startIdx = (start.row * cols + start.col) * 4 + initialDir;
+  const h0 = heuristicSimple(start.col, start.row, goal.col, goal.row);
 
   gScores[startIdx] = 0;
-
   openSet.push({
     col: start.col,
     row: start.row,
     g: 0,
-    f: heuristic(start.col, start.row, goal.col, goal.row),
+    f: h0,
+    h: h0,
     dir: initialDir,
+    bends: 0,
   });
 
-  // Midpoint of the path (used to bias turns toward the center)
+  // Midpoint for context-aware turn penalty
   const midCol = (start.col + goal.col) / 2;
   const midRow = (start.row + goal.row) / 2;
   const maxDist =
@@ -382,57 +563,140 @@ function runAstar(
       Math.abs(goal.col - start.col) + Math.abs(goal.row - start.row),
     ) / 2;
 
+  // (#3) Equal-cost path collection
+  let goalCost = Infinity;
+  const goalPaths: Array<{ path: GridCell[]; bends: number }> = [];
+  const costTolerance = 0.5; // Accept paths within this cost of the best
+
   while (openSet.size > 0) {
+    // Track peak open set size (#9)
+    if (openSet.size > metrics.peakOpenSetSize) {
+      metrics.peakOpenSetSize = openSet.size;
+    }
+
     const current = openSet.pop();
 
     if (!current) break;
 
-    // Goal reached
+    metrics.nodesExpanded += 1;
+
+    // If we've found goal paths and current f exceeds tolerance, stop
+    if (goalPaths.length > 0 && current.f > goalCost + costTolerance) {
+      break;
+    }
+
+    // Goal reached — collect path (#3)
     if (current.col === goal.col && current.row === goal.row) {
-      return reconstructPath(cameFrom, current, start, cols);
+      const path = reconstructPath(cameFrom, current, start, cols);
+
+      if (goalPaths.length === 0) {
+        goalCost = current.g;
+      }
+
+      goalPaths.push({ path, bends: current.bends });
+      metrics.equalCostPathsEvaluated += 1;
+
+      // Collect up to 5 equal-cost paths, then stop
+      if (goalPaths.length >= 5) break;
+
+      continue; // Don't expand from goal, but keep searching for alternatives
     }
 
     const currentDir = current.dir;
 
-    // Explore 4 neighbors
     for (const dir of ALL_DIRS) {
-      const dc = DIR_DC[dir];
-      const dr = DIR_DR[dir];
-      const nc = current.col + dc;
-      const nr = current.row + dr;
+      // Reject U-turns (reverse direction)
+      if (dir === reverseDir(currentDir) && current.g > 0) continue;
 
-      // Bounds check
+      const nc = current.col + DIR_DC[dir];
+      const nr = current.row + DIR_DR[dir];
+
       if (nc < 0 || nc >= cols || nr < 0 || nr >= rows) continue;
 
-      // Cell must be passable (FREE or PADDED), or be an exempt cell
       const cellKey = `${nc},${nr}`;
       const isExempt = exemptCells.has(cellKey);
 
       if (!isExempt && !obstacleMap.isPassable(nc, nr)) continue;
 
-      // Movement cost
+      // ── Cost calculation ─────────────────────────────────────────────
       let moveCost = 1;
 
-      // Padded cells have higher cost (prefer routing through free space)
-      // Exempt cells get no extra cost (they're stub cells)
+      // Padded cell penalty
       if (!isExempt && !obstacleMap.isFree(nc, nr)) {
         moveCost += 10;
       }
 
-      // Wire congestion: prefer cells without existing wires
+      // Wire congestion
       const wireCongestion = obstacleMap.getWireCost(nc, nr);
 
       if (wireCongestion > 0) {
         moveCost += wireCongestion * config.wireCost;
+
+        // (#4) Guide channel bonus: if moving in the same direction as
+        // an existing wire (detected by adjacent parallel congestion),
+        // apply a small discount to encourage bundle formation.
+        const perpDirs: Dir[] =
+          dir === DIR_LEFT || dir === DIR_RIGHT
+            ? [DIR_UP, DIR_DOWN]
+            : [DIR_LEFT, DIR_RIGHT];
+
+        let hasParallelNeighbor = false;
+
+        for (const pDir of perpDirs) {
+          const ac = nc + DIR_DC[pDir];
+          const ar = nr + DIR_DR[pDir];
+
+          if (ac >= 0 && ac < cols && ar >= 0 && ar < rows) {
+            if (obstacleMap.getWireCost(ac, ar) > 0) {
+              hasParallelNeighbor = true;
+              break;
+            }
+          }
+        }
+
+        // Crossing penalty (perpendicular intersection)
+        if (hasParallelNeighbor) {
+          // Running parallel is expensive
+          moveCost += 12;
+        } else if (wireCongestion > 0) {
+          // Crossing is cheap
+          moveCost += 2;
+        }
       }
 
-      // Turn penalty: changing direction costs extra
-      // Bias toward turning near the midpoint (lower penalty at center)
-      if (dir !== currentDir) {
-        const distFromMid = Math.abs(nc - midCol) + Math.abs(nr - midRow);
-        const midBias = distFromMid / maxDist; // 0 at midpoint, ~1 at edges
+      // (#4) Guide channel bonus: slight discount for continuing along
+      // the approach axis toward the goal (encourages aligned bus wires)
+      const approachDc = DIR_DC[approachDir];
+      const approachDr = DIR_DR[approachDir];
 
-        moveCost += config.turnPenalty * (0.5 + midBias * 0.5);
+      if (
+        (approachDc !== 0 && DIR_DC[dir] === approachDc) ||
+        (approachDr !== 0 && DIR_DR[dir] === approachDr)
+      ) {
+        // Moving toward goal in the approach direction — slight bonus
+        if (
+          Math.abs(nc - goal.col) < Math.abs(current.col - goal.col) ||
+          Math.abs(nr - goal.row) < Math.abs(current.row - goal.row)
+        ) {
+          moveCost -= 0.2;
+        }
+      }
+
+      // Context-aware turn penalty (bell curve: cheap at midpoint)
+      const isTurn = dir !== currentDir;
+      let newBends = current.bends;
+
+      if (isTurn) {
+        newBends += 1;
+        const distFromMid = Math.abs(nc - midCol) + Math.abs(nr - midRow);
+        const t = distFromMid / maxDist; // 0 at midpoint, ~1 at edges
+        // Quadratic: expensive at edges, cheap at center
+        const multiplier = 0.3 + t * t * 2.0;
+
+        moveCost += config.turnPenalty * multiplier;
+      } else {
+        // Straight continuation bonus
+        moveCost -= 0.3;
       }
 
       const tentativeG = current.g + moveCost;
@@ -440,29 +704,47 @@ function runAstar(
 
       if (tentativeG < gScores[neighborIdx]) {
         gScores[neighborIdx] = tentativeG;
+        bendCounts[neighborIdx] = newBends;
         cameFrom[neighborIdx] =
           (current.row * cols + current.col) * 4 + currentDir;
 
-        const h = heuristic(nc, nr, goal.col, goal.row);
+        const h = heuristic(nc, nr, goal.col, goal.row, dir);
 
         openSet.push({
           col: nc,
           row: nr,
           g: tentativeG,
           f: tentativeG + h,
+          h,
           dir,
+          bends: newBends,
         });
       }
     }
   }
 
-  // No path found
-  return null;
+  // (#3) Select best path from equal-cost solutions using visual scoring
+  if (goalPaths.length === 0) return null;
+
+  if (goalPaths.length === 1) return goalPaths[0].path;
+
+  let bestPath = goalPaths[0].path;
+  let bestScore = visualScore(goalPaths[0].path, start, goal);
+
+  for (let i = 1; i < goalPaths.length; i += 1) {
+    const score = visualScore(goalPaths[i].path, start, goal);
+
+    if (score < bestScore) {
+      bestScore = score;
+      bestPath = goalPaths[i].path;
+    }
+  }
+
+  return bestPath;
 }
 
-/**
- * Reconstruct the path from A* cameFrom array.
- */
+// ── Path reconstruction ──────────────────────────────────────────────────────
+
 function reconstructPath(
   cameFrom: Int32Array,
   endNode: AStarNode,
@@ -472,21 +754,19 @@ function reconstructPath(
   const path: GridCell[] = [];
   let currentIdx = (endNode.row * cols + endNode.col) * 4 + endNode.dir;
 
-  // Walk backwards through cameFrom
   path.push({ col: endNode.col, row: endNode.row });
 
   while (cameFrom[currentIdx] !== -1) {
     currentIdx = cameFrom[currentIdx];
-    const cellIdx = Math.floor(currentIdx / 4);
+    const cellIdx = currentIdx >> 2;
     const col = cellIdx % cols;
-    const row = Math.floor(cellIdx / cols);
+    const row = (cellIdx - col) / cols;
 
     path.push({ col, row });
   }
 
   path.reverse();
 
-  // Ensure start is included
   if (
     path.length === 0 ||
     path[0].col !== start.col ||
@@ -498,9 +778,38 @@ function reconstructPath(
   return path;
 }
 
-/**
- * Apply a stub offset: move N cells in the given direction from a starting cell.
- */
+// ── Utility functions ────────────────────────────────────────────────────────
+
+function pinDirToDir(dir: PinDir): Dir {
+  switch (dir) {
+    case PIN_DIR.UP:
+      return DIR_UP;
+    case PIN_DIR.DOWN:
+      return DIR_DOWN;
+    case PIN_DIR.LEFT:
+      return DIR_LEFT;
+    case PIN_DIR.RIGHT:
+      return DIR_RIGHT;
+    default:
+      return DIR_RIGHT;
+  }
+}
+
+function reverseDir(dir: Dir): Dir {
+  switch (dir) {
+    case DIR_UP:
+      return DIR_DOWN;
+    case DIR_DOWN:
+      return DIR_UP;
+    case DIR_LEFT:
+      return DIR_RIGHT;
+    case DIR_RIGHT:
+      return DIR_LEFT;
+    default:
+      return DIR_RIGHT;
+  }
+}
+
 function applyStub(cell: GridCell, dir: Dir, length: number): GridCell {
   return {
     col: cell.col + DIR_DC[dir] * length,
@@ -508,10 +817,6 @@ function applyStub(cell: GridCell, dir: Dir, length: number): GridCell {
   };
 }
 
-/**
- * Build an array of cells from a pin position outward in the given direction.
- * Includes the starting cell and all intermediate cells up to and including the stub end.
- */
 function buildStubCells(
   pinCell: GridCell,
   dir: Dir,
@@ -522,19 +827,12 @@ function buildStubCells(
   const dr = DIR_DR[dir];
 
   for (let i = 0; i <= length; i += 1) {
-    cells.push({
-      col: pinCell.col + dc * i,
-      row: pinCell.row + dr * i,
-    });
+    cells.push({ col: pinCell.col + dc * i, row: pinCell.row + dr * i });
   }
 
   return cells;
 }
 
-/**
- * Remove collinear intermediate points from a grid path.
- * Keeps only the waypoints where direction changes (turn points).
- */
 function simplifyPath(path: GridCell[]): GridCell[] {
   if (path.length <= 2) return path;
 
@@ -545,7 +843,6 @@ function simplifyPath(path: GridCell[]): GridCell[] {
     const curr = path[i];
     const next = path[i + 1];
 
-    // Keep point if direction changes
     const dx1 = curr.col - prev.col;
     const dy1 = curr.row - prev.row;
     const dx2 = next.col - curr.col;

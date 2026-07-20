@@ -42,6 +42,12 @@ function GateChip({
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/gate", type);
+        // Suppress default browser drag ghost image
+        const emptyImg = new Image();
+
+        emptyImg.src =
+          "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        e.dataTransfer.setDragImage(emptyImg, 0, 0);
         onDragStart();
       }}
       className={cn(

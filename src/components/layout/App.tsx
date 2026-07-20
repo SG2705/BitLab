@@ -331,7 +331,12 @@ function DigitalGateApp() {
 
       updateComponent(id, { rotation: next });
     }
-  }, [selection, snapshot.components, updateComponent]);
+
+    // Trigger rerouting after rotation
+    if (wireStyle === WIRE_TYPE.OPTIMIZED && selection.size > 0) {
+      setRerouteTrigger((v) => v + 1);
+    }
+  }, [selection, snapshot.components, updateComponent, wireStyle]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
 
@@ -770,6 +775,7 @@ function DigitalGateApp() {
             {showObstacleMap && (
               <ObstacleMapInfo
                 obstacleMap={obstacleMapRef.current}
+                routingMetrics={wireRouter.getMetrics()}
                 version={obstacleMapVersion}
               />
             )}
@@ -789,7 +795,17 @@ function DigitalGateApp() {
                     ? "cursor-grab"
                     : "cursor-default",
               )}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => {
+                if (showObstacleMap) {
+                  // Don't allow drop when obstacle map is active — shows not-allowed cursor
+                  e.dataTransfer.dropEffect = "none";
+
+                  return;
+                }
+
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "copy";
+              }}
               onDrop={onCanvasDrop}
               onMouseDown={onCanvasMouseDown}
               onMouseMove={onCanvasMouseMove}
@@ -1094,9 +1110,14 @@ function DigitalGateApp() {
           {selectedComp && (
             <GateProperties
               comp={selectedComp}
-              onUpdate={(id: string, patch: Partial<ComponentInstance>) =>
-                updateComponent(id, patch)
-              }
+              onUpdate={(id: string, patch: Partial<ComponentInstance>) => {
+                updateComponent(id, patch);
+
+                // Trigger rerouting when rotation changes
+                if ("rotation" in patch && wireStyle === WIRE_TYPE.OPTIMIZED) {
+                  setRerouteTrigger((v) => v + 1);
+                }
+              }}
               onDelete={deleteSelected}
               onDuplicate={duplicateSelected}
             />

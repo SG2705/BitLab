@@ -64,6 +64,8 @@ export class WireRouterClient {
             waypoints: r.waypoints,
             gridPath: [], // Not needed on main thread for rendering
             valid: r.valid,
+            topologyVersion: 0, // Worker routes are always fresh
+            configVersion: 0,
           });
         }
 
