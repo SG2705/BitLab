@@ -130,6 +130,7 @@ export const CONSOLE_TAB = {
   WARN: "warn",
   TIMELINE: "timeline",
   PERF: "perf",
+  PROPAGATION: "propagation",
 };
 export const BASE_LOG = {
   t: Date.now(),

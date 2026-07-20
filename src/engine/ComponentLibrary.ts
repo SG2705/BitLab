@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+/* eslint-disable class-methods-use-this */
 /**
  * ComponentLibrary — authoritative registry of all component definitions.
  *
@@ -1687,6 +1689,55 @@ const DEFINITIONS: ComponentDefinition[] = [
 
 // ── Registry class ────────────────────────────────────────────────────────────
 
+/**
+ * ComponentLibrary — Authoritative registry of all component definitions.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * COMPONENT DEFINITION CONTRACT
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Required fields:
+ *   type       — Unique string identifier (must not collide with existing)
+ *   label      — Display name (may be an i18n key)
+ *   category   — One of GATE_CATEGORY_* constants
+ *   inputs     — Number of input pins (>= 0)
+ *   outputs    — Number of output pins (>= 0)
+ *   width      — Component width in pixels (> 0)
+ *   height     — Component height in pixels (> 0)
+ *   isSequential — True if evaluation depends on clock edges
+ *   isClock    — True if this component drives the simulation clock
+ *   isInput    — True if this is a user-driven input source
+ *   isOutput   — True if this is an output sink (LED, Display)
+ *   initialState — Factory function returning the initial state object
+ *   evaluate   — Pure evaluation function (inputs, state) → (outputs, state)
+ *
+ * Optional fields:
+ *   symbol, inputLabels, outputLabels, tick, isAnnotation,
+ *   samplesEveryTick, needsInputSnapshot, isBusInput, isBusOutput,
+ *   busInputGroups, busOutputGroups
+ *
+ * Invariants enforced at registration:
+ *   - type must be unique (no overwrites unless unregister is called first)
+ *   - inputs >= 0, outputs >= 0
+ *   - width > 0, height > 0
+ *   - inputLabels.length === inputs (if provided)
+ *   - outputLabels.length === outputs (if provided)
+ *   - busInputGroups ranges must be within [0, inputs)
+ *   - busOutputGroups ranges must be within [0, outputs)
+ *   - initialState() must produce a valid state for the evaluator
+ *   - evaluate(defaultInputs, initialState) must return correct output count
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ */
+
+/** Validation error thrown when a component definition is invalid */
+class ComponentValidationError extends Error {
+  constructor(type: string, issue: string) {
+    super(`[ComponentLibrary] Invalid definition for "${type}": ${issue}`);
+    this.name = "ComponentValidationError";
+  }
+}
+
 export class ComponentLibrary {
   private typeMap: Map<string, ComponentDefinition> = new Map();
   private customTypes: Set<string> = new Set();
@@ -1694,7 +1745,7 @@ export class ComponentLibrary {
 
   constructor(defs: ComponentDefinition[] = DEFINITIONS) {
     for (const d of defs) {
-      this.typeMap.set(d.type, d);
+      this.validateAndRegister(d);
     }
   }
 
@@ -1726,9 +1777,207 @@ export class ComponentLibrary {
     return Array.from(this.typeMap.values());
   }
 
-  /** Register a component definition. */
+  /**
+   * Register a component definition with full validation.
+   * Throws ComponentValidationError if the definition is invalid.
+   * Rejects duplicate type IDs unless the type was previously unregistered.
+   */
   register(def: ComponentDefinition): void {
+    // Reject duplicates for safety (#5)
+    if (this.typeMap.has(def.type) && !this.customTypes.has(def.type)) {
+      throw new ComponentValidationError(
+        def.type,
+        `Type "${def.type}" is already registered. Unregister it first or use a unique type ID.`,
+      );
+    }
+
+    this.validateAndRegister(def);
+  }
+
+  // ── Validation ─────────────────────────────────────────────────────────────
+
+  /**
+   * Validate a component definition against all invariants and register it.
+   * Called during construction (for built-in defs) and during register().
+   */
+  private validateAndRegister(def: ComponentDefinition): void {
+    // #1: Pin definition validation
+    this.validatePinDefinition(def);
+
+    // #4: Default state validation
+    this.validateInitialState(def);
+
+    // #2: Pin ordering — validate evaluator produces correct output count
+    this.validateEvaluatorContract(def);
+
+    // Registration
     this.typeMap.set(def.type, def);
+  }
+
+  /**
+   * Validate pin definitions: counts, labels, bus groups, dimensions.
+   * Addresses findings #1 and #6.
+   */
+  private validatePinDefinition(def: ComponentDefinition): void {
+    const t = def.type;
+
+    // Basic sanity
+    if (def.inputs < 0) {
+      throw new ComponentValidationError(
+        t,
+        `inputs must be >= 0, got ${def.inputs}`,
+      );
+    }
+
+    if (def.outputs < 0) {
+      throw new ComponentValidationError(
+        t,
+        `outputs must be >= 0, got ${def.outputs}`,
+      );
+    }
+
+    if (def.width <= 0) {
+      throw new ComponentValidationError(
+        t,
+        `width must be > 0, got ${def.width}`,
+      );
+    }
+
+    if (def.height <= 0) {
+      throw new ComponentValidationError(
+        t,
+        `height must be > 0, got ${def.height}`,
+      );
+    }
+
+    // Pin label counts must match pin counts (#6)
+    if (def.inputLabels && def.inputLabels.length !== def.inputs) {
+      throw new ComponentValidationError(
+        t,
+        `inputLabels length (${def.inputLabels.length}) does not match inputs (${def.inputs})`,
+      );
+    }
+
+    if (def.outputLabels && def.outputLabels.length !== def.outputs) {
+      throw new ComponentValidationError(
+        t,
+        `outputLabels length (${def.outputLabels.length}) does not match outputs (${def.outputs})`,
+      );
+    }
+
+    // Pin label uniqueness within each side
+    if (def.inputLabels) {
+      const seen = new Set<string>();
+
+      for (const label of def.inputLabels) {
+        if (seen.has(label)) {
+          throw new ComponentValidationError(
+            t,
+            `Duplicate input label: "${label}"`,
+          );
+        }
+
+        seen.add(label);
+      }
+    }
+
+    if (def.outputLabels) {
+      const seen = new Set<string>();
+
+      for (const label of def.outputLabels) {
+        if (seen.has(label)) {
+          throw new ComponentValidationError(
+            t,
+            `Duplicate output label: "${label}"`,
+          );
+        }
+
+        seen.add(label);
+      }
+    }
+
+    // Bus group range validation
+    if (def.busInputGroups) {
+      for (const [start, end] of def.busInputGroups) {
+        if (start < 0 || end > def.inputs || start >= end) {
+          throw new ComponentValidationError(
+            t,
+            `Invalid busInputGroup [${start}, ${end}) for ${def.inputs} inputs`,
+          );
+        }
+      }
+    }
+
+    if (def.busOutputGroups) {
+      for (const [start, end] of def.busOutputGroups) {
+        if (start < 0 || end > def.outputs || start >= end) {
+          throw new ComponentValidationError(
+            t,
+            `Invalid busOutputGroup [${start}, ${end}) for ${def.outputs} outputs`,
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate that initialState() produces a non-throwing result.
+   * For sequential components, validates state structure basics.
+   * Addresses finding #4.
+   */
+  private validateInitialState(def: ComponentDefinition): void {
+    try {
+      const state = def.initialState();
+
+      // Sequential components with prevClk should have it as a number (LogicValue)
+      if (def.isSequential && state && "prevClk" in state) {
+        const { prevClk } = state;
+
+        if (typeof prevClk !== "number" || prevClk < 0 || prevClk > 3) {
+          throw new ComponentValidationError(
+            def.type,
+            `prevClk in initialState must be a valid LogicValue (0-3), got ${String(prevClk)}`,
+          );
+        }
+      }
+    } catch (e) {
+      if (e instanceof ComponentValidationError) throw e;
+      throw new ComponentValidationError(
+        def.type,
+        `initialState() threw: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  }
+
+  /**
+   * Validate that the evaluator produces the correct number of outputs
+   * when called with default inputs and initial state.
+   * Addresses finding #2.
+   */
+  private validateEvaluatorContract(def: ComponentDefinition): void {
+    // Skip annotation components (no pins)
+    if (def.isAnnotation) return;
+    // Skip components with 0 inputs and 0 outputs
+    if (def.inputs === 0 && def.outputs === 0) return;
+
+    try {
+      const state = def.initialState();
+      const defaultInputs = new Array<SignalValue>(def.inputs).fill(ZERO);
+      const result = def.evaluate(defaultInputs, state, { tick: 0 });
+
+      if (result.outputs.length !== def.outputs) {
+        throw new ComponentValidationError(
+          def.type,
+          `Evaluator returned ${result.outputs.length} outputs but definition declares ${def.outputs}`,
+        );
+      }
+    } catch (e) {
+      if (e instanceof ComponentValidationError) throw e;
+      throw new ComponentValidationError(
+        def.type,
+        `Evaluator threw on default inputs: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
 
   /**
@@ -2224,7 +2473,7 @@ export class ComponentLibrary {
       },
     };
 
-    this.typeMap.set(type, def);
+    this.validateAndRegister(def);
     this.customTypes.add(type);
     this.customMeta.set(type, {
       type,

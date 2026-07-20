@@ -58,6 +58,11 @@ export class CircuitManager {
 
   private listeners: Set<EngineListener> = new Set();
 
+  // ── Transaction support (#4) ──────────────────────────────────────────────
+  private transactionDepth = 0;
+  private transactionSeeds: string[] = [];
+  private transactionDirty = false;
+
   constructor(lib: ComponentLibrary = defaultComponentLibrary) {
     this.library = lib;
     this.graph = new GraphManager();
@@ -71,6 +76,69 @@ export class CircuitManager {
 
     // Forward engine events to our own listeners
     this.engine.on((e) => this.emit(e));
+  }
+
+  // ── Transaction API (#4) ───────────────────────────────────────────────────
+
+  /**
+   * Begin a transaction. During a transaction:
+   * - Propagation is deferred (seeds are collected)
+   * - SNAPSHOT_CHANGED events are suppressed
+   * - A single recomputation happens on commit
+   *
+   * Transactions can be nested (counted). Only the outermost commit triggers
+   * propagation and events.
+   */
+  beginTransaction(): void {
+    this.transactionDepth += 1;
+  }
+
+  /**
+   * Commit the current transaction. If this is the outermost transaction,
+   * flush all collected seeds and emit a snapshot change.
+   */
+  commitTransaction(): void {
+    if (this.transactionDepth <= 0) return;
+
+    this.transactionDepth -= 1;
+
+    if (this.transactionDepth === 0 && this.transactionDirty) {
+      this.transactionDirty = false;
+
+      // Invalidate cache since graph may have changed
+      this.propagator.invalidateCache();
+
+      if (this.transactionSeeds.length > 0) {
+        const seeds = Array.from(new Set(this.transactionSeeds));
+
+        this.transactionSeeds = [];
+        this.engine.triggerPropagation(seeds);
+      } else {
+        // No specific seeds — do a full recompute
+        this.propagator.recomputeAll(this.components);
+        this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
+      }
+    }
+  }
+
+  /**
+   * Abort the current transaction without propagating.
+   * Note: mutations already applied are NOT rolled back.
+   */
+  abortTransaction(): void {
+    if (this.transactionDepth <= 0) return;
+
+    this.transactionDepth -= 1;
+
+    if (this.transactionDepth === 0) {
+      this.transactionSeeds = [];
+      this.transactionDirty = false;
+    }
+  }
+
+  /** Whether a transaction is currently active */
+  get inTransaction(): boolean {
+    return this.transactionDepth > 0;
   }
 
   // ── Component operations ──────────────────────────────────────────────────
@@ -106,7 +174,7 @@ export class CircuitManager {
 
     // If it's an input source, immediately propagate its initial output
     if (def.isInput || def.isClock) {
-      this.engine.triggerPropagation([cid]);
+      this.triggerPropagate([cid]);
     }
 
     this.emit({ type: ENGINE_EVENT_TYPE.COMPONENT_ADDED, payload: comp });
@@ -183,7 +251,7 @@ export class CircuitManager {
     const result = def.evaluate(comp.inputs, newState);
 
     this.components[id] = { ...comp, state: newState, outputs: result.outputs };
-    this.engine.triggerPropagation([id]);
+    this.triggerPropagate([id]);
   }
 
   // ── Wire operations ───────────────────────────────────────────────────────
@@ -213,6 +281,7 @@ export class CircuitManager {
 
     this.wires[id] = wire;
     this.graph.addWire(wire);
+    this.propagator.invalidateCache();
     // Immediately propagate through the newly connected path
     const srcComp = this.components[fromComp];
 
@@ -244,7 +313,7 @@ export class CircuitManager {
         }
       }
 
-      this.engine.triggerPropagation([fromComp]);
+      this.triggerPropagate([fromComp]);
     }
 
     this.emit({ type: ENGINE_EVENT_TYPE.WIRE_ADDED, payload: wire });
@@ -259,6 +328,7 @@ export class CircuitManager {
     if (!wire) return;
 
     this.graph.removeWire(wireId);
+    this.propagator.invalidateCache();
 
     delete this.wires[wireId];
 
@@ -294,7 +364,7 @@ export class CircuitManager {
         this.components[wire.to.comp] = { ...target, inputs };
       }
 
-      this.engine.triggerPropagation([wire.to.comp]);
+      this.triggerPropagate([wire.to.comp]);
     }
 
     this.emit({ type: ENGINE_EVENT_TYPE.WIRE_REMOVED, payload: { wireId } });
@@ -397,6 +467,9 @@ export class CircuitManager {
       this.graph.addWire(wire);
     }
 
+    // Invalidate topology cache after full rebuild
+    this.propagator.invalidateCache();
+
     // Full propagation pass to restore signal state
     this.propagator.recomputeAll(this.components);
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
@@ -411,7 +484,32 @@ export class CircuitManager {
   }
 
   private emit(event: EngineEvent): void {
+    // During transactions, suppress snapshot-changed events
+    if (
+      this.transactionDepth > 0 &&
+      event.type === ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED
+    ) {
+      this.transactionDirty = true;
+
+      return;
+    }
+
     for (const l of this.listeners) l(event);
+  }
+
+  /**
+   * Trigger propagation, respecting transaction state.
+   * During a transaction, seeds are collected and deferred.
+   */
+  private triggerPropagate(seeds: string[]): void {
+    if (this.transactionDepth > 0) {
+      this.transactionSeeds.push(...seeds);
+      this.transactionDirty = true;
+
+      return;
+    }
+
+    this.engine.triggerPropagation(seeds);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

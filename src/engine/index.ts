@@ -17,6 +17,7 @@ export type {
   ComponentDefinition,
   SimulationStatus,
   SimulationStats,
+  PropagationStats,
   EngineEventType,
   EngineEvent,
   EngineListener,
@@ -37,7 +38,9 @@ export {
   evalGateXnor,
   evalGateNot,
   evalGateBuffer,
+  evalTriStateBuffer,
   resolveSignal,
+  resolveBus,
   migrateSignal,
 } from "./logic";
 
@@ -46,6 +49,7 @@ export { GraphManager } from "./GraphManager";
 export { ComponentLibrary, library } from "./ComponentLibrary";
 export type { CustomGateMeta } from "./ComponentLibrary";
 export { SignalPropagator } from "./SignalPropagator";
+export type { PropagationMetrics, PropagationResult } from "./SignalPropagator";
 export type { SimulationEngineOptions } from "./SimulationEngine";
 export { SimulationEngine } from "./SimulationEngine";
 export type { AddComponentOptions } from "./CircuitManager";

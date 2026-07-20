@@ -141,6 +141,32 @@ export interface SimulationStats {
   oscillationsDetected: number;
   status: SimulationStatus;
   clockHz: number;
+  /** Propagation metrics from the most recent pass */
+  propagation: PropagationStats | null;
+  /** Component IDs that have thrown during evaluation */
+  faultedComponents: string[];
+  /** Recent evaluation errors (last 10) */
+  recentErrors: Array<{ compId: string; error: string; tick: number }>;
+}
+
+/** Propagation statistics exposed to the UI */
+export interface PropagationStats {
+  /** Total evaluations in last pass */
+  evaluations: number;
+  /** Delta cycles in last pass */
+  deltaCycles: number;
+  /** Max queue/dirty-set depth */
+  maxQueueDepth: number;
+  /** Events skipped via deduplication */
+  skippedEvents: number;
+  /** Average propagation depth */
+  avgPropagationDepth: number;
+  /** Components involved in oscillation */
+  oscillatingComponents: string[];
+  /** Evaluations per delta cycle */
+  evalsPerDelta: number[];
+  /** Duration in milliseconds */
+  durationMs: number;
 }
 
 // ── Engine event bus ──────────────────────────────────────────────────────────
