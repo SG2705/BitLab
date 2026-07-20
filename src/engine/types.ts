@@ -97,6 +97,8 @@ export interface ComponentInstance {
   /** Current input signal values — derived from connected wires */
   inputs: SignalValue[];
   color?: string;
+  /** Whether the component is pinned (locked position, excluded from delete-all) */
+  pinned?: boolean;
   /** Arbitrary user-editable properties (clock period, propagation delay…) */
   properties?: Record<string, unknown>;
 }

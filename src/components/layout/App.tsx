@@ -14,6 +14,7 @@ import {
   EmptyCanvas,
   ErrorBoundary,
   GateNode,
+  RightClickMenu,
   WirePath,
 } from "@/components/ui";
 import type { ComponentInstance, SignalValue } from "@/engine";
@@ -185,6 +186,11 @@ function DigitalGateApp() {
   const [isRouting, setIsRouting] = useState(false);
   const [rerouteTrigger, setRerouteTrigger] = useState(0);
   const [dragType, setDragType] = useState<string | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number;
+    y: number;
+    compId: string;
+  } | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   // Singletons: worker and router are created once at module level
@@ -289,25 +295,31 @@ function DigitalGateApp() {
     // Obstacle map mode is view-only
     if (showObstacleMap) return;
 
+    // Filter out pinned components from deletion
+    const deletableComps = Array.from(selection).filter(
+      (id) => !snapshot.components[id]?.pinned,
+    );
+
     const wireIds = new Set<string>();
 
     for (const w of Object.values(snapshot.wires)) {
       if (
         selWires.has(w.id) ||
-        selection.has(w.from.comp) ||
-        selection.has(w.to.comp)
+        deletableComps.includes(w.from.comp) ||
+        deletableComps.includes(w.to.comp)
       )
         wireIds.add(w.id);
     }
 
     removeWires(Array.from(wireIds));
-    removeComponents(Array.from(selection));
+    removeComponents(deletableComps);
 
     clearSelection();
   }, [
     selection,
     selWires,
     snapshot.wires,
+    snapshot.components,
     removeComponents,
     removeWires,
     clearSelection,
@@ -438,6 +450,9 @@ function DigitalGateApp() {
 
       const p = toWorld(e.clientX, e.clientY);
 
+      // Pinned components can be selected but not dragged
+      if (c.pinned) return;
+
       dragCompRef.current = {
         id: c.id,
         ox: p.x - c.x,
@@ -455,6 +470,81 @@ function DigitalGateApp() {
       setSelWires,
     ],
   );
+
+  // ── Context menu handlers ───────────────────────────────────────────────────
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, compId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (showObstacleMap) return;
+
+      setCtxMenu({ x: e.clientX, y: e.clientY, compId });
+    },
+    [showObstacleMap],
+  );
+
+  const handleCtxPin = useCallback(() => {
+    if (!ctxMenu) return;
+
+    const comp = snapshot.components[ctxMenu.compId];
+
+    if (comp) {
+      updateComponent(ctxMenu.compId, { pinned: !comp.pinned });
+    }
+  }, [ctxMenu, snapshot.components, updateComponent]);
+
+  const handleCtxReplace = useCallback(
+    (newType: string) => {
+      if (!ctxMenu) return;
+
+      const comp = snapshot.components[ctxMenu.compId];
+
+      if (!comp || !library.has(newType)) return;
+
+      const newDef = library.get(newType);
+
+      // Reset state and pin arrays to match the new definition
+      const initialState = newDef.initialState();
+      const defaultInputs = new Array<SignalValue>(newDef.inputs).fill(
+        LogicValue.HIGH_IMPEDANCE,
+      );
+      const { outputs } = newDef.evaluate(defaultInputs, initialState);
+
+      updateComponent(ctxMenu.compId, {
+        type: newType,
+        label: newDef.label,
+        state: initialState,
+        outputs,
+        inputs: defaultInputs,
+      });
+    },
+    [ctxMenu, snapshot.components, updateComponent],
+  );
+
+  const handleCtxDuplicate = useCallback(() => {
+    if (!ctxMenu) return;
+
+    const idMap = duplicateComponents([ctxMenu.compId]);
+
+    setSelection(new Set(idMap.values()));
+  }, [ctxMenu, duplicateComponents, setSelection]);
+
+  const handleCtxDelete = useCallback(() => {
+    if (!ctxMenu) return;
+
+    const wireIds: string[] = [];
+
+    for (const w of Object.values(snapshot.wires)) {
+      if (w.from.comp === ctxMenu.compId || w.to.comp === ctxMenu.compId) {
+        wireIds.push(w.id);
+      }
+    }
+
+    removeWires(wireIds);
+    removeComponents([ctxMenu.compId]);
+    clearSelection();
+  }, [ctxMenu, snapshot.wires, removeWires, removeComponents, clearSelection]);
 
   // ── Canvas drop ─────────────────────────────────────────────────────────────
   const onCanvasDrop = useCallback(
@@ -1044,6 +1134,9 @@ function DigitalGateApp() {
                         onMouseDown={(e: React.MouseEvent) =>
                           startCompDrag(e, c)
                         }
+                        onContextMenu={(e: React.MouseEvent) =>
+                          handleContextMenu(e, c.id)
+                        }
                         onPinDown={(
                           e: React.MouseEvent,
                           pin: number,
@@ -1234,6 +1327,20 @@ function DigitalGateApp() {
         <Suspense fallback={null}>
           <SettingsPanel onClose={() => setSettingsOpen(false)} />
         </Suspense>
+      )}
+
+      {/* Component Context Menu */}
+      {ctxMenu && snapshot.components[ctxMenu.compId] && (
+        <RightClickMenu
+          x={ctxMenu.x}
+          y={ctxMenu.y}
+          comp={snapshot.components[ctxMenu.compId]}
+          onClose={() => setCtxMenu(null)}
+          onPin={handleCtxPin}
+          onReplace={handleCtxReplace}
+          onDuplicate={handleCtxDuplicate}
+          onDelete={handleCtxDelete}
+        />
       )}
     </div>
   );

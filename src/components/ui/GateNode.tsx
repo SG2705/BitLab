@@ -272,11 +272,13 @@ interface GateNodeProps {
   onPointerUpBody?: (e: React.PointerEvent) => void;
   onPinDown: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
   onPinUp: (e: React.MouseEvent, pin: number, kind: PinKind) => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 GateNode.defaultProps = {
   onPointerDownBody: undefined,
   onPointerUpBody: undefined,
+  onContextMenu: undefined,
 };
 
 function GateNode({
@@ -288,6 +290,7 @@ function GateNode({
   onPointerUpBody,
   onPinDown,
   onPinUp,
+  onContextMenu,
 }: GateNodeProps) {
   const intl = useIntl();
 
@@ -330,6 +333,7 @@ function GateNode({
       <g
         transform={`translate(${comp.x}, ${comp.y})`}
         onMouseDown={onMouseDown}
+        onContextMenu={onContextMenu}
       >
         {isSelected && (
           <rect
@@ -377,7 +381,11 @@ function GateNode({
   }
 
   return (
-    <g transform={`translate(${comp.x}, ${comp.y})`} onMouseDown={onMouseDown}>
+    <g
+      transform={`translate(${comp.x}, ${comp.y})`}
+      onMouseDown={onMouseDown}
+      onContextMenu={onContextMenu}
+    >
       {(() => {
         const r =
           comp.type === GATE_TYPE_PROBE || comp.type === GATE_TYPE_DISPLAY7
@@ -428,6 +436,19 @@ function GateNode({
               style={{ cursor: isIO ? "pointer" : "grab" }}
               className={cn(bodyGlow)}
             />
+            {/* Pinned indicator */}
+            {comp.pinned && (
+              <g
+                transform={`translate(${rw - 18}, 2) rotate(20, 3.5, 4.5) scale(2)`}
+                pointerEvents="none"
+              >
+                <path
+                  d="M3.5 0.5L3.5 2.5L1 4.5L1 5.5L3 5.5L3 8.5L4 8.5L4 5.5L6 5.5L6 4.5L3.5 2.5L3.5 0.5Z"
+                  fill="var(--color-accent)"
+                  stroke="none"
+                />
+              </g>
+            )}
             {/* Symbol/Icon — always horizontal text */}
             {isNormalIcon && IconComponent && (
               <IconComponent

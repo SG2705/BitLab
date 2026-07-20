@@ -10,6 +10,7 @@ export { default as ToolBtn } from "./ToolBtn";
 export { default as WirePath } from "./WirePath";
 export { default as EmptyCanvas } from "./EmptyCanvas";
 export { default as ErrorBoundary } from "./ErrorBoundary";
+export { default as RightClickMenu } from "./RightClickMenu";
 
 // Types
 export type { ButtonProps } from "./Button";
