@@ -129,10 +129,10 @@ export class SignalPropagator {
       // internal edge-triggered storage.
       const needsSnapshot = def.isSequential || def.needsInputSnapshot;
       const liveInputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
-        U,
+        LogicValue.ZERO,
       );
       const snapshotInputs = needsSnapshot
-        ? new Array<SignalValue>(def.inputs).fill(U)
+        ? new Array<SignalValue>(def.inputs).fill(LogicValue.ZERO)
         : undefined;
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
@@ -204,6 +204,9 @@ export class SignalPropagator {
   /**
    * Full re-evaluation of every component in topological order.
    * Used on circuit load or after a topology change.
+   *
+   * Handles feedback cycles by iteratively evaluating cycle participants
+   * until their outputs stabilize, then re-evaluating downstream sinks.
    */
   recomputeAll(
     components: Record<string, ComponentInstance>,
@@ -211,20 +214,22 @@ export class SignalPropagator {
     let totalEvals = 0;
     const order = this.graph.topologicalSort();
     const changed = new Set<string>();
-    const oscillation = false;
+    let oscillation = false;
 
+    // Phase 1: Evaluate components in topological order (non-cycle)
     for (const compId of order) {
       const comp = components[compId];
 
       if (!comp) continue;
-
       if (!this.library.has(comp.type)) continue;
 
       const def = this.library.get(comp.type);
 
-      if (def.isClock || def.isInput) continue; // these drive signals; don't re-evaluate
+      if (def.isClock || def.isInput) continue;
 
-      const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(U);
+      const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+        LogicValue.ZERO,
+      );
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
         const wire = this.graph.getInputWire(compId, pin);
@@ -232,19 +237,19 @@ export class SignalPropagator {
         if (wire) {
           const src = components[wire.from.comp];
 
-          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? U;
+          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? LogicValue.ZERO;
         }
       }
 
-      let outputChanged = false;
       const result = def.evaluate(inputs, comp.state, { tick: 0 });
 
       totalEvals += 1;
 
+      let outputChanged = false;
+
       for (let i = 0; i < result.outputs.length; i += 1) {
         if (result.outputs[i] !== comp.outputs[i]) {
           outputChanged = true;
-
           break;
         }
       }
@@ -258,8 +263,137 @@ export class SignalPropagator {
           outputs: result.outputs,
           state: result.state ?? comp.state,
         };
-
         changed.add(compId);
+      } else if (inputs.some((v, i) => v !== comp.inputs[i])) {
+        components[compId] = { ...comp, inputs };
+      }
+    }
+
+    // Phase 2: Stabilize cycle participants (not in topological order)
+    const allNodes = this.graph.getAllNodes();
+    const orderSet = new Set(order);
+    const cycleNodes = allNodes.filter(
+      (id) => !orderSet.has(id) && components[id],
+    );
+
+    if (cycleNodes.length > 0) {
+      const maxPasses = 64;
+      let pass = 0;
+      let anyChanged = true;
+
+      while (anyChanged && pass < maxPasses) {
+        anyChanged = false;
+        pass += 1;
+
+        for (const compId of cycleNodes) {
+          const comp = components[compId];
+
+          if (!comp) continue;
+          if (!this.library.has(comp.type)) continue;
+
+          const def = this.library.get(comp.type);
+
+          if (def.isClock || def.isInput) continue;
+
+          const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+            LogicValue.ZERO,
+          );
+
+          for (let pin = 0; pin < def.inputs; pin += 1) {
+            const wire = this.graph.getInputWire(compId, pin);
+
+            if (wire) {
+              const src = components[wire.from.comp];
+
+              if (src)
+                inputs[pin] = src.outputs[wire.from.pin] ?? LogicValue.ZERO;
+            }
+          }
+
+          const result = def.evaluate(inputs, comp.state, { tick: 0 });
+
+          totalEvals += 1;
+
+          let outputChanged = false;
+
+          for (let i = 0; i < result.outputs.length; i += 1) {
+            if (result.outputs[i] !== comp.outputs[i]) {
+              outputChanged = true;
+              break;
+            }
+          }
+
+          const stateChanged = !stateEqual(result.state, comp.state);
+
+          if (outputChanged || stateChanged) {
+            components[compId] = {
+              ...comp,
+              inputs,
+              outputs: result.outputs,
+              state: result.state ?? comp.state,
+            };
+            changed.add(compId);
+            anyChanged = true;
+          } else if (inputs.some((v, i) => v !== comp.inputs[i])) {
+            components[compId] = { ...comp, inputs };
+          }
+        }
+      }
+
+      if (pass >= maxPasses) oscillation = true;
+    }
+
+    // Phase 3: Final pass — re-evaluate all non-input/clock components
+    // so downstream sinks (LEDs) reflect settled cycle outputs.
+    for (const compId of order) {
+      const comp = components[compId];
+
+      if (!comp) continue;
+      if (!this.library.has(comp.type)) continue;
+
+      const def = this.library.get(comp.type);
+
+      if (def.isClock || def.isInput) continue;
+
+      const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+        LogicValue.ZERO,
+      );
+
+      for (let pin = 0; pin < def.inputs; pin += 1) {
+        const wire = this.graph.getInputWire(compId, pin);
+
+        if (wire) {
+          const src = components[wire.from.comp];
+
+          if (src) inputs[pin] = src.outputs[wire.from.pin] ?? LogicValue.ZERO;
+        }
+      }
+
+      const result = def.evaluate(inputs, comp.state, { tick: 0 });
+
+      totalEvals += 1;
+
+      let outputChanged = false;
+
+      for (let i = 0; i < result.outputs.length; i += 1) {
+        if (result.outputs[i] !== comp.outputs[i]) {
+          outputChanged = true;
+          break;
+        }
+      }
+
+      const stateChanged = !stateEqual(result.state, comp.state);
+
+      if (outputChanged || stateChanged) {
+        components[compId] = {
+          ...comp,
+          inputs,
+          outputs: result.outputs,
+          state: result.state ?? comp.state,
+        };
+        changed.add(compId);
+      } else if (inputs.some((v, i) => v !== comp.inputs[i])) {
+        components[compId] = { ...comp, inputs };
       }
     }
 

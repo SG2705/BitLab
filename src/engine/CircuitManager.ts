@@ -196,6 +196,9 @@ export class CircuitManager {
   ): Wire | null {
     if (!this.components[fromComp] || !this.components[toComp]) return null;
 
+    // Prevent self-connection (output → input on the same component)
+    if (fromComp === toComp) return null;
+
     // Prevent double-wiring the same input pin
     const existing = this.graph.getInputWire(toComp, toPin);
 
@@ -215,10 +218,31 @@ export class CircuitManager {
 
     if (srcComp) {
       // Update the target's input signal right away
+      const targetInputs = this.buildInputs(toComp);
+
       this.components[toComp] = {
         ...this.components[toComp],
-        inputs: this.buildInputs(toComp),
+        inputs: targetInputs,
       };
+
+      // For output sinks (LED, Display, Probe — 0 output pins), immediately
+      // evaluate so their visual state updates even if propagation doesn't
+      // reach them through the normal downstream traversal (e.g. in cycles).
+      if (this.library.has(this.components[toComp].type)) {
+        const targetDef = this.library.get(this.components[toComp].type);
+
+        if (targetDef.outputs === 0) {
+          const result = targetDef.evaluate(
+            targetInputs,
+            this.components[toComp].state,
+          );
+
+          this.components[toComp] = {
+            ...this.components[toComp],
+            state: result.state ?? this.components[toComp].state,
+          };
+        }
+      }
 
       this.engine.triggerPropagation([fromComp]);
     }
@@ -244,15 +268,8 @@ export class CircuitManager {
     if (target) {
       const inputs = [...target.inputs];
 
-      // Output components (LED, Probe, Display) default to ZERO when disconnected
-      if (
-        this.library.has(target.type) &&
-        this.library.get(target.type).isOutput
-      ) {
-        inputs[wire.to.pin] = LogicValue.ZERO;
-      } else {
-        inputs[wire.to.pin] = U;
-      }
+      // Disconnected pins default to ZERO (safe logic level).
+      inputs[wire.to.pin] = LogicValue.ZERO;
 
       // Re-evaluate the target with updated inputs so outputs reflect the change
       if (this.library.has(target.type)) {
@@ -406,8 +423,10 @@ export class CircuitManager {
 
     const def = this.library.get(type);
     // Output components (LED, Probe, Display) default to ZERO when unconnected.
-    // All other components default to HIGH_IMPEDANCE for unconnected pins.
-    const defaultVal = def.isOutput ? LogicValue.ZERO : U;
+    // Logic gates and other non-input components also default to ZERO for
+    // unconnected pins — HIGH_IMPEDANCE would produce UNKNOWN through truth tables.
+    // Only input/clock sources use HIGH_IMPEDANCE as their driven default.
+    const defaultVal = LogicValue.ZERO;
     const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
       defaultVal,
     );

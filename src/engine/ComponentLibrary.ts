@@ -759,7 +759,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     samplesEveryTick: true,
     isClock: false,
     isInput: false,
-    isOutput: false,
+    isOutput: true,
     initialState: () => ({
       history: [] as Array<{ v: boolean; t: number }>,
     }),
@@ -871,7 +871,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["D", "CLK"],
     outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: false }),
+    initialState: () => ({ q: false, prevClk: ZERO }),
     evaluate: evalDff,
   }),
   hw({
@@ -889,7 +889,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["J", "K", "CLK"],
     outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: false }),
+    initialState: () => ({ q: false, prevClk: ZERO }),
     evaluate: evalJkff,
   }),
   hw({
@@ -907,7 +907,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["T", "CLK"],
     outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: false }),
+    initialState: () => ({ q: false, prevClk: ZERO }),
     evaluate: evalTiff,
   }),
   hw({
@@ -943,7 +943,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["D0", "D1", "D2", "D3", "CLK"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ q: 0, prevClk: false }),
+    initialState: () => ({ q: 0, prevClk: ZERO }),
     evaluate: evalReg4,
   }),
   hw({
@@ -961,7 +961,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["CLK", "RST"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ count: 0, prevClk: false }),
+    initialState: () => ({ count: 0, prevClk: ZERO }),
     evaluate: evalCounter4,
   }),
   hw({
@@ -979,7 +979,7 @@ const DEFINITIONS: ComponentDefinition[] = [
     isOutput: false,
     inputLabels: ["SI", "CLK", "RST"],
     outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ bits: 0, prevClk: false }),
+    initialState: () => ({ bits: 0, prevClk: ZERO }),
     evaluate: evalShreg4,
   }),
 

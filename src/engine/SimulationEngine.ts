@@ -52,7 +52,7 @@ export class SimulationEngine {
 
   constructor(
     private readonly components: Record<string, ComponentInstance>,
-    _graph: GraphManager,
+    private readonly graph: GraphManager,
     private readonly library: ComponentLibrary,
     private readonly propagator: SignalPropagator,
     options: SimulationEngineOptions = {},
@@ -117,8 +117,11 @@ export class SimulationEngine {
 
       const def = defs.get(comp.type);
       const initialState = def.initialState();
+      // Input/clock sources use HIGH_IMPEDANCE as their "driven" default;
+      // all other components use ZERO for unconnected pins.
+      const resetDefault = def.isInput || def.isClock ? U : LogicValue.ZERO;
       const initialOutputs = def.evaluate(
-        new Array<SignalValue>(def.inputs).fill(U),
+        new Array<SignalValue>(def.inputs).fill(resetDefault),
         initialState,
       ).outputs;
 
@@ -126,7 +129,7 @@ export class SimulationEngine {
         ...comp,
         state: initialState,
         outputs: initialOutputs,
-        inputs: new Array<SignalValue>(def.inputs).fill(U),
+        inputs: new Array<SignalValue>(def.inputs).fill(resetDefault),
       };
     }
 
@@ -279,6 +282,47 @@ export class SimulationEngine {
     if (result.oscillationDetected) {
       this.oscillationsDetected += 1;
       this.emit({ type: ENGINE_EVENT_TYPE.OSCILLATION });
+    }
+
+    // Post-propagation: ensure output sinks (LED, Display — 0 output pins)
+    // reflect the final settled signals. In feedback cycles, the propagator
+    // may have dequeued a sink before its upstream source stabilized.
+    for (const id of Object.keys(this.components)) {
+      const comp = this.components[id];
+
+      if (!this.library.has(comp.type)) continue;
+
+      const def = this.library.get(comp.type);
+
+      if (def.outputs > 0 || def.isInput || def.isClock) continue;
+
+      // Re-read live inputs from connected wires
+      const liveInputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
+        LogicValue.ZERO,
+      );
+
+      for (let pin = 0; pin < def.inputs; pin += 1) {
+        const wire = this.graph.getInputWire(id, pin);
+
+        if (wire) {
+          const src = this.components[wire.from.comp];
+
+          if (src)
+            liveInputs[pin] = src.outputs[wire.from.pin] ?? LogicValue.ZERO;
+        }
+      }
+
+      // Always re-evaluate to ensure state reflects current inputs
+      const evalResult = def.evaluate(liveInputs, comp.state, {
+        tick: this.tick,
+      });
+
+      this.components[id] = {
+        ...comp,
+        inputs: liveInputs,
+        outputs: evalResult.outputs,
+        state: evalResult.state ?? comp.state,
+      };
     }
 
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
