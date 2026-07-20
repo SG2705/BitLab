@@ -329,11 +329,14 @@ function DigitalGateApp() {
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
 
   const undoWithReroute = useCallback(() => {
+    // Clear all routes so wires fall back to ortho while worker reroutes
+    if (wireStyle === WIRE_TYPE.OPTIMIZED) setRoutedWires(new Map());
     undo();
     if (wireStyle === WIRE_TYPE.OPTIMIZED) setRerouteTrigger((v) => v + 1);
   }, [undo, wireStyle]);
 
   const redoWithReroute = useCallback(() => {
+    if (wireStyle === WIRE_TYPE.OPTIMIZED) setRoutedWires(new Map());
     redo();
     if (wireStyle === WIRE_TYPE.OPTIMIZED) setRerouteTrigger((v) => v + 1);
   }, [redo, wireStyle]);
