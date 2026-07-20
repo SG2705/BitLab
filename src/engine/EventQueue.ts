@@ -1,11 +1,28 @@
 /**
- * EventQueue — min-heap priority queue for simulation events.
+ * EventQueue — Min-heap priority queue for simulation event scheduling.
  *
- * Priority is the component's topological rank so that upstream components
- * are always evaluated before downstream ones in the same propagation pass.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Deduplication: enqueueing a component that is already in the queue is a
- * no-op, preventing redundant evaluations in the same propagation pass.
+ * Provides O(log n) enqueue/dequeue with priority ordering, used by the
+ * SignalPropagator to evaluate components in topological order.
+ *
+ * Key properties:
+ *   • Priority is the component's topological rank (lower = evaluate first)
+ *   • Built-in deduplication: enqueueing an already-queued component is a no-op
+ *   • After dequeue, the component CAN be re-enqueued (dedup only while in queue)
+ *   • Array-based binary heap for cache-friendly memory access
+ *
+ * Complexity:
+ *   • enqueue: O(log n) — bubble up
+ *   • dequeue: O(log n) — sink down
+ *   • has:     O(1) — Set lookup
+ *
+ * Note: This queue is used as a utility by recomputeAll's legacy path.
+ * The primary propagation loop now uses a dirty-set approach (SignalPropagator).
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 interface HeapItem {
@@ -17,6 +34,10 @@ export class EventQueue {
   private heap: HeapItem[] = [];
   private inQueue: Set<string> = new Set();
 
+  /**
+   * Add a component to the queue with the given priority.
+   * If the component is already in the queue, this is a no-op (deduplication).
+   */
   enqueue(componentId: string, priority: number): void {
     if (this.inQueue.has(componentId)) {
       return;
@@ -27,6 +48,10 @@ export class EventQueue {
     this.shiftUp(this.heap.length - 1);
   }
 
+  /**
+   * Remove and return the highest-priority (lowest rank) component.
+   * Returns undefined if the queue is empty.
+   */
   dequeue(): string | undefined {
     if (this.heap.length === 0) {
       return undefined;
@@ -45,23 +70,28 @@ export class EventQueue {
     return top.componentId;
   }
 
+  /** Check if a component is currently in the queue */
   has(componentId: string): boolean {
     return this.inQueue.has(componentId);
   }
 
+  /** True if no events are pending */
   isEmpty(): boolean {
     return this.heap.length === 0;
   }
 
+  /** Remove all events from the queue */
   clear(): void {
     this.heap = [];
     this.inQueue.clear();
   }
 
+  /** Current number of pending events */
   get size(): number {
     return this.heap.length;
   }
 
+  /** Restore heap property by moving a node up toward the root */
   private shiftUp(i: number): void {
     while (i > 0) {
       // eslint-disable-next-line no-bitwise
@@ -76,6 +106,7 @@ export class EventQueue {
     }
   }
 
+  /** Restore heap property by moving a node down toward the leaves */
   private shiftDown(i: number): void {
     const n = this.heap.length;
 

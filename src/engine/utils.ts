@@ -1,6 +1,17 @@
 /**
- * Engine-level utility functions.
- * No UI or framework dependencies.
+ * utils.ts — Engine-level utility functions.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Pure utility functions used by the engine internals:
+ *   • stateEqual: Fast shallow equality for component state objects
+ *   • getHeightForPinCount: Compute component height based on pin density
+ *
+ * No UI or framework dependencies. Safe for worker contexts.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { CELL_SIZE, MIN_COMP_SIZE, PIN_SPACING_UNITS } from "@/globals";

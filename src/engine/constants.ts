@@ -1,9 +1,26 @@
 /**
- * Engine-level constants used by the simulation engine and its components.
- * These have zero UI/framework dependencies.
+ * constants.ts — Engine-level constants used by the simulation engine.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Contains all string constants and numeric parameters for the engine:
+ *   • Gate category identifiers (for library organization)
+ *   • Gate type identifiers (unique key per component type)
+ *   • Engine event type strings
+ *   • Simulation status strings
+ *   • Simulation parameters (ticks per cycle, probe samples, etc.)
+ *   • Pin count constants (avoid magic numbers in definitions)
+ *   • Internationalization label mapping
+ *
+ * Zero UI/framework dependencies. Safe to import from workers.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 // ── Gate Categories ──────────────────────────────────────────────────────────
+// Used by ComponentLibrary to group components in the toolbox panel.
 
 export const GATE_CATEGORY_LOGIC = "gate_category-logic";
 export const GATE_CATEGORY_INPUT = "gate_category-input";

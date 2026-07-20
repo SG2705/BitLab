@@ -1,17 +1,39 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 /**
- * CircuitManager — single source of truth for circuit structure and state.
+ * CircuitManager — Single source of truth for circuit structure and state.
  *
- * Manages:
- *   • Component instances (position, internal state, current signals)
- *   • Wires (connections between component pins)
- *   • Graph topology (via GraphManager)
- *   • The SimulationEngine (starts/stops the simulation loop)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * All mutating operations go through this class so that:
- *   1. The graph stays consistent with the component/wire collections.
- *   2. The engine is notified of topology changes.
- *   3. Listeners receive a snapshot after every mutation.
+ * The CircuitManager is the top-level orchestrator of the simulation engine.
+ * All circuit mutations flow through this class to maintain consistency.
+ *
+ * Responsibilities:
+ *   • Component CRUD (add, remove, move, update)
+ *   • Wire CRUD (add, remove)
+ *   • Input toggling (setInput) with immediate signal propagation
+ *   • Simulation lifecycle (start, stop, pause, step, reset)
+ *   • Snapshot queries for UI rendering
+ *   • Event emission to notify the UI of state changes
+ *   • Transaction support for batched edits (paste, multi-delete, etc.)
+ *
+ * Transaction Model:
+ *   beginTransaction() → multiple mutations → commitTransaction()
+ *   During a transaction:
+ *     • Signal propagation is deferred
+ *     • SNAPSHOT_CHANGED events are suppressed
+ *     • A single recomputation runs on commit
+ *   This prevents expensive intermediate states during large edits.
+ *
+ * Invariants maintained:
+ *   • GraphManager always reflects the current wires collection
+ *   • Self-connections (output→input on same component) are rejected
+ *   • Each input pin has at most one connected wire
+ *   • Propagation is triggered after every structural change (outside transactions)
+ *   • The propagator's topology cache is invalidated on wire changes
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { v4 as uuidv4 } from "uuid";
@@ -143,6 +165,15 @@ export class CircuitManager {
 
   // ── Component operations ──────────────────────────────────────────────────
 
+  /**
+   * Add a new component instance to the circuit.
+   * Evaluates with default inputs to establish initial output state.
+   * Triggers propagation if the component is an input source (Toggle, Clock).
+   *
+   * @param type - Component type key (must exist in the library)
+   * @param opts - Position, label, rotation, color, and custom properties
+   * @returns The created component instance
+   */
   addComponent(
     type: string,
     opts: AddComponentOptions = {},
@@ -183,6 +214,7 @@ export class CircuitManager {
     return comp;
   }
 
+  /** Remove a component and all its connected wires from the circuit. */
   removeComponent(id: string): void {
     if (!this.components[id]) return;
 
@@ -201,10 +233,12 @@ export class CircuitManager {
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
+  /** Remove multiple components in one call. Use within a transaction for batching. */
   removeComponents(ids: string[]): void {
     for (const id of ids) this.removeComponent(id);
   }
 
+  /** Move a component to an absolute position. Does not affect signals. */
   moveComponent(id: string, x: number, y: number): void {
     const comp = this.components[id];
 
@@ -215,6 +249,7 @@ export class CircuitManager {
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
+  /** Move multiple components by a relative delta. Does not affect signals. */
   moveComponents(ids: string[], dx: number, dy: number): void {
     for (const id of ids) {
       const comp = this.components[id];
@@ -227,6 +262,7 @@ export class CircuitManager {
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
+  /** Apply a partial update to a component instance (label, color, properties, etc.) */
   updateComponent(id: string, patch: Partial<ComponentInstance>): void {
     const comp = this.components[id];
 
@@ -256,6 +292,19 @@ export class CircuitManager {
 
   // ── Wire operations ───────────────────────────────────────────────────────
 
+  /**
+   * Create a wire connecting an output pin to an input pin.
+   *
+   * Validation:
+   *   • Both components must exist
+   *   • Self-connection (same component) is rejected
+   *   • Double-wiring the same input pin is rejected
+   *
+   * After connection, the target's inputs are rebuilt and propagation is triggered.
+   * For output sinks (0 outputs), an immediate evaluation ensures visual state updates.
+   *
+   * @returns The created Wire object, or null if validation failed
+   */
   addWire(
     fromComp: string,
     fromPin: number,
@@ -322,6 +371,10 @@ export class CircuitManager {
     return wire;
   }
 
+  /**
+   * Remove a wire by ID. Disconnects the target's input pin (defaults to ZERO),
+   * re-evaluates the target, and triggers downstream propagation.
+   */
   removeWire(wireId: string): void {
     const wire = this.wires[wireId];
 
@@ -371,6 +424,7 @@ export class CircuitManager {
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
+  /** Remove multiple wires. Use within a transaction for batching. */
   removeWires(wireIds: string[]): void {
     for (const id of wireIds) this.removeWire(id);
   }
@@ -385,51 +439,67 @@ export class CircuitManager {
     };
   }
 
+  /** Get a single component by ID, or undefined if not found. */
   getComponent(id: string): ComponentInstance | undefined {
     return this.components[id];
   }
 
+  /** Get a single wire by ID, or undefined if not found. */
   getWire(id: string): Wire | undefined {
     return this.wires[id];
   }
 
   // ── Simulation passthrough ────────────────────────────────────────────────
+  // These delegate to SimulationEngine and provide a unified API surface.
 
+  /** Start the simulation clock loop (RAF-based). */
   startSimulation(): void {
     this.engine.start();
   }
 
+  /** Pause the simulation clock (stops ticking, preserves state). */
   pauseSimulation(): void {
     this.engine.pause();
   }
 
+  /** Stop the simulation (pauses and resets status to IDLE). */
   stopSimulation(): void {
     this.engine.stop();
   }
 
+  /** Advance exactly one simulation tick (for step-by-step debugging). */
   stepSimulation(): void {
     this.engine.step();
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
+  /** Reset all components to initial state and re-propagate. */
   resetSimulation(): void {
     this.engine.reset();
   }
 
+  /** Set the simulation clock frequency in Hz. */
   setClockHz(hz: number): void {
     this.engine.setClockHz(hz);
   }
 
+  /** Get current simulation lifecycle status (IDLE, RUNNING, PAUSED). */
   getSimulationStatus(): SimulationStatus {
     return this.engine.getStatus();
   }
 
+  /** Get aggregate simulation statistics including propagation metrics. */
   getSimulationStats(): SimulationStats {
     return this.engine.getStats();
   }
 
   // ── Load from a snapshot (used by ProjectManager) ─────────────────────────
 
+  /**
+   * Replace the entire circuit with the given snapshot.
+   * Stops simulation, clears all state, rebuilds from scratch,
+   * invalidates caches, and runs a full recomputation.
+   */
   loadSnapshot(snapshot: CircuitSnapshot): void {
     // Stop simulation before replacing state
     this.engine.stop();

@@ -1,8 +1,42 @@
 /**
  * Public API for the BitLab simulation engine.
  *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * ENGINE ARCHITECTURE
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * The engine is composed of several cooperating modules:
+ *
+ *   CircuitManager  — Single source of truth for circuit topology and state.
+ *                     All mutations (add/remove/move/wire) go through here.
+ *                     Supports transactions for batched edits.
+ *
+ *   SimulationEngine — Orchestrates the clock loop (RAF-based) and triggers
+ *                      signal propagation. Provides start/stop/step/reset.
+ *                      Includes re-entrant propagation guard and seed batching.
+ *
+ *   SignalPropagator — Delta-cycle event-driven propagation engine.
+ *                      Evaluates dirty components, detects oscillation,
+ *                      handles sequential snapshot isolation.
+ *
+ *   GraphManager    — Directed graph of circuit topology with Kahn's sort.
+ *                     Provides O(1) pin-level wire lookups and adjacency queries.
+ *
+ *   ComponentLibrary — Registry of all component definitions with validation.
+ *                      Supports runtime registration of custom circuits.
+ *
+ *   EventQueue      — Min-heap priority queue (utility, used internally).
+ *
+ *   ProjectManager  — Persistence layer: save/load/undo/redo.
+ *
+ * Data Flow:
+ *   User input → CircuitManager.setInput() → SimulationEngine.triggerPropagation()
+ *   → SignalPropagator.propagate() → delta cycles → stable state → UI render
+ *
  * Import from "@/engine" to access the engine in application code.
  * The engine has zero UI framework dependencies.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 export type {

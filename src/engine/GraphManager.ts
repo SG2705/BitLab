@@ -1,16 +1,35 @@
 /**
- * GraphManager — directed graph representing circuit topology.
+ * GraphManager — Directed graph representing circuit topology.
  *
- * Maintains two adjacency maps:
- *   downstream: compId → Set of compIds that receive signals FROM it
- *   upstream:   compId → Set of compIds that send signals TO it
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Also maintains per-pin wire maps for O(1) signal lookup during propagation:
- *   outputWires[compId:pinIndex] → Wire[]   (fan-out, one output → many inputs)
- *   inputWire[compId:pinIndex]  → Wire      (one input ← at most one output)
+ * Maintains the structural connectivity of the circuit as a directed graph.
+ * Used by SignalPropagator to determine evaluation order and fan-out.
  *
- * Topological order is computed lazily via Kahn's algorithm and invalidated
- * whenever the graph structure changes.
+ * Data structures:
+ *   • downstream: compId → Set<compId>  (who receives signals FROM this node)
+ *   • upstream:   compId → Set<compId>  (who sends signals TO this node)
+ *   • outputWires: "compId:pin" → Wire[]  (fan-out: one output → many inputs)
+ *   • inputWires:  "compId:pin" → Wire    (single-driver: one input ← one output)
+ *   • nodeWires:   compId → Set<wireId>   (all wires touching a node)
+ *   • edgeCount:   "from:to" → number     (reference count for adjacency cleanup)
+ *
+ * Topological ordering:
+ *   • Computed lazily via Kahn's algorithm
+ *   • Cached until graph structure changes (addNode/removeNode/addWire/removeWire)
+ *   • Cycle participants get rank Number.MAX_SAFE_INTEGER
+ *   • Used by propagator to evaluate upstream before downstream
+ *
+ * Complexity:
+ *   • addNode/removeNode: O(1) amortized
+ *   • addWire/removeWire: O(1)
+ *   • getInputWire: O(1) — direct Map lookup
+ *   • getDownstream/getUpstream: O(k) where k = neighbor count
+ *   • topologicalSort: O(V + E) — cached after first call
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { KEY_SEPARATOR } from "./constants";
@@ -38,6 +57,7 @@ export class GraphManager {
 
   // ── Nodes ──────────────────────────────────────────────────────────────────
 
+  /** Register a new component node in the graph. Initializes empty adjacency sets. */
   addNode(id: ComponentId): void {
     if (!this.downstream.has(id)) this.downstream.set(id, new Set());
     if (!this.upstream.has(id)) this.upstream.set(id, new Set());
@@ -46,6 +66,7 @@ export class GraphManager {
     this.invalidate();
   }
 
+  /** Remove a node and all its connected wires. Cleans up adjacency and invalidates cache. */
   removeNode(id: ComponentId): void {
     // Remove every wire touching this node using the per-node index
     const wireIds = this.nodeWires.get(id);
@@ -62,6 +83,7 @@ export class GraphManager {
 
   // ── Wires ──────────────────────────────────────────────────────────────────
 
+  /** Add a wire to the graph. Updates adjacency, per-pin maps, and edge counts. */
   addWire(wire: Wire): void {
     this.wires.set(wire.id, wire);
 
@@ -87,6 +109,7 @@ export class GraphManager {
     this.invalidate();
   }
 
+  /** Remove a wire by ID. Cleans up adjacency when no wires remain between a pair. */
   removeWire(wireId: WireId): void {
     const wire = this.wires.get(wireId);
 
@@ -147,6 +170,7 @@ export class GraphManager {
     return this.outputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? [];
   }
 
+  /** Get all registered component node IDs */
   getAllNodes(): ComponentId[] {
     return Array.from(this.downstream.keys());
   }
@@ -232,6 +256,7 @@ export class GraphManager {
     return this.topologicalSort().length < this.downstream.size;
   }
 
+  /** Invalidate cached topological order (called after any structural change) */
   private invalidate(): void {
     this.cachedOrder = null;
     this.cachedRanks = null;
