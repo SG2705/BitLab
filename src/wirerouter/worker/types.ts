@@ -1,5 +1,16 @@
 /**
- * Wire Router Worker — Message types for main ↔ worker communication.
+ * types.ts — Message protocol for main thread ↔ worker communication.
+ *
+ * Defines the serializable message types passed between WireRouterClient
+ * and wirerouter.worker.ts via postMessage/onmessage.
+ *
+ * Main → Worker:
+ *   WorkerMsgRebuildAndRouteAll — Full snapshot + geometry for complete reroute
+ *   WorkerMsgRouteSubset        — Snapshot + specific wire IDs for partial reroute
+ *
+ * Worker → Main:
+ *   WorkerResultRoutes — Array of { wireId, waypoints, valid }
+ *   WorkerResultError  — Error message string
  */
 
 import type { CircuitSnapshot } from "@/engine/types";

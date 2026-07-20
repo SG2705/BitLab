@@ -1,12 +1,35 @@
 /**
- * WireRouterClient — Main-thread interface to the wire routing Web Worker.
+ * WireRouterClient — Main-thread async interface to the wire routing Web Worker.
  *
- * Singleton pattern: the worker is created once at module load and reused
- * throughout the app lifetime. This prevents multiple worker copies from
- * being spawned on re-renders.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Provides an async API for heavy routing operations (rebuild + routeAll)
- * while the main thread stays responsive.
+ * Provides a Promise-based API for routing operations that execute in a
+ * Web Worker (off the main thread). Used by App.tsx when wire style is
+ * "optimized" to prevent UI jank during complex routing.
+ *
+ * Singleton:
+ *   WireRouterClient.getInstance() returns the shared instance.
+ *   The underlying Worker is created once and reused across the app lifetime.
+ *
+ * Request Cancellation:
+ *   rebuildAndRouteAll() cancels any pending prior request before sending a new one.
+ *   This implements "latest wins" semantics — only the most recent routing
+ *   request matters (e.g., during rapid dragging). Cancelled requests reject
+ *   with "Cancelled: newer request".
+ *
+ * Geometry Map:
+ *   The worker cannot access the ComponentLibrary singleton, so the client
+ *   builds a serializable GeometryMap containing component dimensions and
+ *   pin counts for all types in the snapshot. This is sent with each request.
+ *
+ * Methods:
+ *   rebuildAndRouteAll(snapshot, config?) — Full rebuild + route all wires
+ *   routeSubset(snapshot, wireIds)       — Route only specified wires
+ *   dispose()                            — Terminate the worker
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import { library } from "@/engine";

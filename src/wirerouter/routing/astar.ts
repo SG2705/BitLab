@@ -58,6 +58,7 @@ export interface RouteMetrics {
   equalCostPathsEvaluated: number;
 }
 
+/** Create a zeroed metrics object */
 function emptyMetrics(): RouteMetrics {
   return {
     nodesExpanded: 0,
@@ -225,6 +226,11 @@ const H_ALIGNMENT_BONUS = 0.06;
 /** Straight bonus: can reach goal without turning */
 const H_STRAIGHT_BONUS = 0.18;
 
+/**
+ * Heading-aware heuristic with admissible tie-breaking bonuses.
+ * Manhattan distance minus small bonuses for alignment/heading.
+ * Remains admissible because bonuses < step cost (1).
+ */
 function heuristic(
   col: number,
   row: number,
@@ -519,8 +525,16 @@ export function findPath(
   return { success: true, waypoints, gridPath: simplified, metrics };
 }
 
-// ── Core A* implementation ───────────────────────────────────────────────────
-
+/**
+ * Core A* search with:
+ * - Multi-level tie-breaking (f → h → bends)
+ * - Context-aware turn penalty (bell curve)
+ * - Equal-cost path collection with visual scoring
+ * - U-turn rejection
+ * - Search instrumentation
+ *
+ * @returns Grid path from start to goal, or null if no path exists
+ */
 function runAstar(
   obstacleMap: ObstacleMap,
   start: GridCell,
@@ -743,8 +757,7 @@ function runAstar(
   return bestPath;
 }
 
-// ── Path reconstruction ──────────────────────────────────────────────────────
-
+/** Reconstruct the grid path by walking backwards through the cameFrom array */
 function reconstructPath(
   cameFrom: Int32Array,
   endNode: AStarNode,
@@ -780,6 +793,7 @@ function reconstructPath(
 
 // ── Utility functions ────────────────────────────────────────────────────────
 
+/** Convert a PinDir (left/right/up/down string) to a numeric Dir index */
 function pinDirToDir(dir: PinDir): Dir {
   switch (dir) {
     case PIN_DIR.UP:
@@ -795,6 +809,7 @@ function pinDirToDir(dir: PinDir): Dir {
   }
 }
 
+/** Reverse a direction (UP↔DOWN, LEFT↔RIGHT) */
 function reverseDir(dir: Dir): Dir {
   switch (dir) {
     case DIR_UP:
@@ -810,6 +825,7 @@ function reverseDir(dir: Dir): Dir {
   }
 }
 
+/** Compute the grid cell N steps from `cell` in direction `dir` */
 function applyStub(cell: GridCell, dir: Dir, length: number): GridCell {
   return {
     col: cell.col + DIR_DC[dir] * length,
@@ -817,6 +833,7 @@ function applyStub(cell: GridCell, dir: Dir, length: number): GridCell {
   };
 }
 
+/** Build an array of cells from pin outward in direction `dir` (inclusive on both ends) */
 function buildStubCells(
   pinCell: GridCell,
   dir: Dir,
@@ -833,6 +850,7 @@ function buildStubCells(
   return cells;
 }
 
+/** Remove collinear intermediate points — keeps only turn waypoints and endpoints */
 function simplifyPath(path: GridCell[]): GridCell[] {
   if (path.length <= 2) return path;
 

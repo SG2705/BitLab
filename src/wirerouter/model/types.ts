@@ -1,5 +1,25 @@
 /**
- * Wire Router — Core types for the obstacle map and routing engine.
+ * types.ts — Core type definitions for the wire routing engine.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * TYPE CATEGORIES
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Geometry:
+ *   Rect      — Axis-aligned rectangle in world (canvas) coordinates
+ *   Point     — 2D position in world coordinates (pixels)
+ *   GridCell  — Column/row position in the discretized routing grid
+ *
+ * Obstacles:
+ *   Obstacle  — A component's obstacle footprint (body bounds + padded bounds)
+ *
+ * Configuration:
+ *   RouterConfig — All tunable parameters for the obstacle map and A* search
+ *
+ * Grid State:
+ *   CellState — Enum describing what occupies a grid cell (FREE/BLOCKED/PADDED)
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 /** A rectangle in world (canvas) coordinates. */
@@ -10,13 +30,19 @@ export interface Rect {
   height: number;
 }
 
-/** An obstacle on the canvas — a component's bounding box inflated by padding. */
+/** An obstacle on the canvas — a component's routing footprint. */
 export interface Obstacle {
   /** Component ID this obstacle belongs to */
   compId: string;
-  /** Original bounding box (unpadded) */
+  /**
+   * Blocked bounds — the component body expanded to pin tips on pin-bearing edges.
+   * Wires cannot cross this region (BLOCKED cells).
+   */
   bounds: Rect;
-  /** Padded bounding box used for routing avoidance */
+  /**
+   * Padded bounds — the blocked region expanded by obstaclePadding on non-pin edges.
+   * Wires can cross this region but incur higher traversal cost (PADDED cells).
+   */
   paddedBounds: Rect;
 }
 
@@ -32,21 +58,27 @@ export interface GridCell {
   row: number;
 }
 
-/** Configuration for the obstacle map and router. */
+/**
+ * Configuration for the obstacle map and A* router.
+ * All values are validated on assignment (negative values rejected).
+ */
 export interface RouterConfig {
-  /** Grid cell size in pixels (derived from app CELL_SIZE constant) */
+  /** Grid cell size in pixels. Determines routing grid resolution. */
   cellSize: number;
-  /** Padding around obstacles in grid units */
+  /**
+   * Padding cells around obstacles on non-pin edges.
+   * Pin-bearing edges get zero padding (wires approach pins directly).
+   */
   obstaclePadding: number;
-  /** How many grid cells the wire must travel straight from a pin before turning */
+  /** Forced stub length: cells a wire must travel straight from a pin before turning */
   stubLength: number;
-  /** Cost multiplier for changing direction (higher = fewer bends) */
+  /** Base turn penalty (scaled by midpoint distance — bell curve) */
   turnPenalty: number;
-  /** Corner radius in pixels for rounded bends (0 = sharp corners) */
+  /** Corner radius in pixels for SVG path rendering (0 = sharp corners) */
   bendRadius: number;
-  /** Cost multiplier per existing wire in a cell (higher = more spreading) */
+  /** Cost multiplier per existing wire in a cell (soft obstacle weight) */
   wireCost: number;
-  /** Padding in cells around each wire path for soft obstacle marking */
+  /** Radius in cells for wire congestion marking around each routed path */
   wirePadding: number;
 }
 

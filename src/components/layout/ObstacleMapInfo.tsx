@@ -146,7 +146,7 @@ function ObstacleMapInfo({
             id="DgJW5Q"
             defaultMessage="{buildTimeMs}ms"
             values={{
-              paddedPercent: stats.buildTimeMs.toFixed(1),
+              buildTimeMs: stats.buildTimeMs.toFixed(1),
             }}
           />
         </span>

@@ -1,12 +1,32 @@
 /* eslint-disable no-restricted-globals */
 /**
- * Wire Router Web Worker
+ * wirerouter.worker.ts — Off-main-thread wire routing Web Worker.
  *
- * Handles heavy operations off the main thread:
- * - rebuildAndRouteAll (obstacle map construction + A* for all wires)
- * - routeSubset (A* for a subset of wires after rebuild)
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
  *
- * Receives snapshot + geometry map, returns computed waypoints.
+ * Performs heavy routing operations without blocking the main thread:
+ *
+ *   rebuildAndRouteAll:
+ *     Receives a full CircuitSnapshot + component geometry map.
+ *     Builds a fresh ObstacleMap, then routes ALL wires sequentially.
+ *     Each routed wire is marked as a soft obstacle for subsequent wires,
+ *     producing natural wire spreading.
+ *
+ *   routeSubset:
+ *     Routes only the specified wire IDs (used after component moves).
+ *     Builds a fresh ObstacleMap from the snapshot first.
+ *
+ * Communication:
+ *   Main → Worker: WorkerInMessage (snapshot + geometry + config)
+ *   Worker → Main: WorkerOutMessage (routes array or error)
+ *
+ * The worker maintains its own geometry map (component sizes/pin counts)
+ * since it cannot access the ComponentLibrary singleton from the main thread.
+ * Pin positions are computed locally using the same algorithm as src/lib/circuit.ts.
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine/types";

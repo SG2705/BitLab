@@ -1,7 +1,25 @@
 /**
- * pathBuilder — Converts waypoints to SVG path `d` strings.
+ * pathBuilder.ts — Converts waypoints to SVG path `d` strings.
  *
- * Produces orthogonal polylines with optional rounded corners at turns.
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * MODULE OVERVIEW
+ * ═══════════════════════════════════════════════════════════════════════════════
+ *
+ * Takes an array of orthogonal waypoints (from the A* router) and produces
+ * an SVG path string suitable for rendering in the WirePath component.
+ *
+ * Two output modes:
+ *   waypointsToPolyline — Sharp corners (straight line segments)
+ *   waypointsToPath     — Rounded corners (quadratic Bézier at each turn)
+ *
+ * The corner radius is clamped to half the shortest adjacent segment
+ * to prevent arcs from overlapping.
+ *
+ * Utilities:
+ *   segmentLength     — Euclidean distance between two points
+ *   pointAlongSegment — Interpolate a point at distance `d` from `from` toward `to`
+ *
+ * ═══════════════════════════════════════════════════════════════════════════════
  */
 
 import type { Point } from "../model/types";
@@ -10,6 +28,7 @@ import { DEFAULT_ROUTER_CONFIG } from "../obstacles/ObstacleMap";
 /** Corner radius in pixels for rounded turns. Set to 0 for sharp corners. */
 const CORNER_RADIUS = DEFAULT_ROUTER_CONFIG.bendRadius;
 
+/** Convert waypoints to a simple SVG polyline (M...L...L...) with sharp corners */
 export const waypointsToPolyline = (waypoints: Point[]): string => {
   if (waypoints.length === 0) return "";
 
@@ -22,6 +41,7 @@ export const waypointsToPolyline = (waypoints: Point[]): string => {
   return parts.join(" ");
 };
 
+/** Compute Euclidean distance between two points */
 export const segmentLength = (a: Point, b: Point): number => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -29,6 +49,7 @@ export const segmentLength = (a: Point, b: Point): number => {
   return Math.sqrt(dx * dx + dy * dy);
 };
 
+/** Interpolate a point at distance `dist` from `from` toward `to` */
 export const pointAlongSegment = (
   from: Point,
   to: Point,
@@ -46,6 +67,15 @@ export const pointAlongSegment = (
   };
 };
 
+/**
+ * Convert waypoints to an SVG path string with optional rounded corners.
+ * Uses quadratic Bézier curves at each turn point, with radius clamped
+ * to half the shortest adjacent segment to prevent overlap.
+ *
+ * @param waypoints - Array of orthogonal waypoints from the router
+ * @param radius - Corner radius in pixels (0 = sharp corners, uses polyline)
+ * @returns SVG path `d` attribute string
+ */
 export const waypointsToPath = (
   waypoints: Point[],
   radius = CORNER_RADIUS,

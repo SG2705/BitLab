@@ -7,32 +7,42 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Converts component positions into a discretized routing grid with multiple
- * layers of cost information:
+ * layers of information used by the A* pathfinder:
  *
- *   Grid Layer (Uint8Array):
- *     - FREE (0): fully clear for routing
- *     - BLOCKED (1): component body, impassable
- *     - PADDED (2): inflation zone around components, passable but penalized
+ *   Grid Layer (Uint8Array — CellState enum):
+ *     - FREE (0):    Fully clear for routing, zero extra cost
+ *     - BLOCKED (1): Component body + pin-offset zone, impassable
+ *     - PADDED (2):  Inflation zone on non-pin edges, passable but penalized
  *
  *   Clearance Field (Uint8Array):
- *     - Distance from nearest BLOCKED cell (BFS-computed)
- *     - Enables gradient-based obstacle repulsion in the router
- *     - Higher = farther from components = cheaper traversal
+ *     - BFS-computed Manhattan distance from nearest BLOCKED cell
+ *     - Range: 0 (blocked) to CLEARANCE_FIELD_MAX (8)
+ *     - Used by router for gradient-based obstacle repulsion
  *
  *   Wire Cost Layer (Uint8Array):
  *     - Accumulated wire traffic per cell (soft obstacle)
- *     - Distinguishes hard obstacles (components) from soft costs (existing wires)
- *     - Configurable traversal cost multiplier
+ *     - Configurable cost multiplier (wireCost)
+ *     - Does NOT block routing — only increases traversal cost
  *
- * Features:
- *   - Size-adaptive padding (#1): larger components get proportionally more padding
- *   - Pin-access corridors (#2): explicit clearance maintained around pin positions
- *   - Gradient clearance field (#5): BFS distance from obstacles for smooth repulsion
- *   - Incremental updates (#4): dirty-region tracking for efficient single-component moves
- *   - Soft wire costs (#3): existing wires influence but don't block new routes
- *   - Map statistics (#8): blocked/padded percentages and rebuild timing
- *   - Configuration validation (#9): rejects invalid parameter combinations
- *   - Debug data (#10): raw grid + clearance field exposed for overlay rendering
+ * Obstacle Footprint:
+ *   The BLOCKED region for each component includes:
+ *     - The component body rectangle (comp.x, comp.y, width, height)
+ *     - PIN_OFFSET_UNITS cells of expansion on pin-bearing edges
+ *       (prevents wires from threading between body and pins)
+ *     - No expansion on non-pin edges
+ *
+ *   The PADDED region adds obstaclePadding cells:
+ *     - ONLY on non-pin edges (top/bottom for vertical, left/right for horizontal)
+ *     - Zero padding on pin-bearing edges (wires approach pins freely)
+ *
+ * Incremental Updates:
+ *   - updateObstacle(): clears old cells, re-marks with new position, recomputes clearance
+ *   - removeObstacle(): clears cells, re-marks overlapping neighbors, recomputes clearance
+ *
+ * Statistics & Debug:
+ *   - getStats(): blocked/padded/free cell counts, percentages, build time
+ *   - getRawGrid(): raw Uint8Array for debug overlay rendering
+ *   - getClearanceField(): distance field for gradient heatmap overlay
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
@@ -54,12 +64,6 @@ import {
 
 /** Maximum clearance distance tracked (in cells) */
 const CLEARANCE_FIELD_MAX = 8;
-
-/** Minimum padding (cells) regardless of component size */
-const MIN_PADDING = 2;
-
-/** Pin corridor width (cells on each side of the pin access line) */
-const PIN_CORRIDOR_WIDTH = 0;
 
 // ── Default Configuration ────────────────────────────────────────────────────
 
@@ -509,23 +513,18 @@ export class ObstacleMap {
   // ── Private: Obstacle Placement (#1, #2) ───────────────────────────────────
 
   /**
-   * Add a component as an obstacle with size-adaptive padding (#1)
-   * and pin-access corridors (#2).
+   * Add a component as an obstacle.
    *
-   * The BLOCKED region extends from the component body outward ONLY on edges
-   * where pins exist, and only up to the stub join point (PIN_OFFSET_UNITS cells).
-   * Non-pin edges keep the original component body as the blocked boundary.
-   * This prevents wires from routing through the gap between a component
-   * and its own pins, while leaving non-pin sides tighter.
+   * BLOCKED region extends to pin tips on pin-bearing edges.
+   * PADDED region (avoidance zone) is applied ONLY on non-pin edges.
+   * Pin-bearing edges have NO padding — wires approach pins directly.
    */
   private addObstacle(comp: ComponentInstance): void {
     const size = this.getCompSize(comp);
     const r = comp.rotation ?? 0;
     const isVertical = r === 0 || r === 180;
 
-    // Determine pin expansion per edge.
-    // For vertical orientation (r=0, r=180): pins on left and right edges.
-    // For horizontal orientation (r=90, r=270): pins on top and bottom edges.
+    // Blocked region: body + pin-offset on pin-bearing edges
     const pinExpand = PIN_OFFSET_UNITS * this.config.cellSize;
 
     let expandLeft = 0;
@@ -534,11 +533,9 @@ export class ObstacleMap {
     let expandBottom = 0;
 
     if (isVertical) {
-      // Pins on left and right edges
       expandLeft = pinExpand;
       expandRight = pinExpand;
     } else {
-      // Pins on top and bottom edges
       expandTop = pinExpand;
       expandBottom = pinExpand;
     }
@@ -550,16 +547,12 @@ export class ObstacleMap {
       height: size.h + expandTop + expandBottom,
     };
 
-    // (#1) Size-adaptive padding: scale padding with component size
-    const basePadding = this.config.obstaclePadding;
-    const sizeScale = Math.max(size.w, size.h) / (this.config.cellSize * 12);
-    const adaptivePadding = Math.max(
-      MIN_PADDING,
-      Math.round(basePadding * Math.min(1.5, Math.max(0.7, sizeScale))),
-    );
+    // Padded region: uniform padding on NON-PIN edges only.
+    // Pin-bearing edges get zero padding (wires approach freely).
 
-    const pad = adaptivePadding * this.config.cellSize;
-    const paddedBounds: Rect = {
+    const pad = this.config.obstaclePadding * this.config.cellSize;
+
+    const paddedBounds = {
       x: bounds.x - pad,
       y: bounds.y - pad,
       width: bounds.width + pad * 2,
@@ -572,122 +565,6 @@ export class ObstacleMap {
 
     // Mark cells
     this.markObstacleCells(obstacle);
-
-    // (#2) Carve pin-access corridors
-    this.carvePinCorridors(comp, size, adaptivePadding);
-  }
-
-  /**
-   * Carve corridors in the padded zone to ensure pins remain accessible (#2).
-   * For each edge where pins exist, clears a narrow channel from the pin
-   * outward through the padding zone.
-   */
-  private carvePinCorridors(
-    comp: ComponentInstance,
-    size: { w: number; h: number },
-    paddingCells: number,
-  ): void {
-    // Determine which edges have pins based on component definition
-    // Input pins are on one edge, output pins on the opposite edge
-    // The corridor extends from the component edge outward through the padding
-    const r = comp.rotation ?? 0;
-    const isVertical = r === 0 || r === 180;
-
-    // Pin edges in world coordinates
-    // For rotation 0: inputs on left edge, outputs on right edge
-    // For rotation 90: inputs on top edge, outputs on bottom edge
-    const corridorLength = paddingCells;
-
-    if (isVertical) {
-      // Left and right edges have pins — carve horizontal corridors
-      const leftX = comp.x - this.config.cellSize;
-      const rightX = comp.x + size.w;
-      const midY = comp.y + size.h / 2;
-
-      // Left corridor (inputs for r=0, outputs for r=180)
-      this.carveHorizontalCorridor(leftX, midY, -corridorLength, size.h);
-      // Right corridor (outputs for r=0, inputs for r=180)
-      this.carveHorizontalCorridor(rightX, midY, corridorLength, size.h);
-    } else {
-      // Top and bottom edges have pins — carve vertical corridors
-      const topY = comp.y - this.config.cellSize;
-      const bottomY = comp.y + size.h;
-      const midX = comp.x + size.w / 2;
-
-      // Top corridor
-      this.carveVerticalCorridor(midX, topY, -corridorLength, size.w);
-      // Bottom corridor
-      this.carveVerticalCorridor(midX, bottomY, corridorLength, size.w);
-    }
-  }
-
-  /** Carve a horizontal corridor (free cells) through the padding zone */
-  private carveHorizontalCorridor(
-    startX: number,
-    centerY: number,
-    lengthCells: number,
-    heightSpan: number,
-  ): void {
-    const dir = Math.sign(lengthCells);
-    const absLen = Math.abs(lengthCells);
-    const halfHeight = Math.floor(
-      heightSpan / this.config.cellSize / 2 + PIN_CORRIDOR_WIDTH,
-    );
-
-    const startCell = this.worldToGrid({ x: startX, y: centerY });
-
-    for (let d = 0; d < absLen; d += 1) {
-      const col = startCell.col + dir * d;
-
-      for (
-        let row = startCell.row - halfHeight;
-        row <= startCell.row + halfHeight;
-        row += 1
-      ) {
-        if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
-          const idx = row * this.cols + col;
-
-          // Only downgrade PADDED → FREE, never unblock
-          if ((this.grid[idx] as CellState) === CellState.PADDED) {
-            this.grid[idx] = CellState.FREE;
-          }
-        }
-      }
-    }
-  }
-
-  /** Carve a vertical corridor (free cells) through the padding zone */
-  private carveVerticalCorridor(
-    centerX: number,
-    startY: number,
-    lengthCells: number,
-    widthSpan: number,
-  ): void {
-    const dir = Math.sign(lengthCells);
-    const absLen = Math.abs(lengthCells);
-    const halfWidth = Math.floor(
-      widthSpan / this.config.cellSize / 2 + PIN_CORRIDOR_WIDTH,
-    );
-
-    const startCell = this.worldToGrid({ x: centerX, y: startY });
-
-    for (let d = 0; d < absLen; d += 1) {
-      const row = startCell.row + dir * d;
-
-      for (
-        let col = startCell.col - halfWidth;
-        col <= startCell.col + halfWidth;
-        col += 1
-      ) {
-        if (col >= 0 && col < this.cols && row >= 0 && row < this.rows) {
-          const idx = row * this.cols + col;
-
-          if ((this.grid[idx] as CellState) === CellState.PADDED) {
-            this.grid[idx] = CellState.FREE;
-          }
-        }
-      }
-    }
   }
 
   // ── Private: Cell marking ──────────────────────────────────────────────────

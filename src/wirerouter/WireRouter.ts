@@ -2,15 +2,40 @@
  * WireRouter — High-level orchestrator for optimized wire routing.
  *
  * ═══════════════════════════════════════════════════════════════════════════════
- * FEATURES
+ * MODULE OVERVIEW
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * - Ties ObstacleMap + A* pathfinding together
- * - Caches computed routes per wire ID with topology versioning (#10)
- * - Tight cache invalidation: only affected routes are recomputed (#1)
- * - Configuration versioning: caches invalidated only on relevant changes (#6)
- * - Routing metrics: cache hits, misses, reroutes, timing (#7)
- * - Selective re-routing when components move
+ * Ties together ObstacleMap (grid discretization) and A* pathfinding into
+ * a single routing API consumed by the application layer.
+ *
+ * Responsibilities:
+ *   • Build/rebuild obstacle map from circuit snapshots
+ *   • Route individual wires or all wires in bulk
+ *   • Cache routes with dual versioning (topology + config)
+ *   • Detect which routes are affected by component changes
+ *   • Provide selective re-routing for incremental edits
+ *   • Collect and expose routing performance metrics
+ *
+ * Cache Versioning:
+ *   Every cached route is stamped with two version numbers:
+ *     topologyVersion — bumped when obstacles change (move/add/remove/rebuild)
+ *     configVersion   — bumped when routing parameters change (setConfig)
+ *   On cache lookup, stale routes (version mismatch) trigger recomputation.
+ *
+ * Invalidation Strategy (#1 — tight):
+ *   On component move, only these routes are invalidated:
+ *     1. Wires directly connected to the moved component
+ *     2. Wires whose grid path crosses the component's BODY bounds
+ *   The padded bounds are NOT used for intersection — a wire passing
+ *   through padding is still valid (just higher cost, not blocked).
+ *
+ * Metrics (#7):
+ *   Tracks cache hits/misses, reroute count, total/avg routing time,
+ *   and version numbers. Exposed via getMetrics() for UI display.
+ *
+ * Singleton Pattern:
+ *   WireRouter.getInstance() returns a shared instance used by App.tsx.
+ *   The worker has its own independent ObstacleMap (no shared state).
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
