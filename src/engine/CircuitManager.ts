@@ -82,8 +82,9 @@ export class CircuitManager {
     const cid = uuidv4();
     const def = this.library.get(type);
     const initialState = def.initialState();
+    const defaultInput = def.isInput || def.isClock ? U : LogicValue.ZERO;
     const { outputs } = def.evaluate(
-      new Array<SignalValue>(def.inputs).fill(U),
+      new Array<SignalValue>(def.inputs).fill(defaultInput),
       initialState,
     );
     const comp: ComponentInstance = {
@@ -95,7 +96,7 @@ export class CircuitManager {
       rotation: opts.rotation,
       state: initialState,
       outputs,
-      inputs: new Array<SignalValue>(def.inputs).fill(U),
+      inputs: new Array<SignalValue>(def.inputs).fill(defaultInput),
       color: opts.color,
       properties: opts.properties,
     };

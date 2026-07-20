@@ -187,28 +187,10 @@ function DigitalGateApp() {
   const [dragType, setDragType] = useState<string | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
-  // Lazy initialization: avoids creating new instances on every render
-  const wireRouterRef = useRef<WireRouter | null>(null);
-
-  if (!wireRouterRef.current) {
-    wireRouterRef.current = new WireRouter();
-  }
-
-  const wireRouterClientRef = useRef<WireRouterClient | null>(null);
-
-  if (!wireRouterClientRef.current) {
-    wireRouterClientRef.current = new WireRouterClient();
-  }
-
-  const obstacleMapRef = useRef<ObstacleMap | null>(null);
-
-  if (!obstacleMapRef.current) {
-    obstacleMapRef.current = wireRouterRef.current.getObstacleMap();
-  }
-
-  // Safe accessors (refs are always initialized above before first use)
-  const wireRouter = wireRouterRef.current;
-  const wireRouterClient = wireRouterClientRef.current;
+  // Singletons: worker and router are created once at module level
+  const wireRouter = WireRouter.getInstance();
+  const wireRouterClient = WireRouterClient.getInstance();
+  const obstacleMapRef = useRef<ObstacleMap>(wireRouter.getObstacleMap());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCompRef = useRef<{
@@ -225,10 +207,7 @@ function DigitalGateApp() {
     [fitToScreenRaw, snapshot],
   );
 
-  // Cleanup worker on unmount
-  useEffect(() => {
-    return () => wireRouterClient.dispose();
-  }, [wireRouterClient]);
+  // No cleanup needed — singletons persist across mounts
 
   // Rebuild obstacle map on snapshot change (cheap, for visualization)
   useEffect(() => {
@@ -256,20 +235,32 @@ function DigitalGateApp() {
 
     setIsRouting(true);
 
+    // Safety timeout: if the worker doesn't respond within 10s, stop waiting
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setIsRouting(false);
+      }
+    }, 10000);
+
     wireRouterClient
       .rebuildAndRouteAll(snapshot)
       .then((routes) => {
         if (!cancelled) {
+          clearTimeout(timeout);
           setRoutedWires(routes);
           setIsRouting(false);
         }
       })
       .catch(() => {
-        if (!cancelled) setIsRouting(false);
+        if (!cancelled) {
+          clearTimeout(timeout);
+          setIsRouting(false);
+        }
       });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wireStyle, rerouteTrigger, wireKey]);
@@ -364,6 +355,7 @@ function DigitalGateApp() {
     duplicateSelected,
     saveProjectToLocal,
     toggleCmdOpen,
+    clearSelection,
     selectionSize: selection.size,
     selectAll: useCallback(() => {
       selectAll(Object.keys(snapshot.components), Object.keys(snapshot.wires));
@@ -493,6 +485,10 @@ function DigitalGateApp() {
       const ny = snap(y - def.height / 2);
       const comp = addComponent(type, nx, ny);
 
+      // Select the newly dropped component, clear previous selection
+      setSelection(new Set([comp.id]));
+      setSelWires(new Set());
+
       addLog(
         CONSOLE_TAB.LOG,
         `Added ${getGateLabel(def.type, def.label)} (${comp.id})`,
@@ -509,6 +505,8 @@ function DigitalGateApp() {
       addLog,
       saveProjectToLocal,
       showObstacleMap,
+      setSelection,
+      setSelWires,
     ],
   );
 
@@ -769,7 +767,7 @@ function DigitalGateApp() {
               fitToScreen={fitToScreen}
               isRouting={isRouting}
             />
-            {showObstacleMap && obstacleMapRef.current && (
+            {showObstacleMap && (
               <ObstacleMapInfo
                 obstacleMap={obstacleMapRef.current}
                 version={obstacleMapVersion}
@@ -799,7 +797,7 @@ function DigitalGateApp() {
               onMouseLeave={onCanvasMouseUp}
             >
               <GridBackground view={view} size={size} />
-              {showObstacleMap && obstacleMapRef.current && (
+              {showObstacleMap && (
                 <ObstacleMapOverlay
                   obstacleMap={obstacleMapRef.current}
                   view={view}
@@ -1037,15 +1035,14 @@ function DigitalGateApp() {
                         ) => {
                           if (showObstacleMap) return;
 
+                          // Always stop propagation on pin interactions to
+                          // prevent the parent group's onMouseDown (startCompDrag)
+                          // from firing.
+                          e.stopPropagation();
+                          e.preventDefault();
+
                           if (kind === PIN_KIND.OUT)
                             startWire(e, c, pin, toWorld);
-                          else if (pendingWire) {
-                            // When drawing a wire and pressing on an input pin,
-                            // stop propagation so the component doesn't get
-                            // selected/dragged.
-                            e.stopPropagation();
-                            e.preventDefault();
-                          }
                         }}
                         onPinUp={(
                           e: React.MouseEvent,

@@ -2208,7 +2208,7 @@ export class ComponentLibrary {
         };
 
         return evaluateCompiled(
-          new Array<SignalValue>(numInputs).fill(LogicValue.HIGH_IMPEDANCE),
+          new Array<SignalValue>(numInputs).fill(ZERO),
           blankState,
           undefined,
           0,

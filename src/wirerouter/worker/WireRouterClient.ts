@@ -1,6 +1,10 @@
 /**
  * WireRouterClient — Main-thread interface to the wire routing Web Worker.
  *
+ * Singleton pattern: the worker is created once at module load and reused
+ * throughout the app lifetime. This prevents multiple worker copies from
+ * being spawned on re-renders.
+ *
  * Provides an async API for heavy routing operations (rebuild + routeAll)
  * while the main thread stays responsive.
  */
@@ -23,6 +27,17 @@ export class WireRouterClient {
       reject: (err: Error) => void;
     }
   >();
+
+  private static instance: WireRouterClient | null = null;
+
+  /** Get the singleton instance (creates the worker on first call) */
+  static getInstance(): WireRouterClient {
+    if (!WireRouterClient.instance) {
+      WireRouterClient.instance = new WireRouterClient();
+    }
+
+    return WireRouterClient.instance;
+  }
 
   constructor() {
     this.worker = new Worker(
@@ -57,10 +72,22 @@ export class WireRouterClient {
     };
 
     this.worker.onerror = (e) => {
-      // Reject all pending requests
-      for (const [id, entry] of this.pending) {
+      const entries = Array.from(this.pending.entries());
+
+      this.pending.clear();
+
+      for (const [, entry] of entries) {
         entry.reject(new Error(e.message || "Worker error"));
-        this.pending.delete(id);
+      }
+    };
+
+    this.worker.onmessageerror = () => {
+      const entries = Array.from(this.pending.entries());
+
+      this.pending.clear();
+
+      for (const [, entry] of entries) {
+        entry.reject(new Error("Worker message deserialization failed"));
       }
     };
   }
@@ -76,9 +103,12 @@ export class WireRouterClient {
     config?: Partial<RouterConfig>,
   ): Promise<Map<string, CachedRoute>> {
     // Cancel any pending requests — only the latest rebuild matters
-    for (const [id, entry] of this.pending) {
+    const entries = Array.from(this.pending.entries());
+
+    this.pending.clear();
+
+    for (const [, entry] of entries) {
       entry.reject(new Error("Cancelled: newer request"));
-      this.pending.delete(id);
     }
 
     const id = this.nextId;
@@ -135,6 +165,7 @@ export class WireRouterClient {
     }
 
     this.pending.clear();
+    WireRouterClient.instance = null;
   }
 
   /**

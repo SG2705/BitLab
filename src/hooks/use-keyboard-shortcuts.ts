@@ -14,6 +14,7 @@ export interface KeyboardShortcutDeps {
   selectAll: () => void;
   copySelection: () => void;
   pasteClipboard: () => void;
+  clearSelection: () => void;
   selectionSize: number;
 }
 
@@ -31,6 +32,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
     selectAll,
     copySelection,
     pasteClipboard,
+    clearSelection,
     selectionSize,
   } = deps;
 
@@ -46,6 +48,14 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
         if (inInput) return;
 
         deleteSelected();
+
+        return;
+      }
+
+      if (e.key === "Escape") {
+        if (inInput) return;
+
+        clearSelection();
 
         return;
       }
@@ -89,6 +99,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps): void {
     selectAll,
     copySelection,
     pasteClipboard,
+    clearSelection,
     selectionSize,
   ]);
 }

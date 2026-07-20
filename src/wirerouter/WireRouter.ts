@@ -34,6 +34,17 @@ export class WireRouter {
   /** Cached routes keyed by wire ID */
   private cache: Map<string, CachedRoute> = new Map();
 
+  private static instance: WireRouter | null = null;
+
+  /** Get the singleton instance */
+  static getInstance(): WireRouter {
+    if (!WireRouter.instance) {
+      WireRouter.instance = new WireRouter();
+    }
+
+    return WireRouter.instance;
+  }
+
   constructor(config?: Partial<RouterConfig>, sizeResolver?: CompSizeResolver) {
     this.obstacleMap = new ObstacleMap(config, sizeResolver);
   }
