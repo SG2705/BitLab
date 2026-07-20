@@ -100,6 +100,9 @@ export const MESSAGES = defineMessages({
   lb_bus_not16: { id: "FMe4zn", defaultMessage: "Bus NOT 16" },
   lb_bus_display8: { id: "uVR4dd", defaultMessage: "Bus Display 8" },
   lb_bus_display16: { id: "Mg4f1K", defaultMessage: "Bus Display 16" },
+  lb_tristate: { id: "/Hbmdf", defaultMessage: "Tri-State" },
+  lb_tristate_inv: { id: "v0J1vP", defaultMessage: "Tri-State (inv)" },
+  lb_transceiver: { id: "Gh9RbN", defaultMessage: "Transceiver" },
 });
 
 export type Messages = keyof typeof MESSAGES;

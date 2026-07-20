@@ -47,6 +47,9 @@
   "2yUX2y": {
     "defaultMessage": "{count} cells"
   },
+  "3zydi4": {
+    "defaultMessage": "Topo Ver."
+  },
   "45rhyt": {
     "defaultMessage": "SR"
   },
@@ -56,6 +59,9 @@
   "4fHiNl": {
     "defaultMessage": "Duplicate"
   },
+  "4fnB4S": {
+    "defaultMessage": "Build Time"
+  },
   "5w6Utj": {
     "defaultMessage": "Cell Size"
   },
@@ -64,6 +70,9 @@
   },
   "6JZETj": {
     "defaultMessage": "5V (VCC)"
+  },
+  "6bW0uV": {
+    "defaultMessage": "⚠ Faulted Components"
   },
   "753yX5": {
     "defaultMessage": "Label"
@@ -76,6 +85,9 @@
   },
   "8IFOIz": {
     "defaultMessage": "OR-4"
+  },
+  "8MxVYV": {
+    "defaultMessage": "Avg Time"
   },
   "8ZVfG8": {
     "defaultMessage": "100%"
@@ -97,6 +109,12 @@
   },
   "9nolIL": {
     "defaultMessage": "This page didn't load"
+  },
+  "9rxlkO": {
+    "defaultMessage": "{paddedCells} x ({paddedPercent}%)"
+  },
+  "9t9RtV": {
+    "defaultMessage": "{avgRoutingTimeMs}ms"
   },
   "9u25Hp": {
     "defaultMessage": "Bus AND 4"
@@ -125,6 +143,9 @@
   "DYWVqY": {
     "defaultMessage": "Mux 4:1"
   },
+  "DgJW5Q": {
+    "defaultMessage": "{buildTimeMs}ms"
+  },
   "DyaKi9": {
     "defaultMessage": "Debus 8"
   },
@@ -146,11 +167,17 @@
   "FazwRl": {
     "defaultMessage": "Try again"
   },
+  "FtvuNH": {
+    "defaultMessage": "Hits / Misses"
+  },
   "FvwS8K": {
     "defaultMessage": "Bus In 8"
   },
   "G3+QfR": {
     "defaultMessage": "Constant"
+  },
+  "GXQJBb": {
+    "defaultMessage": "{totalRoutingTimeMs}ms"
   },
   "Gb5Mf2": {
     "defaultMessage": "/{busWidth}"
@@ -164,17 +191,26 @@
   "H1pTIh": {
     "defaultMessage": "Custom color"
   },
+  "H3eDAS": {
+    "defaultMessage": "Statistics"
+  },
   "H63+mc": {
     "defaultMessage": "Shift Reg 4"
   },
   "HzfrYu": {
     "defaultMessage": "Grid"
   },
+  "IIrG75": {
+    "defaultMessage": "{blockedCells} x ({blockedPercent}%)"
+  },
   "INlWvJ": {
     "defaultMessage": "OR"
   },
   "IRAMdG": {
     "defaultMessage": "Used as pin name when saved as a custom circuit"
+  },
+  "IiT0j3": {
+    "defaultMessage": "t={tick}"
   },
   "JqiqNj": {
     "defaultMessage": "Something went wrong"
@@ -230,6 +266,9 @@
   "PJTLiq": {
     "defaultMessage": "D Flip-Flop"
   },
+  "PqSVOB": {
+    "defaultMessage": "Config Ver."
+  },
   "QRccCM": {
     "defaultMessage": "Page not found"
   },
@@ -269,6 +308,9 @@
   "UoljwI": {
     "defaultMessage": "Rotate 90° CW"
   },
+  "Uwwnd+": {
+    "defaultMessage": "{evalsPerDelta} delta cycles • {maxEvalsPerDelta} max evals/delta"
+  },
   "V+xjJQ": {
     "defaultMessage": "LOW"
   },
@@ -278,8 +320,17 @@
   "VVkJRv": {
     "defaultMessage": "Wire"
   },
+  "VlBIny": {
+    "defaultMessage": "No propagation data yet. Run the simulation or connect wires"
+  },
+  "WUXuuR": {
+    "defaultMessage": "Hit Rate"
+  },
   "X/SJAt": {
     "defaultMessage": "Half Sub"
+  },
+  "XH4UaQ": {
+    "defaultMessage": "Delta {index}: {count} evals"
   },
   "Xco1sn": {
     "defaultMessage": "Drag a component from the toolbox onto the canvas"
@@ -299,6 +350,9 @@
   "a3I/Dc": {
     "defaultMessage": "SR Latch"
   },
+  "aA2vDh": {
+    "defaultMessage": "{hitRate}%"
+  },
   "aI80kg": {
     "defaultMessage": "Properties"
   },
@@ -310,6 +364,9 @@
   },
   "bI5iFx": {
     "defaultMessage": "BitLab v{version} · Sagar Gupta"
+  },
+  "bwdpnY": {
+    "defaultMessage": "Reroutes"
   },
   "c0zYiQ": {
     "defaultMessage": "Bus OR 8"
@@ -353,8 +410,17 @@
   "gW8Bt7": {
     "defaultMessage": "Rerouting..."
   },
+  "ge+rKb": {
+    "defaultMessage": "Evaluations per Delta Cycle"
+  },
   "gjQsdg": {
     "defaultMessage": "{fromLabel} [{fromPinLabel}]"
+  },
+  "gkDS3C": {
+    "defaultMessage": "Cache Size"
+  },
+  "h9w0Wr": {
+    "defaultMessage": "{cols} x {rows}"
   },
   "hxKJOS": {
     "defaultMessage": "T Flip-Flop"
@@ -389,11 +455,17 @@
   "kRdz1D": {
     "defaultMessage": "Type a command..."
   },
+  "kgLyso": {
+    "defaultMessage": "Total Time"
+  },
   "kjUTRa": {
     "defaultMessage": "OR-3"
   },
   "ku+mDU": {
     "defaultMessage": "State"
+  },
+  "kxSfEi": {
+    "defaultMessage": "Routing"
   },
   "l10dAY": {
     "defaultMessage": "No entries"
@@ -412,6 +484,9 @@
   },
   "m9VoMp": {
     "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
+  },
+  "mYWIlF": {
+    "defaultMessage": "{cacheHits} / {cacheMisses}"
   },
   "n+hlL2": {
     "defaultMessage": "Register 4"
@@ -512,6 +587,9 @@
   "tSOV46": {
     "defaultMessage": "Digital Logic Simulator Canvas"
   },
+  "tf1lIh": {
+    "defaultMessage": "Free"
+  },
   "uEqOPm": {
     "defaultMessage": "Mux 2:1"
   },
@@ -569,8 +647,14 @@
   "xu5aZu": {
     "defaultMessage": "Splitter"
   },
+  "xxiUbv": {
+    "defaultMessage": "⚠ Oscillation Detected"
+  },
   "yjnzeu": {
     "defaultMessage": "{resolvedLabel} · {ipc}→{opc}"
+  },
+  "zBHN4g": {
+    "defaultMessage": "Components involved: {comps}"
   },
   "zFBwag": {
     "defaultMessage": "Turn Penalty"

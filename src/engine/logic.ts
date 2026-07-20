@@ -968,3 +968,92 @@ export const evalUreg8 = (
 
   return { outputs, state };
 };
+
+// ── Tri-State / Bidirectional Components ─────────────────────────────────────
+
+/**
+ * Tri-State Buffer: inputs[0] = Data, inputs[1] = Enable
+ * When Enable = HIGH → output = Data
+ * When Enable = LOW  → output = HIGH_IMPEDANCE (disconnected)
+ * When Enable = X/Z  → output = UNKNOWN
+ */
+export const evalTriState = (inputs: SignalValue[]): EvaluateResult => {
+  const data = inputs[0] ?? HIGH_IMPEDANCE;
+  const enable = inputs[1] ?? ZERO;
+
+  if (enable === ONE) {
+    return { outputs: [data], state: null };
+  }
+
+  if (enable === ZERO) {
+    return { outputs: [HIGH_IMPEDANCE], state: null };
+  }
+
+  // Enable is X or Z → output is unknown
+  return { outputs: [UNKNOWN], state: null };
+};
+
+/**
+ * Tri-State Buffer (Inverted Enable): inputs[0] = Data, inputs[1] = Enable (active-low)
+ * When Enable = LOW  → output = Data
+ * When Enable = HIGH → output = HIGH_IMPEDANCE (disconnected)
+ * When Enable = X/Z  → output = UNKNOWN
+ */
+export const evalTriStateInv = (inputs: SignalValue[]): EvaluateResult => {
+  const data = inputs[0] ?? HIGH_IMPEDANCE;
+  const enable = inputs[1] ?? ONE;
+
+  if (enable === ZERO) {
+    return { outputs: [data], state: null };
+  }
+
+  if (enable === ONE) {
+    return { outputs: [HIGH_IMPEDANCE], state: null };
+  }
+
+  return { outputs: [UNKNOWN], state: null };
+};
+
+/**
+ * Bus Transceiver (like 74HC245):
+ *   inputs[0] = A_in (data from side A)
+ *   inputs[1] = B_in (data from side B)
+ *   inputs[2] = DIR  (direction: HIGH = A→B, LOW = B→A)
+ *   inputs[3] = EN   (enable: HIGH = active, LOW = high-Z outputs)
+ *
+ *   outputs[0] = A_out (drives side A)
+ *   outputs[1] = B_out (drives side B)
+ *
+ * Usage: Connect A_in and A_out to the same net (via separate wires) on side A,
+ * and B_in/B_out similarly on side B. The DIR pin controls which side drives.
+ */
+export const evalTransceiver = (inputs: SignalValue[]): EvaluateResult => {
+  const aIn = inputs[0] ?? HIGH_IMPEDANCE;
+  const bIn = inputs[1] ?? HIGH_IMPEDANCE;
+  const dir = inputs[2] ?? ZERO;
+  const en = inputs[3] ?? ZERO;
+
+  // Disabled → both outputs are high-impedance
+  if (en === ZERO) {
+    return { outputs: [HIGH_IMPEDANCE, HIGH_IMPEDANCE], state: null };
+  }
+
+  if (en !== ONE) {
+    // Enable is X or Z → outputs are unknown
+    return { outputs: [UNKNOWN, UNKNOWN], state: null };
+  }
+
+  // Enabled
+  if (dir === ONE) {
+    // A → B: B_out = A_in, A_out = high-Z (not driving A side)
+    return { outputs: [HIGH_IMPEDANCE, aIn], state: null };
+  }
+
+  if (dir === ZERO) {
+    // B → A: A_out = B_in, B_out = high-Z (not driving B side)
+    return { outputs: [bIn, HIGH_IMPEDANCE], state: null };
+  }
+
+  // DIR is X or Z → both outputs unknown
+  return { outputs: [UNKNOWN, UNKNOWN], state: null };
+};

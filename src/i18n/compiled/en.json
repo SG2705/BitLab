@@ -111,6 +111,12 @@
       "value": " cells"
     }
   ],
+  "3zydi4": [
+    {
+      "type": 0,
+      "value": "Topo Ver."
+    }
+  ],
   "45rhyt": [
     {
       "type": 0,
@@ -131,6 +137,12 @@
     {
       "type": 0,
       "value": "Duplicate"
+    }
+  ],
+  "4fnB4S": [
+    {
+      "type": 0,
+      "value": "Build Time"
     }
   ],
   "5w6Utj": [
@@ -159,6 +171,12 @@
       "value": "5V (VCC)"
     }
   ],
+  "6bW0uV": [
+    {
+      "type": 0,
+      "value": "⚠ Faulted Components"
+    }
+  ],
   "753yX5": [
     {
       "type": 0,
@@ -181,6 +199,12 @@
     {
       "type": 0,
       "value": "OR-4"
+    }
+  ],
+  "8MxVYV": [
+    {
+      "type": 0,
+      "value": "Avg Time"
     }
   ],
   "8ZVfG8": [
@@ -223,6 +247,34 @@
     {
       "type": 0,
       "value": "This page didn't load"
+    }
+  ],
+  "9rxlkO": [
+    {
+      "type": 1,
+      "value": "paddedCells"
+    },
+    {
+      "type": 0,
+      "value": " x ("
+    },
+    {
+      "type": 1,
+      "value": "paddedPercent"
+    },
+    {
+      "type": 0,
+      "value": "%)"
+    }
+  ],
+  "9t9RtV": [
+    {
+      "type": 1,
+      "value": "avgRoutingTimeMs"
+    },
+    {
+      "type": 0,
+      "value": "ms"
     }
   ],
   "9u25Hp": [
@@ -303,6 +355,16 @@
       "value": "Mux 4:1"
     }
   ],
+  "DgJW5Q": [
+    {
+      "type": 1,
+      "value": "buildTimeMs"
+    },
+    {
+      "type": 0,
+      "value": "ms"
+    }
+  ],
   "DyaKi9": [
     {
       "type": 0,
@@ -345,6 +407,12 @@
       "value": "Try again"
     }
   ],
+  "FtvuNH": [
+    {
+      "type": 0,
+      "value": "Hits / Misses"
+    }
+  ],
   "FvwS8K": [
     {
       "type": 0,
@@ -355,6 +423,16 @@
     {
       "type": 0,
       "value": "Constant"
+    }
+  ],
+  "GXQJBb": [
+    {
+      "type": 1,
+      "value": "totalRoutingTimeMs"
+    },
+    {
+      "type": 0,
+      "value": "ms"
     }
   ],
   "Gb5Mf2": [
@@ -389,6 +467,12 @@
       "value": "Custom color"
     }
   ],
+  "H3eDAS": [
+    {
+      "type": 0,
+      "value": "Statistics"
+    }
+  ],
   "H63+mc": [
     {
       "type": 0,
@@ -401,6 +485,24 @@
       "value": "Grid"
     }
   ],
+  "IIrG75": [
+    {
+      "type": 1,
+      "value": "blockedCells"
+    },
+    {
+      "type": 0,
+      "value": " x ("
+    },
+    {
+      "type": 1,
+      "value": "blockedPercent"
+    },
+    {
+      "type": 0,
+      "value": "%)"
+    }
+  ],
   "INlWvJ": [
     {
       "type": 0,
@@ -411,6 +513,16 @@
     {
       "type": 0,
       "value": "Used as pin name when saved as a custom circuit"
+    }
+  ],
+  "IiT0j3": [
+    {
+      "type": 0,
+      "value": "t="
+    },
+    {
+      "type": 1,
+      "value": "tick"
     }
   ],
   "JqiqNj": [
@@ -525,6 +637,12 @@
       "value": "D Flip-Flop"
     }
   ],
+  "PqSVOB": [
+    {
+      "type": 0,
+      "value": "Config Ver."
+    }
+  ],
   "QRccCM": [
     {
       "type": 0,
@@ -603,6 +721,24 @@
       "value": "Rotate 90° CW"
     }
   ],
+  "Uwwnd+": [
+    {
+      "type": 1,
+      "value": "evalsPerDelta"
+    },
+    {
+      "type": 0,
+      "value": " delta cycles • "
+    },
+    {
+      "type": 1,
+      "value": "maxEvalsPerDelta"
+    },
+    {
+      "type": 0,
+      "value": " max evals/delta"
+    }
+  ],
   "V+xjJQ": [
     {
       "type": 0,
@@ -621,10 +757,44 @@
       "value": "Wire"
     }
   ],
+  "VlBIny": [
+    {
+      "type": 0,
+      "value": "No propagation data yet. Run the simulation or connect wires"
+    }
+  ],
+  "WUXuuR": [
+    {
+      "type": 0,
+      "value": "Hit Rate"
+    }
+  ],
   "X/SJAt": [
     {
       "type": 0,
       "value": "Half Sub"
+    }
+  ],
+  "XH4UaQ": [
+    {
+      "type": 0,
+      "value": "Delta "
+    },
+    {
+      "type": 1,
+      "value": "index"
+    },
+    {
+      "type": 0,
+      "value": ": "
+    },
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " evals"
     }
   ],
   "Xco1sn": [
@@ -667,6 +837,16 @@
       "value": "SR Latch"
     }
   ],
+  "aA2vDh": [
+    {
+      "type": 1,
+      "value": "hitRate"
+    },
+    {
+      "type": 0,
+      "value": "%"
+    }
+  ],
   "aI80kg": [
     {
       "type": 0,
@@ -697,6 +877,12 @@
     {
       "type": 0,
       "value": " · Sagar Gupta"
+    }
+  ],
+  "bwdpnY": [
+    {
+      "type": 0,
+      "value": "Reroutes"
     }
   ],
   "c0zYiQ": [
@@ -787,6 +973,12 @@
       "value": "Rerouting..."
     }
   ],
+  "ge+rKb": [
+    {
+      "type": 0,
+      "value": "Evaluations per Delta Cycle"
+    }
+  ],
   "gjQsdg": [
     {
       "type": 1,
@@ -803,6 +995,26 @@
     {
       "type": 0,
       "value": "]"
+    }
+  ],
+  "gkDS3C": [
+    {
+      "type": 0,
+      "value": "Cache Size"
+    }
+  ],
+  "h9w0Wr": [
+    {
+      "type": 1,
+      "value": "cols"
+    },
+    {
+      "type": 0,
+      "value": " x "
+    },
+    {
+      "type": 1,
+      "value": "rows"
     }
   ],
   "hxKJOS": [
@@ -875,6 +1087,12 @@
       "value": "Type a command..."
     }
   ],
+  "kgLyso": [
+    {
+      "type": 0,
+      "value": "Total Time"
+    }
+  ],
   "kjUTRa": [
     {
       "type": 0,
@@ -885,6 +1103,12 @@
     {
       "type": 0,
       "value": "State"
+    }
+  ],
+  "kxSfEi": [
+    {
+      "type": 0,
+      "value": "Routing"
     }
   ],
   "l10dAY": [
@@ -921,6 +1145,20 @@
     {
       "type": 0,
       "value": "Something went wrong on our end. You can try refreshing or head back home."
+    }
+  ],
+  "mYWIlF": [
+    {
+      "type": 1,
+      "value": "cacheHits"
+    },
+    {
+      "type": 0,
+      "value": " / "
+    },
+    {
+      "type": 1,
+      "value": "cacheMisses"
     }
   ],
   "n+hlL2": [
@@ -1137,6 +1375,12 @@
       "value": "Digital Logic Simulator Canvas"
     }
   ],
+  "tf1lIh": [
+    {
+      "type": 0,
+      "value": "Free"
+    }
+  ],
   "uEqOPm": [
     {
       "type": 0,
@@ -1267,6 +1511,12 @@
       "value": "Splitter"
     }
   ],
+  "xxiUbv": [
+    {
+      "type": 0,
+      "value": "⚠ Oscillation Detected"
+    }
+  ],
   "yjnzeu": [
     {
       "type": 1,
@@ -1287,6 +1537,16 @@
     {
       "type": 1,
       "value": "opc"
+    }
+  ],
+  "zBHN4g": [
+    {
+      "type": 0,
+      "value": "Components involved: "
+    },
+    {
+      "type": 1,
+      "value": "comps"
     }
   ],
   "zFBwag": [
