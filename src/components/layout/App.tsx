@@ -187,11 +187,29 @@ function DigitalGateApp() {
   const [dragType, setDragType] = useState<string | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
-  const wireRouterRef = useRef<WireRouter>(new WireRouter());
-  const wireRouterClientRef = useRef<WireRouterClient>(new WireRouterClient());
-  const obstacleMapRef = useRef<ObstacleMap>(
-    wireRouterRef.current.getObstacleMap(),
-  );
+  // Lazy initialization: avoids creating new instances on every render
+  const wireRouterRef = useRef<WireRouter | null>(null);
+
+  if (!wireRouterRef.current) {
+    wireRouterRef.current = new WireRouter();
+  }
+
+  const wireRouterClientRef = useRef<WireRouterClient | null>(null);
+
+  if (!wireRouterClientRef.current) {
+    wireRouterClientRef.current = new WireRouterClient();
+  }
+
+  const obstacleMapRef = useRef<ObstacleMap | null>(null);
+
+  if (!obstacleMapRef.current) {
+    obstacleMapRef.current = wireRouterRef.current.getObstacleMap();
+  }
+
+  // Safe accessors (refs are always initialized above before first use)
+  const wireRouter = wireRouterRef.current;
+  const wireRouterClient = wireRouterClientRef.current;
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCompRef = useRef<{
     id: string;
@@ -209,20 +227,18 @@ function DigitalGateApp() {
 
   // Cleanup worker on unmount
   useEffect(() => {
-    const client = wireRouterClientRef.current;
-
-    return () => client.dispose();
-  }, []);
+    return () => wireRouterClient.dispose();
+  }, [wireRouterClient]);
 
   // Rebuild obstacle map on snapshot change (cheap, for visualization)
   useEffect(() => {
-    wireRouterRef.current.rebuild(snapshot);
-    obstacleMapRef.current = wireRouterRef.current.getObstacleMap();
+    wireRouter.rebuild(snapshot);
+    obstacleMapRef.current = wireRouter.getObstacleMap();
 
     if (showObstacleMap) {
       setObstacleMapVersion((v) => v + 1);
     }
-  }, [snapshot, showObstacleMap]);
+  }, [snapshot, showObstacleMap, wireRouter]);
 
   // Stable key that only changes when wires are added/removed (not on signal changes)
   const wireKey = useMemo(
@@ -240,7 +256,7 @@ function DigitalGateApp() {
 
     setIsRouting(true);
 
-    wireRouterClientRef.current
+    wireRouterClient
       .rebuildAndRouteAll(snapshot)
       .then((routes) => {
         if (!cancelled) {
@@ -279,6 +295,9 @@ function DigitalGateApp() {
 
   // ── Selection operations ────────────────────────────────────────────────────
   const deleteSelected = useCallback(() => {
+    // Obstacle map mode is view-only
+    if (showObstacleMap) return;
+
     const wireIds = new Set<string>();
 
     for (const w of Object.values(snapshot.wires)) {
@@ -301,6 +320,7 @@ function DigitalGateApp() {
     removeComponents,
     removeWires,
     clearSelection,
+    showObstacleMap,
   ]);
 
   const duplicateSelected = useCallback(() => {
@@ -364,6 +384,9 @@ function DigitalGateApp() {
   // ── Component interaction ───────────────────────────────────────────────────
   const handleCompClick = useCallback(
     (c: ComponentInstance) => {
+      // Obstacle map mode is view-only
+      if (showObstacleMap) return;
+
       if (c.type === GATE_TYPE_TOGGLE || c.type === GATE_TYPE_CONST)
         setInput(c.id, { on: !c.state?.on });
       if (c.type === GATE_TYPE_DIGIT_BIN)
@@ -389,12 +412,15 @@ function DigitalGateApp() {
         setInput(c.id, { signal: next });
       }
     },
-    [setInput],
+    [setInput, showObstacleMap],
   );
 
   const startCompDrag = useCallback(
     (e: React.MouseEvent, c: ComponentInstance) => {
       e.stopPropagation();
+
+      // Obstacle map mode is view-only — no interactions allowed
+      if (showObstacleMap) return;
 
       // If a wire is being drawn, don't initiate component drag
       if (pendingWire) return;
@@ -423,12 +449,22 @@ function DigitalGateApp() {
         routesInvalidated: false,
       };
     },
-    [selection, toWorld, pendingWire, setSelection, setSelWires],
+    [
+      selection,
+      toWorld,
+      pendingWire,
+      showObstacleMap,
+      setSelection,
+      setSelWires,
+    ],
   );
 
   // ── Canvas drop ─────────────────────────────────────────────────────────────
   const onCanvasDrop = useCallback(
     (e: React.DragEvent) => {
+      // Obstacle map mode is view-only — no drops allowed
+      if (showObstacleMap) return;
+
       const type = e.dataTransfer.getData("text/gate") || dragType;
 
       if (!type || !library.has(type)) return;
@@ -466,12 +502,26 @@ function DigitalGateApp() {
 
       setDragType(null);
     },
-    [dragType, toWorld, addComponent, addLog, saveProjectToLocal],
+    [
+      dragType,
+      toWorld,
+      addComponent,
+      addLog,
+      saveProjectToLocal,
+      showObstacleMap,
+    ],
   );
 
   // ── Canvas mouse handlers (wrappers around the hook) ────────────────────────
   const onCanvasMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      // In obstacle map mode, only allow panning
+      if (showObstacleMap) {
+        canvasMouseDown(e, TOOL.PAN);
+
+        return;
+      }
+
       canvasMouseDown(e, tool);
 
       if (
@@ -483,7 +533,7 @@ function DigitalGateApp() {
         }
       }
     },
-    [canvasMouseDown, tool, svgRef, clearSelection],
+    [canvasMouseDown, tool, svgRef, clearSelection, showObstacleMap],
   );
 
   const onCanvasMouseMove = useCallback(
@@ -719,7 +769,7 @@ function DigitalGateApp() {
               fitToScreen={fitToScreen}
               isRouting={isRouting}
             />
-            {showObstacleMap && (
+            {showObstacleMap && obstacleMapRef.current && (
               <ObstacleMapInfo
                 obstacleMap={obstacleMapRef.current}
                 version={obstacleMapVersion}
@@ -735,9 +785,11 @@ function DigitalGateApp() {
               })}
               className={cn(
                 "absolute inset-0 overflow-hidden select-none",
-                panning || tool === TOOL.PAN
+                panning
                   ? "cursor-grabbing"
-                  : "cursor-default",
+                  : showObstacleMap || tool === TOOL.PAN
+                    ? "cursor-grab"
+                    : "cursor-default",
               )}
               onDragOver={(e) => e.preventDefault()}
               onDrop={onCanvasDrop}
@@ -747,7 +799,7 @@ function DigitalGateApp() {
               onMouseLeave={onCanvasMouseUp}
             >
               <GridBackground view={view} size={size} />
-              {showObstacleMap && (
+              {showObstacleMap && obstacleMapRef.current && (
                 <ObstacleMapOverlay
                   obstacleMap={obstacleMapRef.current}
                   view={view}
@@ -983,6 +1035,8 @@ function DigitalGateApp() {
                           pin: number,
                           kind: PinKind,
                         ) => {
+                          if (showObstacleMap) return;
+
                           if (kind === PIN_KIND.OUT)
                             startWire(e, c, pin, toWorld);
                           else if (pendingWire) {
@@ -998,6 +1052,8 @@ function DigitalGateApp() {
                           pin: number,
                           kind: PinKind,
                         ) => {
+                          if (showObstacleMap) return;
+
                           if (kind === PIN_KIND.IN)
                             finishWire(
                               e,
