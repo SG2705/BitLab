@@ -11,10 +11,9 @@ import {
   X,
 } from "lucide-react";
 
-import { settingsStore, useSettings } from "@/context/SettingsContext";
 import { THEME } from "@/lib/constants";
-import { type Theme } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings-store";
 
 const SETTINGS_CATEGORY = {
   CANVAS: "canvas",
@@ -25,12 +24,10 @@ type Category = (typeof SETTINGS_CATEGORY)[keyof typeof SETTINGS_CATEGORY];
 
 interface SettingsPanelProps {
   onClose: () => void;
-  theme: Theme;
-  setTheme: (t: Theme) => void;
 }
 
-function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
-  const settings = useSettings();
+function SettingsPanel({ onClose }: SettingsPanelProps) {
+  const settings = useSettingsStore();
   const [cat, setCat] = useState<Category>(SETTINGS_CATEGORY.CANVAS);
 
   return (
@@ -70,7 +67,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
           <div className="mt-auto pt-2">
             <button
               type="button"
-              onClick={() => settingsStore.reset()}
+              onClick={() => settings.reset()}
               className="w-full flex items-center gap-2 px-2 py-1.5 text-xs rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
             >
               {}
@@ -106,7 +103,7 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
                   step={0.1}
                   value={settings.wireGlow}
                   unit="x"
-                  onChange={(v) => settingsStore.set({ wireGlow: v })}
+                  onChange={(v) => settings.set({ wireGlow: v })}
                 />
                 <SliderRow
                   label="Component glow"
@@ -116,14 +113,14 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
                   step={0.1}
                   value={settings.compGlow}
                   unit="x"
-                  onChange={(v) => settingsStore.set({ compGlow: v })}
+                  onChange={(v) => settings.set({ compGlow: v })}
                 />
                 <ColorRow
                   label="Grid color"
                   desc="Color of the canvas grid dots and lines."
                   value={settings.gridColor}
                   presets={GRID_COLOR_PRESETS}
-                  onChange={(v) => settingsStore.set({ gridColor: v })}
+                  onChange={(v) => settings.set({ gridColor: v })}
                 />
               </>
             )}
@@ -138,15 +135,15 @@ function SettingsPanel({ onClose, theme, setTheme }: SettingsPanelProps) {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <ThemeCard
-                    active={theme === THEME.DARK}
-                    onClick={() => setTheme(THEME.DARK)}
+                    active={settings.theme === THEME.DARK}
+                    onClick={() => settings.setTheme(THEME.DARK)}
                     icon={<Moon className="h-4 w-4" />}
                     label="Dark"
                     swatches={["#0e1120", "#1a1f36", "#22d3ee", "#e879f9"]}
                   />
                   <ThemeCard
-                    active={theme === THEME.LIGHT}
-                    onClick={() => setTheme(THEME.LIGHT)}
+                    active={settings.theme === THEME.LIGHT}
+                    onClick={() => settings.setTheme(THEME.LIGHT)}
                     icon={<Sun className="h-4 w-4" />}
                     label="Light"
                     swatches={["#f7f8fc", "#ffffff", "#0891b2", "#c026d3"]}

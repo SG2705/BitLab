@@ -29,6 +29,12 @@
       "value": "Encoder 4:2"
     }
   ],
+  "0F5oKT": [
+    {
+      "type": 0,
+      "value": "Bus OR 4"
+    }
+  ],
   "0TVISU": [
     {
       "type": 0,
@@ -47,6 +53,12 @@
       "value": "XOR"
     }
   ],
+  "1Yb46k": [
+    {
+      "type": 0,
+      "value": "Bus In 16"
+    }
+  ],
   "1iDGfg": [
     {
       "type": 1,
@@ -55,6 +67,12 @@
     {
       "type": 0,
       "value": " components"
+    }
+  ],
+  "1k5b21": [
+    {
+      "type": 0,
+      "value": "Bus AND 16"
     }
   ],
   "2BUZ/h": [
@@ -83,6 +101,16 @@
       "value": "Decoder 3:8"
     }
   ],
+  "2yUX2y": [
+    {
+      "type": 1,
+      "value": "count"
+    },
+    {
+      "type": 0,
+      "value": " cells"
+    }
+  ],
   "45rhyt": [
     {
       "type": 0,
@@ -103,6 +131,12 @@
     {
       "type": 0,
       "value": "Duplicate"
+    }
+  ],
+  "5w6Utj": [
+    {
+      "type": 0,
+      "value": "Cell Size"
     }
   ],
   "6IeE6J": [
@@ -131,10 +165,34 @@
       "value": "Label"
     }
   ],
+  "7LHMo9": [
+    {
+      "type": 0,
+      "value": "Padding"
+    }
+  ],
+  "7OjQqz": [
+    {
+      "type": 0,
+      "value": "OR-16"
+    }
+  ],
+  "8IFOIz": [
+    {
+      "type": 0,
+      "value": "OR-4"
+    }
+  ],
   "8ZVfG8": [
     {
       "type": 0,
       "value": "100%"
+    }
+  ],
+  "8ayZOL": [
+    {
+      "type": 0,
+      "value": "AND-8"
     }
   ],
   "8vtLM0": [
@@ -165,6 +223,12 @@
     {
       "type": 0,
       "value": "This page didn't load"
+    }
+  ],
+  "9u25Hp": [
+    {
+      "type": 0,
+      "value": "Bus AND 4"
     }
   ],
   "AcAA5x": [
@@ -207,6 +271,12 @@
     {
       "type": 0,
       "value": "]"
+    }
+  ],
+  "D7q1FU": [
+    {
+      "type": 0,
+      "value": "Obstacle Map"
     }
   ],
   "DPeP5H": [
@@ -257,6 +327,12 @@
       "value": "Digit→Bin"
     }
   ],
+  "FMe4zn": [
+    {
+      "type": 0,
+      "value": "Bus NOT 16"
+    }
+  ],
   "FR3H6g": [
     {
       "type": 0,
@@ -281,12 +357,6 @@
       "value": "Constant"
     }
   ],
-  "Gab3IF": [
-    {
-      "type": 0,
-      "value": "Digit (0-9)"
-    }
-  ],
   "Gb5Mf2": [
     {
       "type": 0,
@@ -303,10 +373,32 @@
       "value": "Start designing"
     }
   ],
+  "GnlDF5": [
+    {
+      "type": 1,
+      "value": "stub"
+    },
+    {
+      "type": 0,
+      "value": " cells"
+    }
+  ],
+  "H1pTIh": [
+    {
+      "type": 0,
+      "value": "Custom color"
+    }
+  ],
   "H63+mc": [
     {
       "type": 0,
       "value": "Shift Reg 4"
+    }
+  ],
+  "HzfrYu": [
+    {
+      "type": 0,
+      "value": "Grid"
     }
   ],
   "INlWvJ": [
@@ -319,6 +411,12 @@
     {
       "type": 0,
       "value": "Used as pin name when saved as a custom circuit"
+    }
+  ],
+  "JqiqNj": [
+    {
+      "type": 0,
+      "value": "Something went wrong"
     }
   ],
   "K3r6DQ": [
@@ -391,10 +489,28 @@
       "value": "X"
     }
   ],
+  "Mg4f1K": [
+    {
+      "type": 0,
+      "value": "Bus Display 16"
+    }
+  ],
+  "MhbcVF": [
+    {
+      "type": 0,
+      "value": "Padded"
+    }
+  ],
   "N2HbmZ": [
     {
       "type": 0,
       "value": "Fit"
+    }
+  ],
+  "NUpvef": [
+    {
+      "type": 0,
+      "value": "NOT-2"
     }
   ],
   "OdPyqE": [
@@ -517,10 +633,32 @@
       "value": "Drag a component from the toolbox onto the canvas"
     }
   ],
+  "Xkdnen": [
+    {
+      "type": 0,
+      "value": "An unexpected error occurred."
+    }
+  ],
   "XqpRRy": [
     {
       "type": 0,
       "value": "U-Reg 4"
+    }
+  ],
+  "XtlH6z": [
+    {
+      "type": 0,
+      "value": "AND-16"
+    }
+  ],
+  "Y8CDfa": [
+    {
+      "type": 1,
+      "value": "size"
+    },
+    {
+      "type": 0,
+      "value": "px"
     }
   ],
   "a3I/Dc": [
@@ -547,24 +685,6 @@
       "value": "Export JSON"
     }
   ],
-  "aNd4xQ": [
-    {
-      "type": 0,
-      "value": "AND-4"
-    }
-  ],
-  "aNd8xQ": [
-    {
-      "type": 0,
-      "value": "AND-8"
-    }
-  ],
-  "aNd16Q": [
-    {
-      "type": 0,
-      "value": "AND-16"
-    }
-  ],
   "bI5iFx": [
     {
       "type": 0,
@@ -579,76 +699,10 @@
       "value": " · Sagar Gupta"
     }
   ],
-  "bIn16Q": [
-    {
-      "type": 0,
-      "value": "Bus In 16"
-    }
-  ],
-  "bAn4xQ": [
-    {
-      "type": 0,
-      "value": "Bus AND 4"
-    }
-  ],
-  "bAn8xQ": [
-    {
-      "type": 0,
-      "value": "Bus AND 8"
-    }
-  ],
-  "bAn16Q": [
-    {
-      "type": 0,
-      "value": "Bus AND 16"
-    }
-  ],
-  "bOr4xQ": [
-    {
-      "type": 0,
-      "value": "Bus OR 4"
-    }
-  ],
-  "bOr8xQ": [
+  "c0zYiQ": [
     {
       "type": 0,
       "value": "Bus OR 8"
-    }
-  ],
-  "bOr16Q": [
-    {
-      "type": 0,
-      "value": "Bus OR 16"
-    }
-  ],
-  "bNo4xQ": [
-    {
-      "type": 0,
-      "value": "Bus NOT 4"
-    }
-  ],
-  "bNo8xQ": [
-    {
-      "type": 0,
-      "value": "Bus NOT 8"
-    }
-  ],
-  "bNo16Q": [
-    {
-      "type": 0,
-      "value": "Bus NOT 16"
-    }
-  ],
-  "bDs8xQ": [
-    {
-      "type": 0,
-      "value": "Bus Display 8"
-    }
-  ],
-  "bDs16Q": [
-    {
-      "type": 0,
-      "value": "Bus Display 16"
     }
   ],
   "cpOWpz": [
@@ -663,10 +717,22 @@
       "value": "NOR"
     }
   ],
+  "d+zNU8": [
+    {
+      "type": 0,
+      "value": "Obstacles"
+    }
+  ],
   "dM+p3/": [
     {
       "type": 0,
       "value": "From"
+    }
+  ],
+  "df8eFS": [
+    {
+      "type": 0,
+      "value": "Stub length"
     }
   ],
   "djNL6D": [
@@ -697,6 +763,12 @@
       "value": " wires"
     }
   ],
+  "fHOUf6": [
+    {
+      "type": 0,
+      "value": "16"
+    }
+  ],
   "fqn+07": [
     {
       "type": 0,
@@ -707,6 +779,12 @@
     {
       "type": 0,
       "value": "Bus 4"
+    }
+  ],
+  "gW8Bt7": [
+    {
+      "type": 0,
+      "value": "Rerouting..."
     }
   ],
   "gjQsdg": [
@@ -739,6 +817,12 @@
       "value": "Live Outputs"
     }
   ],
+  "j7tPqv": [
+    {
+      "type": 0,
+      "value": "NOT-8"
+    }
+  ],
   "jE808X": [
     {
       "type": 0,
@@ -749,6 +833,12 @@
     {
       "type": 0,
       "value": "NOT"
+    }
+  ],
+  "jm/spn": [
+    {
+      "type": 0,
+      "value": "Reset"
     }
   ],
   "k46aB2": [
@@ -821,6 +911,12 @@
       "value": "Half Adder"
     }
   ],
+  "m6pj/i": [
+    {
+      "type": 0,
+      "value": "Bus AND 8"
+    }
+  ],
   "m9VoMp": [
     {
       "type": 0,
@@ -839,46 +935,16 @@
       "value": "Running"
     }
   ],
-  "nOt2xQ": [
-    {
-      "type": 0,
-      "value": "NOT-2"
-    }
-  ],
-  "nOt4xQ": [
+  "nbKKlV": [
     {
       "type": 0,
       "value": "NOT-4"
-    }
-  ],
-  "nOt8xQ": [
-    {
-      "type": 0,
-      "value": "NOT-8"
     }
   ],
   "o8W9TU": [
     {
       "type": 0,
       "value": "Debus 16"
-    }
-  ],
-  "oR4xxQ": [
-    {
-      "type": 0,
-      "value": "OR-4"
-    }
-  ],
-  "oR8xxQ": [
-    {
-      "type": 0,
-      "value": "OR-8"
-    }
-  ],
-  "oR16xQ": [
-    {
-      "type": 0,
-      "value": "OR-16"
     }
   ],
   "oNcdXR": [
@@ -899,6 +965,12 @@
       "value": "NAND"
     }
   ],
+  "oyHYtA": [
+    {
+      "type": 0,
+      "value": "4"
+    }
+  ],
   "p+mBVZ": [
     {
       "type": 0,
@@ -913,6 +985,12 @@
     {
       "type": 0,
       "value": "Tick"
+    }
+  ],
+  "p782Q2": [
+    {
+      "type": 0,
+      "value": "Bus NOT 8"
     }
   ],
   "pTk7NT": [
@@ -945,6 +1023,12 @@
       "value": "Hi-Z (Z)"
     }
   ],
+  "qUJTsT": [
+    {
+      "type": 0,
+      "value": "Blocked"
+    }
+  ],
   "qnonu0": [
     {
       "type": 1,
@@ -961,10 +1045,22 @@
       "value": "XNOR"
     }
   ],
+  "rWbVdz": [
+    {
+      "type": 0,
+      "value": "OR-8"
+    }
+  ],
   "rbrahO": [
     {
       "type": 0,
       "value": "Close"
+    }
+  ],
+  "rvUikf": [
+    {
+      "type": 0,
+      "value": "Bus NOT 4"
     }
   ],
   "sCV/Bb": [
@@ -1017,6 +1113,18 @@
       "value": "length"
     }
   ],
+  "ss8U3M": [
+    {
+      "type": 0,
+      "value": "Bus OR 16"
+    }
+  ],
+  "t5v6IX": [
+    {
+      "type": 0,
+      "value": "5 V"
+    }
+  ],
   "tFFMkF": [
     {
       "type": 0,
@@ -1041,16 +1149,34 @@
       "value": "AND-3"
     }
   ],
+  "uRp42B": [
+    {
+      "type": 0,
+      "value": "AND-4"
+    }
+  ],
   "uTM3YG": [
     {
       "type": 0,
       "value": "UNKNOWN"
     }
   ],
+  "uVR4dd": [
+    {
+      "type": 0,
+      "value": "Bus Display 8"
+    }
+  ],
   "uizmax": [
     {
       "type": 0,
       "value": "Press"
+    }
+  ],
+  "vCO4sB": [
+    {
+      "type": 0,
+      "value": "8"
     }
   ],
   "vSpLrC": [
@@ -1161,6 +1287,12 @@
     {
       "type": 1,
       "value": "opc"
+    }
+  ],
+  "zFBwag": [
+    {
+      "type": 0,
+      "value": "Turn Penalty"
     }
   ],
   "zsr0Bz": [

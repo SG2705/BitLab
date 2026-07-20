@@ -16,7 +16,6 @@ import {
   GateNode,
   WirePath,
 } from "@/components/ui";
-import { settingsStore, useSettings } from "@/context/SettingsContext";
 import type { ComponentInstance, SignalValue } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import {
@@ -49,12 +48,12 @@ import {
   DEFAULT_CLOCK,
   PIN_KIND,
   SAVE_LOCAL_ON_ACTION,
-  THEME,
   TOOL,
   WIRE_TYPE,
 } from "@/lib/constants";
-import { type PinKind, type Theme } from "@/lib/types";
+import { type PinKind } from "@/lib/types";
 import { cn, getGateLabel, snap } from "@/lib/utils";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useUIStore } from "@/stores/ui-store";
 import {
   type CachedRoute,
@@ -174,7 +173,6 @@ function DigitalGateApp() {
     removeCustomCircuit: removeCustomRaw,
   } = useCustomCircuits(addLog);
   const visibleComponents = useViewportCulling(snapshot, view, size);
-  const { theme } = useSettings();
 
   const isRunning = status === SIMULATION_STATUS.RUNNING;
   const { tick } = stats;
@@ -204,8 +202,6 @@ function DigitalGateApp() {
   } | null>(null);
 
   // Utils
-  const setTheme = (t: Theme) => settingsStore.set({ theme: t });
-
   const fitToScreen = useCallback(
     () => fitToScreenRaw(snapshot),
     [fitToScreenRaw, snapshot],
@@ -1100,8 +1096,7 @@ function DigitalGateApp() {
               { label: "Reset simulation", action: reset },
               {
                 label: "Toggle theme",
-                action: () =>
-                  setTheme(theme === THEME.DARK ? THEME.LIGHT : THEME.DARK),
+                action: () => useSettingsStore.getState().toggleTheme(),
               },
               { label: "Fit to screen", action: fitToScreen },
               { label: "Save project to local", action: saveProjectToLocal },
@@ -1163,11 +1158,7 @@ function DigitalGateApp() {
       {/* Settings Panel */}
       {settingsOpen && (
         <Suspense fallback={null}>
-          <SettingsPanel
-            onClose={() => setSettingsOpen(false)}
-            theme={theme}
-            setTheme={setTheme}
-          />
+          <SettingsPanel onClose={() => setSettingsOpen(false)} />
         </Suspense>
       )}
     </div>

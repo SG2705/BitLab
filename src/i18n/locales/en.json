@@ -14,6 +14,9 @@
   "/VTiBR": {
     "defaultMessage": "Encoder 4:2"
   },
+  "0F5oKT": {
+    "defaultMessage": "Bus OR 4"
+  },
   "0TVISU": {
     "defaultMessage": "for the command palette"
   },
@@ -23,8 +26,14 @@
   "0t4zU/": {
     "defaultMessage": "XOR"
   },
+  "1Yb46k": {
+    "defaultMessage": "Bus In 16"
+  },
   "1iDGfg": {
     "defaultMessage": "{count} components"
+  },
+  "1k5b21": {
+    "defaultMessage": "Bus AND 16"
   },
   "2BUZ/h": {
     "defaultMessage": "{gateLabel} : {gateState}"
@@ -35,6 +44,9 @@
   "2uOC49": {
     "defaultMessage": "Decoder 3:8"
   },
+  "2yUX2y": {
+    "defaultMessage": "{count} cells"
+  },
   "45rhyt": {
     "defaultMessage": "SR"
   },
@@ -43,6 +55,9 @@
   },
   "4fHiNl": {
     "defaultMessage": "Duplicate"
+  },
+  "5w6Utj": {
+    "defaultMessage": "Cell Size"
   },
   "6IeE6J": {
     "defaultMessage": "({s})"
@@ -53,8 +68,20 @@
   "753yX5": {
     "defaultMessage": "Label"
   },
+  "7LHMo9": {
+    "defaultMessage": "Padding"
+  },
+  "7OjQqz": {
+    "defaultMessage": "OR-16"
+  },
+  "8IFOIz": {
+    "defaultMessage": "OR-4"
+  },
   "8ZVfG8": {
     "defaultMessage": "100%"
+  },
+  "8ayZOL": {
+    "defaultMessage": "AND-8"
   },
   "8vtLM0": {
     "defaultMessage": "The page you're looking for doesn't exist or has been moved"
@@ -71,6 +98,9 @@
   "9nolIL": {
     "defaultMessage": "This page didn't load"
   },
+  "9u25Hp": {
+    "defaultMessage": "Bus AND 4"
+  },
   "AcAA5x": {
     "defaultMessage": "Components"
   },
@@ -79,6 +109,9 @@
   },
   "CxgWOn": {
     "defaultMessage": "[{time}]"
+  },
+  "D7q1FU": {
+    "defaultMessage": "Obstacle Map"
   },
   "DPeP5H": {
     "defaultMessage": "D Latch"
@@ -104,6 +137,9 @@
   "FJad6C": {
     "defaultMessage": "Digit→Bin"
   },
+  "FMe4zn": {
+    "defaultMessage": "Bus NOT 16"
+  },
   "FR3H6g": {
     "defaultMessage": "No commands found"
   },
@@ -116,23 +152,32 @@
   "G3+QfR": {
     "defaultMessage": "Constant"
   },
-  "Gab3IF": {
-    "defaultMessage": "Digit (0-9)"
-  },
   "Gb5Mf2": {
     "defaultMessage": "/{busWidth}"
   },
   "GkBxYy": {
     "defaultMessage": "Start designing"
   },
+  "GnlDF5": {
+    "defaultMessage": "{stub} cells"
+  },
+  "H1pTIh": {
+    "defaultMessage": "Custom color"
+  },
   "H63+mc": {
     "defaultMessage": "Shift Reg 4"
+  },
+  "HzfrYu": {
+    "defaultMessage": "Grid"
   },
   "INlWvJ": {
     "defaultMessage": "OR"
   },
   "IRAMdG": {
     "defaultMessage": "Used as pin name when saved as a custom circuit"
+  },
+  "JqiqNj": {
+    "defaultMessage": "Something went wrong"
   },
   "K3r6DQ": {
     "defaultMessage": "Delete"
@@ -167,8 +212,17 @@
   "MXPwVk": {
     "defaultMessage": "X"
   },
+  "Mg4f1K": {
+    "defaultMessage": "Bus Display 16"
+  },
+  "MhbcVF": {
+    "defaultMessage": "Padded"
+  },
   "N2HbmZ": {
     "defaultMessage": "Fit"
+  },
+  "NUpvef": {
+    "defaultMessage": "NOT-2"
   },
   "OdPyqE": {
     "defaultMessage": "View internal circuit"
@@ -230,8 +284,17 @@
   "Xco1sn": {
     "defaultMessage": "Drag a component from the toolbox onto the canvas"
   },
+  "Xkdnen": {
+    "defaultMessage": "An unexpected error occurred."
+  },
   "XqpRRy": {
     "defaultMessage": "U-Reg 4"
+  },
+  "XtlH6z": {
+    "defaultMessage": "AND-16"
+  },
+  "Y8CDfa": {
+    "defaultMessage": "{size}px"
   },
   "a3I/Dc": {
     "defaultMessage": "SR Latch"
@@ -245,53 +308,11 @@
   "aXB7Wg": {
     "defaultMessage": "Export JSON"
   },
-  "aNd4xQ": {
-    "defaultMessage": "AND-4"
-  },
-  "aNd8xQ": {
-    "defaultMessage": "AND-8"
-  },
-  "aNd16Q": {
-    "defaultMessage": "AND-16"
-  },
   "bI5iFx": {
     "defaultMessage": "BitLab v{version} · Sagar Gupta"
   },
-  "bIn16Q": {
-    "defaultMessage": "Bus In 16"
-  },
-  "bAn4xQ": {
-    "defaultMessage": "Bus AND 4"
-  },
-  "bAn8xQ": {
-    "defaultMessage": "Bus AND 8"
-  },
-  "bAn16Q": {
-    "defaultMessage": "Bus AND 16"
-  },
-  "bOr4xQ": {
-    "defaultMessage": "Bus OR 4"
-  },
-  "bOr8xQ": {
+  "c0zYiQ": {
     "defaultMessage": "Bus OR 8"
-  },
-  "bOr16Q": {
-    "defaultMessage": "Bus OR 16"
-  },
-  "bNo4xQ": {
-    "defaultMessage": "Bus NOT 4"
-  },
-  "bNo8xQ": {
-    "defaultMessage": "Bus NOT 8"
-  },
-  "bNo16Q": {
-    "defaultMessage": "Bus NOT 16"
-  },
-  "bDs8xQ": {
-    "defaultMessage": "Bus Display 8"
-  },
-  "bDs16Q": {
-    "defaultMessage": "Bus Display 16"
   },
   "cpOWpz": {
     "defaultMessage": "⌘K"
@@ -299,8 +320,14 @@
   "cwHYMN": {
     "defaultMessage": "NOR"
   },
+  "d+zNU8": {
+    "defaultMessage": "Obstacles"
+  },
   "dM+p3/": {
     "defaultMessage": "From"
+  },
+  "df8eFS": {
+    "defaultMessage": "Stub length"
   },
   "djNL6D": {
     "defaultMessage": "Read-only"
@@ -314,11 +341,17 @@
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
+  "fHOUf6": {
+    "defaultMessage": "16"
+  },
   "fqn+07": {
     "defaultMessage": "Bus In 4"
   },
   "g8kf2o": {
     "defaultMessage": "Bus 4"
+  },
+  "gW8Bt7": {
+    "defaultMessage": "Rerouting..."
   },
   "gjQsdg": {
     "defaultMessage": "{fromLabel} [{fromPinLabel}]"
@@ -329,11 +362,17 @@
   "iiWNbN": {
     "defaultMessage": "Live Outputs"
   },
+  "j7tPqv": {
+    "defaultMessage": "NOT-8"
+  },
   "jE808X": {
     "defaultMessage": "Utility"
   },
   "jOgiMP": {
     "defaultMessage": "NOT"
+  },
+  "jm/spn": {
+    "defaultMessage": "Reset"
   },
   "k46aB2": {
     "defaultMessage": "UNKNOWN (X)"
@@ -368,6 +407,9 @@
   "m0Naku": {
     "defaultMessage": "Half Adder"
   },
+  "m6pj/i": {
+    "defaultMessage": "Bus AND 8"
+  },
   "m9VoMp": {
     "defaultMessage": "Something went wrong on our end. You can try refreshing or head back home."
   },
@@ -377,26 +419,11 @@
   "nDyaq/": {
     "defaultMessage": "Running"
   },
-  "nOt2xQ": {
-    "defaultMessage": "NOT-2"
-  },
-  "nOt4xQ": {
+  "nbKKlV": {
     "defaultMessage": "NOT-4"
-  },
-  "nOt8xQ": {
-    "defaultMessage": "NOT-8"
   },
   "o8W9TU": {
     "defaultMessage": "Debus 16"
-  },
-  "oR4xxQ": {
-    "defaultMessage": "OR-4"
-  },
-  "oR8xxQ": {
-    "defaultMessage": "OR-8"
-  },
-  "oR16xQ": {
-    "defaultMessage": "OR-16"
   },
   "oNcdXR": {
     "defaultMessage": "Full Sub"
@@ -407,11 +434,17 @@
   "ocyr/d": {
     "defaultMessage": "NAND"
   },
+  "oyHYtA": {
+    "defaultMessage": "4"
+  },
   "p+mBVZ": {
     "defaultMessage": "Tick {count}"
   },
   "p7+Jxw": {
     "defaultMessage": "Tick"
+  },
+  "p782Q2": {
+    "defaultMessage": "Bus NOT 8"
   },
   "pTk7NT": {
     "defaultMessage": "JK"
@@ -428,14 +461,23 @@
   "qNPjsN": {
     "defaultMessage": "Hi-Z (Z)"
   },
+  "qUJTsT": {
+    "defaultMessage": "Blocked"
+  },
   "qnonu0": {
     "defaultMessage": "{percentage}%"
   },
   "rS8jJE": {
     "defaultMessage": "XNOR"
   },
+  "rWbVdz": {
+    "defaultMessage": "OR-8"
+  },
   "rbrahO": {
     "defaultMessage": "Close"
+  },
+  "rvUikf": {
+    "defaultMessage": "Bus NOT 4"
   },
   "sCV/Bb": {
     "defaultMessage": "U-Reg 8"
@@ -458,6 +500,12 @@
   "sqjS0A": {
     "defaultMessage": "{cat} · {length}"
   },
+  "ss8U3M": {
+    "defaultMessage": "Bus OR 16"
+  },
+  "t5v6IX": {
+    "defaultMessage": "5 V"
+  },
   "tFFMkF": {
     "defaultMessage": "Pause"
   },
@@ -470,11 +518,20 @@
   "uPTSs/": {
     "defaultMessage": "AND-3"
   },
+  "uRp42B": {
+    "defaultMessage": "AND-4"
+  },
   "uTM3YG": {
     "defaultMessage": "UNKNOWN"
   },
+  "uVR4dd": {
+    "defaultMessage": "Bus Display 8"
+  },
   "uizmax": {
     "defaultMessage": "Press"
+  },
+  "vCO4sB": {
+    "defaultMessage": "8"
   },
   "vSpLrC": {
     "defaultMessage": "{toLabel} [{toPinLabel}]"
@@ -514,6 +571,9 @@
   },
   "yjnzeu": {
     "defaultMessage": "{resolvedLabel} · {ipc}→{opc}"
+  },
+  "zFBwag": {
+    "defaultMessage": "Turn Penalty"
   },
   "zsr0Bz": {
     "defaultMessage": "EN"

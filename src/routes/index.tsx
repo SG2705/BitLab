@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import DigitalGateApp from "@/components/layout/App";
 import { BitLabLoader } from "@/components/ui";
-import { settingsStore } from "@/context/SettingsContext";
+import { settingsStore } from "@/stores/settings-store";
 
 /**
  * AppBootstrap — shows a loader while initial setup completes,
