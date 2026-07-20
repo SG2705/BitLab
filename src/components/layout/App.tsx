@@ -56,7 +56,12 @@ import {
 import { type PinKind, type Theme } from "@/lib/types";
 import { cn, getGateLabel, snap } from "@/lib/utils";
 import { useUIStore } from "@/stores/ui-store";
-import { type CachedRoute, type ObstacleMap, WireRouter } from "@/wirerouter";
+import {
+  type CachedRoute,
+  type ObstacleMap,
+  WireRouter,
+  WireRouterClient,
+} from "@/wirerouter";
 
 import BottomBar from "./BottomBar";
 import CanvasToolbar from "./CanvasToolbar";
@@ -154,7 +159,6 @@ function DigitalGateApp() {
     canvasRef,
     svgRef,
     toWorld,
-    onWheel,
     onCanvasMouseDown: canvasMouseDown,
     onCanvasMouseMove: canvasMouseMove,
     onCanvasMouseUp: canvasMouseUp,
@@ -180,10 +184,13 @@ function DigitalGateApp() {
   const [routedWires, setRoutedWires] = useState<Map<string, CachedRoute>>(
     new Map(),
   );
+  const [isRouting, setIsRouting] = useState(false);
+  const [rerouteTrigger, setRerouteTrigger] = useState(0);
   const [dragType, setDragType] = useState<string | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const wireRouterRef = useRef<WireRouter>(new WireRouter());
+  const wireRouterClientRef = useRef<WireRouterClient>(new WireRouterClient());
   const obstacleMapRef = useRef<ObstacleMap>(
     wireRouterRef.current.getObstacleMap(),
   );
@@ -193,6 +200,7 @@ function DigitalGateApp() {
     ox: number;
     oy: number;
     moved: boolean;
+    routesInvalidated: boolean;
   } | null>(null);
 
   // Utils
@@ -203,18 +211,56 @@ function DigitalGateApp() {
     [fitToScreenRaw, snapshot],
   );
 
-  // Effects
+  // Cleanup worker on unmount
+  useEffect(() => {
+    const client = wireRouterClientRef.current;
+
+    return () => client.dispose();
+  }, []);
+
+  // Rebuild obstacle map on snapshot change (cheap, for visualization)
   useEffect(() => {
     wireRouterRef.current.rebuild(snapshot);
     obstacleMapRef.current = wireRouterRef.current.getObstacleMap();
-    setObstacleMapVersion((v) => v + 1);
 
-    if (wireStyle === WIRE_TYPE.OPTIMIZED) {
-      const routes = wireRouterRef.current.routeAll(snapshot);
-
-      setRoutedWires(routes);
+    if (showObstacleMap) {
+      setObstacleMapVersion((v) => v + 1);
     }
-  }, [snapshot, wireStyle]);
+  }, [snapshot, showObstacleMap]);
+
+  // Stable key that only changes when wires are added/removed (not on signal changes)
+  const wireKey = useMemo(
+    () => Object.keys(snapshot.wires).sort().join(","),
+    [snapshot.wires],
+  );
+
+  // Handle wire routing for optimized mode
+  useEffect(() => {
+    if (wireStyle !== WIRE_TYPE.OPTIMIZED) return undefined;
+
+    // Auto-reroute all wires via worker (triggered by rerouteTrigger after drag,
+    // or wireStyle change to optimized)
+    let cancelled = false;
+
+    setIsRouting(true);
+
+    wireRouterClientRef.current
+      .rebuildAndRouteAll(snapshot)
+      .then((routes) => {
+        if (!cancelled) {
+          setRoutedWires(routes);
+          setIsRouting(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsRouting(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wireStyle, rerouteTrigger, wireKey]);
 
   // ── Load project ────────────────────────────────────────────────────────────
   const handleLoadProject = useCallback(() => {
@@ -281,10 +327,21 @@ function DigitalGateApp() {
   }, [selection, snapshot.components, updateComponent]);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
+
+  const undoWithReroute = useCallback(() => {
+    undo();
+    if (wireStyle === WIRE_TYPE.OPTIMIZED) setRerouteTrigger((v) => v + 1);
+  }, [undo, wireStyle]);
+
+  const redoWithReroute = useCallback(() => {
+    redo();
+    if (wireStyle === WIRE_TYPE.OPTIMIZED) setRerouteTrigger((v) => v + 1);
+  }, [redo, wireStyle]);
+
   useKeyboardShortcuts({
     deleteSelected,
-    undo,
-    redo,
+    undo: undoWithReroute,
+    redo: redoWithReroute,
     duplicateSelected,
     saveProjectToLocal,
     toggleCmdOpen,
@@ -364,6 +421,7 @@ function DigitalGateApp() {
         ox: p.x - c.x,
         oy: p.y - c.y,
         moved: false,
+        routesInvalidated: false,
       };
     },
     [selection, toWorld, pendingWire, setSelection, setSelWires],
@@ -454,6 +512,30 @@ function DigitalGateApp() {
               const ids = selection.has(id) ? Array.from(selection) : [id];
 
               moveComponents(ids, dx, dy);
+
+              // Invalidate cached routes for affected wires once per drag
+              if (
+                wireStyle === WIRE_TYPE.OPTIMIZED &&
+                !drag.routesInvalidated
+              ) {
+                drag.routesInvalidated = true;
+                const idsSet = new Set(ids);
+
+                setRoutedWires((prev) => {
+                  const updated = new Map(prev);
+
+                  for (const wire of Object.values(snapshot.wires)) {
+                    if (
+                      idsSet.has(wire.from.comp) ||
+                      idsSet.has(wire.to.comp)
+                    ) {
+                      updated.delete(wire.id);
+                    }
+                  }
+
+                  return updated;
+                });
+              }
             }
           : undefined,
         onPendingWire: pendingWire
@@ -467,15 +549,19 @@ function DigitalGateApp() {
       canvasMouseMove,
       toWorld,
       snapshot.components,
+      snapshot.wires,
       selection,
       moveComponents,
       pendingWire,
       setPendingWire,
+      wireStyle,
     ],
   );
 
   const onCanvasMouseUp = useCallback(() => {
-    if (dragCompRef.current?.moved) commitMove();
+    const wasDragging = dragCompRef.current?.moved;
+
+    if (wasDragging) commitMove();
 
     dragCompRef.current = null;
 
@@ -486,6 +572,11 @@ function DigitalGateApp() {
     }
 
     if (pendingWire) setPendingWire(null);
+
+    // After drag ends, bump the reroute trigger so the effect fires
+    if (wasDragging && wireStyle === WIRE_TYPE.OPTIMIZED) {
+      setRerouteTrigger((v) => v + 1);
+    }
   }, [
     canvasMouseUp,
     snapshot,
@@ -493,6 +584,7 @@ function DigitalGateApp() {
     pendingWire,
     setPendingWire,
     setSelection,
+    wireStyle,
   ]);
 
   // ── Custom circuit wrappers ─────────────────────────────────────────────────
@@ -572,8 +664,8 @@ function DigitalGateApp() {
         tick={tick}
         clockSpeed={clockSpeed}
         setClockSpeed={setClockSpeed}
-        undo={undo}
-        redo={redo}
+        undo={undoWithReroute}
+        redo={redoWithReroute}
         canUndo={canUndo}
         canRedo={canRedo}
         openSettings={() => setSettingsOpen(true)}
@@ -626,6 +718,7 @@ function DigitalGateApp() {
               view={view}
               setView={setView}
               fitToScreen={fitToScreen}
+              isRouting={isRouting}
             />
             {showObstacleMap && (
               <ObstacleMapInfo
@@ -649,7 +742,6 @@ function DigitalGateApp() {
               )}
               onDragOver={(e) => e.preventDefault()}
               onDrop={onCanvasDrop}
-              onWheel={onWheel}
               onMouseDown={onCanvasMouseDown}
               onMouseMove={onCanvasMouseMove}
               onMouseUp={onCanvasMouseUp}
@@ -680,12 +772,6 @@ function DigitalGateApp() {
 
                     if (!a || !b) return null;
                     if (busWireIdSet.has(w.id)) return null;
-                    // Viewport culling: skip wires where both endpoints are off-screen
-                    if (
-                      !visibleComponents.has(w.from.comp) &&
-                      !visibleComponents.has(w.to.comp)
-                    )
-                      return null;
 
                     const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
                     const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
@@ -739,12 +825,6 @@ function DigitalGateApp() {
                     const targetComp = snapshot.components[group.toComp];
 
                     if (!sourceComp || !targetComp) return null;
-                    // Viewport culling: skip bus wires where both endpoints are off-screen
-                    if (
-                      !visibleComponents.has(group.fromComp) &&
-                      !visibleComponents.has(group.toComp)
-                    )
-                      return null;
 
                     const firstWire = snapshot.wires[group.wireIds[0]];
                     const firstFromPin = firstWire?.from.pin ?? 0;

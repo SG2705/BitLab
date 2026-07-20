@@ -14,7 +14,7 @@ import { PIN_KIND } from "@/lib/constants";
 import type { PinDir } from "@/lib/types";
 
 import type { GridCell, Point, RouterConfig } from "./model/types";
-import { ObstacleMap } from "./obstacles/ObstacleMap";
+import { type CompSizeResolver, ObstacleMap } from "./obstacles/ObstacleMap";
 import { findPath, type RouteResult } from "./routing/astar";
 
 /** Cached route for a single wire */
@@ -34,8 +34,8 @@ export class WireRouter {
   /** Cached routes keyed by wire ID */
   private cache: Map<string, CachedRoute> = new Map();
 
-  constructor(config?: Partial<RouterConfig>) {
-    this.obstacleMap = new ObstacleMap(config);
+  constructor(config?: Partial<RouterConfig>, sizeResolver?: CompSizeResolver) {
+    this.obstacleMap = new ObstacleMap(config, sizeResolver);
   }
 
   // ── Public API ───────────────────────────────────────────────────────────

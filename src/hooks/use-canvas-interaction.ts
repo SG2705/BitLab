@@ -38,7 +38,6 @@ export interface CanvasInteractionState {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   svgRef: React.RefObject<SVGSVGElement | null>;
   toWorld: (sx: number, sy: number) => { x: number; y: number };
-  onWheel: (e: React.WheelEvent) => void;
   onCanvasMouseDown: (e: React.MouseEvent, tool: Tool) => void;
   onCanvasMouseMove: (
     e: React.MouseEvent,
@@ -100,7 +99,7 @@ export function useCanvasInteraction(): CanvasInteractionState {
   );
 
   const onWheel = useCallback(
-    (e: React.WheelEvent) => {
+    (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
 
@@ -124,6 +123,18 @@ export function useCanvasInteraction(): CanvasInteractionState {
     },
     [view],
   );
+
+  // Register wheel listener with { passive: false } so preventDefault works
+  useEffect(() => {
+    const el = svgRef.current;
+
+    if (!el) return;
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    // eslint-disable-next-line consistent-return
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [onWheel]);
 
   const onCanvasMouseDown = useCallback(
     (e: React.MouseEvent, tool: Tool) => {
@@ -276,7 +287,6 @@ export function useCanvasInteraction(): CanvasInteractionState {
     canvasRef,
     svgRef,
     toWorld,
-    onWheel,
     onCanvasMouseDown,
     onCanvasMouseMove,
     onCanvasMouseUp,

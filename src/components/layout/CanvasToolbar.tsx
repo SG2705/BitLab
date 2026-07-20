@@ -23,7 +23,12 @@ interface CanvasToolbarProps {
   view: { x: number; y: number; k: number };
   setView: (view: { x: number; y: number; k: number }) => void;
   fitToScreen: () => void;
+  isRouting?: boolean;
 }
+
+CanvasToolbar.defaultProps = {
+  isRouting: false,
+};
 
 function CanvasToolbar({
   tool,
@@ -35,6 +40,7 @@ function CanvasToolbar({
   view,
   setView,
   fitToScreen,
+  isRouting = false,
 }: CanvasToolbarProps) {
   return (
     <>
@@ -78,6 +84,14 @@ function CanvasToolbar({
           icon={<Route className="h-4 w-4" />}
           label="Wire: Optimized"
         />
+        {wireStyle === WIRE_TYPE.OPTIMIZED && isRouting && (
+          <>
+            <div className="w-px h-5 bg-border mx-1" />
+            <span className="text-xs text-muted-foreground italic">
+              <FormattedMessage id="gW8Bt7" defaultMessage="Rerouting..." />
+            </span>
+          </>
+        )}
       </div>
 
       {/* Canvas fit/zoom (right) */}

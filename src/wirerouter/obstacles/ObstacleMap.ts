@@ -24,16 +24,22 @@ import {
 /** Default router configuration */
 export const DEFAULT_ROUTER_CONFIG: RouterConfig = {
   cellSize: CELL_SIZE,
-  obstaclePadding: 2,
+  obstaclePadding: 5,
   stubLength: 2,
   turnPenalty: 50,
-  bendRadius: 0,
-  wireCost: 15,
-  wirePadding: 1,
+  bendRadius: 1,
+  wireCost: 10,
+  wirePadding: 0,
 };
+
+/** Function type for resolving component dimensions */
+export type CompSizeResolver = (
+  comp: ComponentInstance,
+) => { w: number; h: number } | null;
 
 export class ObstacleMap {
   private config: RouterConfig;
+  private sizeResolver: CompSizeResolver | null;
 
   /** Grid dimensions */
   private cols: number = 0;
@@ -51,8 +57,12 @@ export class ObstacleMap {
   /** Canvas bounds (world coordinates) */
   private bounds: Rect = { x: 0, y: 0, width: 0, height: 0 };
 
-  constructor(config: Partial<RouterConfig> = {}) {
+  constructor(
+    config: Partial<RouterConfig> = {},
+    sizeResolver?: CompSizeResolver,
+  ) {
     this.config = { ...DEFAULT_ROUTER_CONFIG, ...config };
+    this.sizeResolver = sizeResolver ?? null;
   }
 
   // ── Public API ───────────────────────────────────────────────────────────
@@ -226,7 +236,7 @@ export class ObstacleMap {
     let maxY = -Infinity;
 
     for (const comp of components) {
-      const size = ObstacleMap.getCompSize(comp);
+      const size = this.getCompSize(comp);
 
       minX = Math.min(minX, comp.x);
       minY = Math.min(minY, comp.y);
@@ -246,7 +256,7 @@ export class ObstacleMap {
   }
 
   private addObstacle(comp: ComponentInstance): void {
-    const size = ObstacleMap.getCompSize(comp);
+    const size = this.getCompSize(comp);
     const bounds: Rect = {
       x: comp.x,
       y: comp.y,
@@ -354,10 +364,16 @@ export class ObstacleMap {
     );
   }
 
-  private static getCompSize(comp: ComponentInstance): {
+  private getCompSize(comp: ComponentInstance): {
     w: number;
     h: number;
   } {
+    if (this.sizeResolver) {
+      const resolved = this.sizeResolver(comp);
+
+      if (resolved) return resolved;
+    }
+
     if (!library.has(comp.type)) {
       return { w: 80, h: 80 }; // fallback
     }
