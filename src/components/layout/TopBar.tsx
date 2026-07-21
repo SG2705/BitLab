@@ -4,6 +4,7 @@ import {
   Clock,
   Command,
   FolderOpen,
+  HelpCircle,
   ImageDown,
   Layers,
   Package,
@@ -34,6 +35,7 @@ interface TopBarProps {
   canUndo: boolean;
   canRedo: boolean;
   openSettings: () => void;
+  openDocs: () => void;
   saveProjectToLocal: () => void;
   loadProjectFromLocal: () => void;
   exportProject: () => void;
@@ -85,6 +87,7 @@ function TopBar({
   canUndo,
   canRedo,
   openSettings,
+  openDocs,
   saveProjectToLocal,
   loadProjectFromLocal,
   exportProject,
@@ -254,6 +257,11 @@ function TopBar({
             />
           }
           label="Toggle obstacle map"
+        />
+        <TBBtn
+          onClick={openDocs}
+          icon={<HelpCircle className="h-4 w-4" />}
+          label="Documentation"
         />
         <TBBtn
           onClick={openSettings}

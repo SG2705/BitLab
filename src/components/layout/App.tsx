@@ -79,6 +79,7 @@ import WireProperties from "./WireProperties";
 // Lazy-loaded components (only rendered on-demand behind conditional guards)
 const CircuitViewer = lazy(() => import("./CircuitViewer"));
 const CommandPalette = lazy(() => import("./CommandPalette"));
+const DocsPanel = lazy(() => import("./DocsPanel"));
 const SettingsPanel = lazy(() => import("./SettingsPanel"));
 
 /**
@@ -99,6 +100,7 @@ function DigitalGateApp() {
     snapEnabled,
     cmdOpen,
     settingsOpen,
+    docsOpen,
     showObstacleMap,
     showMinimap,
     consoleTab,
@@ -114,6 +116,7 @@ function DigitalGateApp() {
     setCmdOpen,
     toggleCmdOpen,
     setSettingsOpen,
+    setDocsOpen,
     toggleObstacleMap,
     setConsoleTab,
     addLog,
@@ -838,6 +841,7 @@ function DigitalGateApp() {
         canUndo={canUndo}
         canRedo={canRedo}
         openSettings={() => setSettingsOpen(true)}
+        openDocs={() => setDocsOpen(true)}
         saveProjectToLocal={saveProjectToLocal}
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
@@ -1386,6 +1390,13 @@ function DigitalGateApp() {
       {settingsOpen && (
         <Suspense fallback={null}>
           <SettingsPanel onClose={() => setSettingsOpen(false)} />
+        </Suspense>
+      )}
+
+      {/* Docs Panel */}
+      {docsOpen && (
+        <Suspense fallback={null}>
+          <DocsPanel onClose={() => setDocsOpen(false)} />
         </Suspense>
       )}
 

@@ -24,6 +24,7 @@ export interface UIState {
   snapEnabled: boolean;
   cmdOpen: boolean;
   settingsOpen: boolean;
+  docsOpen: boolean;
   showObstacleMap: boolean;
   showMinimap: boolean;
 
@@ -51,6 +52,7 @@ export interface UIActions {
   setCmdOpen: (open: boolean) => void;
   toggleCmdOpen: () => void;
   setSettingsOpen: (open: boolean) => void;
+  setDocsOpen: (open: boolean) => void;
   setShowObstacleMap: (show: boolean) => void;
   toggleObstacleMap: () => void;
 
@@ -77,6 +79,7 @@ export const useUIStore = create<UIStore>((set) => ({
   snapEnabled: true,
   cmdOpen: false,
   settingsOpen: false,
+  docsOpen: false,
   showObstacleMap: false,
   showMinimap: true,
   consoleTab: CONSOLE_TAB.LOG,
@@ -121,6 +124,7 @@ export const useUIStore = create<UIStore>((set) => ({
   setCmdOpen: (cmdOpen) => set({ cmdOpen }),
   toggleCmdOpen: () => set((s) => ({ cmdOpen: !s.cmdOpen })),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
+  setDocsOpen: (docsOpen) => set({ docsOpen }),
   setShowObstacleMap: (showObstacleMap) => set({ showObstacleMap }),
   toggleObstacleMap: () =>
     set((s) => ({ showObstacleMap: !s.showObstacleMap })),
