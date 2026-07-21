@@ -50,8 +50,9 @@ export function useCustomCircuits(
           })),
         ),
       );
-    } catch {
-      // localStorage unavailable
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("[BitLab] Failed to save custom circuits:", err);
     }
   }, []);
 
@@ -238,15 +239,25 @@ export function useCustomCircuits(
 
       if (!name) return;
 
-      const type = library.registerCustomCircuit(
-        name.trim(),
-        structuredClone(snapshot),
-      );
+      let type: string | null;
+
+      try {
+        type = library.registerCustomCircuit(
+          name.trim(),
+          structuredClone(snapshot),
+        );
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+
+        logFn(CONSOLE_TAB.ERROR, `Failed to create custom gate: ${msg}`);
+
+        return;
+      }
 
       if (!type) {
         logFn(
           CONSOLE_TAB.ERROR,
-          "Gate needs at least one input (Toggle/Button/Const/Clock) or output (LED).",
+          "Cannot save as reusable gate: circuit needs at least one Input component (Toggle, Button, Constant, or Clock) to define input pins, AND/OR at least one Output component (LED) to define output pins.",
         );
 
         return;
@@ -254,6 +265,13 @@ export function useCustomCircuits(
 
       setCustomBump((v) => v + 1);
       saveCustomCircuitToLocal();
+
+      // eslint-disable-next-line no-console
+      console.log(
+        `[BitLab] Custom gate "${name}" registered as type "${type}". Total custom gates:`,
+        library.getCustomGates().length,
+      );
+
       logFn(
         CONSOLE_TAB.LOG,
         `Registered custom gate "${name}". Drag it from the Custom category.`,

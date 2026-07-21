@@ -172,6 +172,7 @@ function DigitalGateApp() {
     createCircuitFromGates,
     importCustomCircuitFromFile: importCustomRaw,
     removeCustomCircuit: removeCustomRaw,
+    saveCustomCircuitToLocal,
   } = useCustomCircuits(addLog);
   const visibleComponents = useViewportCulling(snapshot, view, size);
 
@@ -370,7 +371,7 @@ function DigitalGateApp() {
     undo: undoWithReroute,
     redo: redoWithReroute,
     duplicateSelected,
-    saveProjectToLocal,
+    saveProjectToLocal: saveCustomCircuitToLocal,
     toggleCmdOpen,
     clearSelection,
     selectionSize: selection.size,
@@ -831,7 +832,7 @@ function DigitalGateApp() {
         canUndo={canUndo}
         canRedo={canRedo}
         openSettings={() => setSettingsOpen(true)}
-        saveProjectToLocal={saveProjectToLocal}
+        saveProjectToLocal={saveCustomCircuitToLocal}
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
         importToCanvas={() => {
