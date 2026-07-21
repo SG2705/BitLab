@@ -626,11 +626,12 @@ function GateNode({
                         start: number;
                         end: number;
                       };
+
+                  let pinIdx = 0;
                   const slots: Slot[] = [];
                   const groupStartMap = new Map(
                     busGroups.map((g, gi) => [g[0], { gi, g }]),
                   );
-                  let pinIdx = 0;
 
                   while (pinIdx < def.inputs) {
                     const entry = groupStartMap.get(pinIdx);
@@ -803,6 +804,7 @@ function GateNode({
                     const pinLabel = def.inputLabels?.[i];
                     const inSignal =
                       comp.inputs[i] ?? LogicValue.HIGH_IMPEDANCE;
+                    const isClockPin = pinLabel === "CLK";
 
                     return (
                       <g key={`gate-node-in-${i}`}>
@@ -814,29 +816,63 @@ function GateNode({
                           stroke={pinColor(inSignal)}
                           strokeWidth={1.5}
                         />
-                        <circle
-                          cx={cx}
-                          cy={cy}
-                          r={5}
-                          fill={
-                            inSignal === LogicValue.ONE
-                              ? "var(--color-signal-on)"
-                              : inSignal === LogicValue.UNKNOWN
-                                ? "var(--color-signal-unknown)"
-                                : inSignal === LogicValue.HIGH_IMPEDANCE
-                                  ? "var(--color-signal-highz)"
-                                  : "var(--color-background)"
-                          }
-                          stroke={pinColor(inSignal)}
-                          strokeWidth={1.5}
-                          onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
-                          onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
-                          style={{ cursor: "crosshair" }}
-                          className={cn(
-                            "hover:stroke-primary",
-                            glowClass(inSignal),
-                          )}
-                        />
+                        {isClockPin ? (
+                          <>
+                            <rect
+                              x={cx - 5}
+                              y={cy - 5}
+                              width={10}
+                              height={10}
+                              fill={
+                                inSignal === LogicValue.ONE
+                                  ? "var(--color-signal-on)"
+                                  : inSignal === LogicValue.UNKNOWN
+                                    ? "var(--color-signal-unknown)"
+                                    : inSignal === LogicValue.HIGH_IMPEDANCE
+                                      ? "var(--color-signal-highz)"
+                                      : "var(--color-background)"
+                              }
+                              stroke={pinColor(inSignal)}
+                              strokeWidth={1.5}
+                              onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
+                              onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
+                              style={{ cursor: "crosshair" }}
+                              className={cn(
+                                "hover:stroke-primary",
+                                glowClass(inSignal),
+                              )}
+                            />
+                            <polygon
+                              points={`${cx - 3},${cy - 3} ${cx + 3},${cy} ${cx - 3},${cy + 3}`}
+                              fill={pinColor(inSignal)}
+                              pointerEvents="none"
+                            />
+                          </>
+                        ) : (
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={5}
+                            fill={
+                              inSignal === LogicValue.ONE
+                                ? "var(--color-signal-on)"
+                                : inSignal === LogicValue.UNKNOWN
+                                  ? "var(--color-signal-unknown)"
+                                  : inSignal === LogicValue.HIGH_IMPEDANCE
+                                    ? "var(--color-signal-highz)"
+                                    : "var(--color-background)"
+                            }
+                            stroke={pinColor(inSignal)}
+                            strokeWidth={1.5}
+                            onMouseDown={(e) => onPinDown(e, i, PIN_KIND.IN)}
+                            onMouseUp={(e) => onPinUp(e, i, PIN_KIND.IN)}
+                            style={{ cursor: "crosshair" }}
+                            className={cn(
+                              "hover:stroke-primary",
+                              glowClass(inSignal),
+                            )}
+                          />
+                        )}
                         {pinLabel && (
                           <text
                             x={isVertical ? (r === 0 ? 4 : rw - 4) : pos}
@@ -928,11 +964,12 @@ function GateNode({
                         start: number;
                         end: number;
                       };
+
+                  let pinIdx = 0;
                   const slots: Slot[] = [];
                   const groupStartMap = new Map(
                     busGroups.map((g, gi) => [g[0], { gi, g }]),
                   );
-                  let pinIdx = 0;
 
                   while (pinIdx < def.outputs) {
                     const entry = groupStartMap.get(pinIdx);
