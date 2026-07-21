@@ -49,7 +49,7 @@
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { CELL_SIZE, PIN_OFFSET_UNITS } from "@/globals";
+import { CELL_SIZE } from "@/globals";
 
 import {
   CellState,
@@ -390,7 +390,7 @@ export class ObstacleMap {
     const existing = this.obstacles.get(comp.id);
 
     if (existing) {
-      this.clearObstacleCells(existing);
+      this.clearObstacleCells(existing, comp);
     }
 
     this.addObstacle(comp);
@@ -401,12 +401,12 @@ export class ObstacleMap {
   }
 
   /** Remove a component's obstacle from the map */
-  removeObstacle(compId: string): void {
+  removeObstacle(compId: string, comp: ComponentInstance): void {
     const obs = this.obstacles.get(compId);
 
     if (!obs) return;
 
-    this.clearObstacleCells(obs);
+    this.clearObstacleCells(obs, comp);
     this.obstacles.delete(compId);
     this.computeClearanceField();
   }
@@ -524,27 +524,11 @@ export class ObstacleMap {
     const r = comp.rotation ?? 0;
     const isVertical = r === 0 || r === 180;
 
-    // Blocked region: body + pin-offset on pin-bearing edges
-    const pinExpand = PIN_OFFSET_UNITS * this.config.cellSize;
-
-    let expandLeft = 0;
-    let expandRight = 0;
-    let expandTop = 0;
-    let expandBottom = 0;
-
-    if (isVertical) {
-      expandLeft = pinExpand;
-      expandRight = pinExpand;
-    } else {
-      expandTop = pinExpand;
-      expandBottom = pinExpand;
-    }
-
     const bounds: Rect = {
-      x: comp.x - expandLeft,
-      y: comp.y - expandTop,
-      width: size.w + expandLeft + expandRight,
-      height: size.h + expandTop + expandBottom,
+      x: comp.x,
+      y: comp.y,
+      width: size.w,
+      height: size.h,
     };
 
     // Padded region: uniform padding on NON-PIN edges only.
@@ -553,10 +537,10 @@ export class ObstacleMap {
     const pad = this.config.obstaclePadding * this.config.cellSize;
 
     const paddedBounds = {
-      x: bounds.x - pad,
-      y: bounds.y - pad,
-      width: bounds.width + pad * 2,
-      height: bounds.height + pad * 2,
+      x: isVertical ? bounds.x : bounds.x - pad,
+      y: isVertical ? bounds.y - pad : bounds.y,
+      width: isVertical ? bounds.width : bounds.width + pad * 2,
+      height: isVertical ? bounds.height + pad * 2 : bounds.height,
     };
 
     const obstacle: Obstacle = { compId: comp.id, bounds, paddedBounds };
@@ -564,17 +548,41 @@ export class ObstacleMap {
     this.obstacles.set(comp.id, obstacle);
 
     // Mark cells
-    this.markObstacleCells(obstacle);
+    this.markObstacleCells(obstacle, comp);
   }
 
   // ── Private: Cell marking ──────────────────────────────────────────────────
 
-  private markObstacleCells(obs: Obstacle): void {
-    // Mark padded zone
+  private markBlockedRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ): void {
+    const topLeft = this.worldToGrid({ x, y });
+    const bottomRight = this.worldToGrid({
+      x: x + width,
+      y: y + height,
+    });
+
+    for (let r = topLeft.row; r < bottomRight.row; r += 1) {
+      for (let c = topLeft.col; c < bottomRight.col; c += 1) {
+        if (c >= 0 && c < this.cols && r >= 0 && r < this.rows) {
+          this.grid[r * this.cols + c] = CellState.BLOCKED;
+        }
+      }
+    }
+  }
+
+  private markObstacleCells(obs: Obstacle, comp: ComponentInstance): void {
+    // ----------------------------
+    // Mark padded region
+    // ----------------------------
     const padTopLeft = this.worldToGrid({
       x: obs.paddedBounds.x,
       y: obs.paddedBounds.y,
     });
+
     const padBottomRight = this.worldToGrid({
       x: obs.paddedBounds.x + obs.paddedBounds.width,
       y: obs.paddedBounds.y + obs.paddedBounds.height,
@@ -592,11 +600,14 @@ export class ObstacleMap {
       }
     }
 
-    // Mark blocked zone (component body)
+    // ----------------------------
+    // Mark component body
+    // ----------------------------
     const bodyTopLeft = this.worldToGrid({
       x: obs.bounds.x,
       y: obs.bounds.y,
     });
+
     const bodyBottomRight = this.worldToGrid({
       x: obs.bounds.x + obs.bounds.width,
       y: obs.bounds.y + obs.bounds.height,
@@ -609,9 +620,74 @@ export class ObstacleMap {
         }
       }
     }
+
+    // ----------------------------
+    // Add blocked "tongs"
+    // ----------------------------
+    const pad = this.config.obstaclePadding * this.config.cellSize;
+
+    // Opening left for pins
+    const tongUnits = 2;
+    const tongHeight = tongUnits * this.config.cellSize;
+    const tongWidth = tongUnits * this.config.cellSize;
+
+    const opening = Math.max(0, obs.bounds.height - 2 * tongHeight);
+
+    const rotation = comp.rotation ?? 0;
+    const pinOnLeftRight = rotation === 0 || rotation === 180;
+
+    if (pinOnLeftRight) {
+      const lowerTongY = obs.bounds.y + tongHeight + opening;
+
+      // LEFT upper
+      this.markBlockedRect(obs.bounds.x - pad, obs.bounds.y, pad, tongHeight);
+
+      // LEFT lower
+      this.markBlockedRect(obs.bounds.x - pad, lowerTongY, pad, tongHeight);
+
+      // RIGHT upper
+      this.markBlockedRect(
+        obs.bounds.x + obs.bounds.width,
+        obs.bounds.y,
+        pad,
+        tongHeight,
+      );
+
+      // RIGHT lower
+      this.markBlockedRect(
+        obs.bounds.x + obs.bounds.width,
+        lowerTongY,
+        pad,
+        tongHeight,
+      );
+    } else {
+      const rightTongX = obs.bounds.x + tongWidth + opening;
+
+      // TOP left
+      this.markBlockedRect(obs.bounds.x, obs.bounds.y - pad, tongWidth, pad);
+
+      // TOP right
+      this.markBlockedRect(rightTongX, obs.bounds.y - pad, tongWidth, pad);
+
+      // BOTTOM left
+      this.markBlockedRect(
+        obs.bounds.x,
+        obs.bounds.y + obs.bounds.height,
+        tongWidth,
+        pad,
+      );
+
+      // BOTTOM right
+      this.markBlockedRect(
+        rightTongX,
+        obs.bounds.y + obs.bounds.height,
+        tongWidth,
+        pad,
+      );
+    }
   }
 
-  private clearObstacleCells(obs: Obstacle): void {
+  private clearObstacleCells(obs: Obstacle, comp: ComponentInstance): void {
     const padTopLeft = this.worldToGrid({
       x: obs.paddedBounds.x,
       y: obs.paddedBounds.y,
@@ -634,7 +710,7 @@ export class ObstacleMap {
       if (id === obs.compId) continue;
 
       if (ObstacleMap.rectsOverlap(obs.paddedBounds, other.paddedBounds)) {
-        this.markObstacleCells(other);
+        this.markObstacleCells(other, comp);
       }
     }
   }

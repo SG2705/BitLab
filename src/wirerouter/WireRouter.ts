@@ -305,7 +305,9 @@ export class WireRouter {
 
   /** Handle component removal */
   onComponentRemove(compId: string, snapshot: CircuitSnapshot): void {
-    this.obstacleMap.removeObstacle(compId);
+    const comp = snapshot.components[compId];
+
+    this.obstacleMap.removeObstacle(compId, comp);
     this.topologyVersion += 1;
 
     for (const [wireId, wire] of Object.entries(snapshot.wires)) {
