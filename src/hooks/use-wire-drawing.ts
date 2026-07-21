@@ -37,7 +37,6 @@ export interface WireDrawingControls {
       toPin: number,
     ) => Wire | null,
     addLog: (kind: ConsoleTab, msg: string) => void,
-    saveProjectToLocal: () => void,
   ) => void;
 }
 
@@ -82,7 +81,6 @@ export function useWireDrawing(): WireDrawingControls {
         toPin: number,
       ) => Wire | null,
       addLog: (kind: ConsoleTab, msg: string) => void,
-      saveProjectToLocal: () => void,
     ) => {
       e.stopPropagation();
 
@@ -150,7 +148,6 @@ export function useWireDrawing(): WireDrawingControls {
         if (created > 0)
           addLog(CONSOLE_TAB.LOG, `Bus connected: ${created} wires created`);
 
-        saveProjectToLocal();
         setPendingWire(null);
 
         return;
@@ -188,7 +185,6 @@ export function useWireDrawing(): WireDrawingControls {
 
       if (wire) addLog(CONSOLE_TAB.LOG, `Wire connected (${wire.id})`);
 
-      saveProjectToLocal();
       setPendingWire(null);
     },
     [pendingWire],

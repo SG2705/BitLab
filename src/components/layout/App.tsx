@@ -172,7 +172,6 @@ function DigitalGateApp() {
     createCircuitFromGates,
     importCustomCircuitFromFile: importCustomRaw,
     removeCustomCircuit: removeCustomRaw,
-    saveCustomCircuitToLocal,
   } = useCustomCircuits(addLog);
   const visibleComponents = useViewportCulling(snapshot, view, size);
 
@@ -371,7 +370,7 @@ function DigitalGateApp() {
     undo: undoWithReroute,
     redo: redoWithReroute,
     duplicateSelected,
-    saveProjectToLocal: saveCustomCircuitToLocal,
+    saveProjectToLocal,
     toggleCmdOpen,
     clearSelection,
     selectionSize: selection.size,
@@ -832,7 +831,7 @@ function DigitalGateApp() {
         canUndo={canUndo}
         canRedo={canRedo}
         openSettings={() => setSettingsOpen(true)}
-        saveProjectToLocal={saveCustomCircuitToLocal}
+        saveProjectToLocal={saveProjectToLocal}
         loadProjectFromLocal={handleLoadProject}
         exportProject={exportJSON}
         importToCanvas={() => {
@@ -1182,15 +1181,7 @@ function DigitalGateApp() {
                           if (showObstacleMap) return;
 
                           if (kind === PIN_KIND.IN)
-                            finishWire(
-                              e,
-                              c,
-                              pin,
-                              snapshot,
-                              addWire,
-                              addLog,
-                              saveProjectToLocal,
-                            );
+                            finishWire(e, c, pin, snapshot, addWire, addLog);
                         }}
                       />
                     );

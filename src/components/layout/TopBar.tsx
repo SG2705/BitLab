@@ -3,7 +3,9 @@ import { FormattedMessage, useIntl } from "react-intl";
 import {
   Clock,
   Command,
+  Download,
   FolderOpen,
+  ImageDown,
   Layers,
   Package,
   Pause,
@@ -16,7 +18,6 @@ import {
   Square,
   StepForward,
   Undo2,
-  Upload,
 } from "lucide-react";
 
 import { Button } from "@/components/ui";
@@ -129,7 +130,7 @@ function TopBar({
       />
       <TBBtn
         onClick={exportProject}
-        icon={<Save className="h-4 w-4 rotate-180" />}
+        icon={<ImageDown className="h-4 w-4 rotate-180" />}
         label="Export"
       />
       <TBBtn
@@ -145,7 +146,7 @@ function TopBar({
       />
       <TBBtn
         onClick={importCircuit}
-        icon={<Upload className="h-4 w-4" />}
+        icon={<Download className="h-4 w-4" />}
         label="Import circuit from file"
       />
       <div className="w-px h-6 bg-border mx-1" />
