@@ -258,16 +258,6 @@ function TopBar({
           }
           label="Toggle obstacle map"
         />
-        <TBBtn
-          onClick={openDocs}
-          icon={<HelpCircle className="h-4 w-4" />}
-          label="Documentation"
-        />
-        <TBBtn
-          onClick={openSettings}
-          icon={<Settings className="h-4 w-4" />}
-          label="Settings"
-        />
         <button
           type="button"
           onClick={openCmd}
@@ -280,6 +270,16 @@ function TopBar({
             <FormattedMessage id="cpOWpz" defaultMessage="⌘K" />
           </kbd>
         </button>
+        <TBBtn
+          onClick={openSettings}
+          icon={<Settings className="h-4 w-4" />}
+          label="Settings"
+        />
+        <TBBtn
+          onClick={openDocs}
+          icon={<HelpCircle className="h-4 w-4" />}
+          label="Documentation"
+        />
       </div>
     </header>
   );
