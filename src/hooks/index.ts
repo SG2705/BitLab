@@ -14,6 +14,10 @@ export type {
   CanvasSize,
   LassoRect,
 } from "./use-canvas-interaction";
-export type { PendingWire } from "./use-wire-drawing";
+export type {
+  PendingWire,
+  AutoConnectPreview,
+  WireDrawingControls,
+} from "./use-wire-drawing";
 export type { ClipboardControls } from "./use-clipboard";
 export type { CustomCircuitControls } from "./use-custom-circuits";

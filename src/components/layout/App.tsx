@@ -133,6 +133,7 @@ function DigitalGateApp() {
     moveComponents,
     commitMove,
     addWire,
+    addWireRaw,
     removeWires,
     removeComponents,
     updateComponent,
@@ -144,6 +145,7 @@ function DigitalGateApp() {
     start,
     step,
     reset,
+    pushHistory,
     exportJSON,
     importJSON,
     newProject,
@@ -164,8 +166,13 @@ function DigitalGateApp() {
     onCanvasMouseUp: canvasMouseUp,
     fitToScreen: fitToScreenRaw,
   } = useCanvasInteraction();
-  const { pendingWire, setPendingWire, startWire, finishWire } =
-    useWireDrawing();
+  const {
+    pendingWire,
+    setPendingWire,
+    autoConnectPreview,
+    startWire,
+    finishWire,
+  } = useWireDrawing();
   const clipboard = useClipboard();
   const {
     customBump,
@@ -903,7 +910,9 @@ function DigitalGateApp() {
                   ? "cursor-grabbing"
                   : showObstacleMap || tool === TOOL.PAN
                     ? "cursor-grab"
-                    : "cursor-default",
+                    : pendingWire?.isAutoConnect
+                      ? "cursor-copy"
+                      : "cursor-default",
               )}
               onDragOver={(e) => {
                 if (showObstacleMap) {
@@ -1115,6 +1124,37 @@ function DigitalGateApp() {
                         />
                       );
                     })()}
+                  {autoConnectPreview &&
+                    (() => {
+                      const sourceComp =
+                        snapshot.components[autoConnectPreview.sourceComp];
+                      const targetComp =
+                        snapshot.components[autoConnectPreview.targetComp];
+
+                      if (!sourceComp || !targetComp) return null;
+
+                      return autoConnectPreview.pairs.map((pair, idx) => {
+                        const p1 = pinPos(
+                          sourceComp,
+                          PIN_KIND.OUT,
+                          pair.fromPin,
+                        );
+                        const p2 = pinPos(targetComp, PIN_KIND.IN, pair.toPin);
+
+                        return (
+                          <WirePath
+                            // eslint-disable-next-line react/no-array-index-key
+                            key={`ac-preview-${idx}`}
+                            p1={p1}
+                            p2={p2}
+                            isSignalUp={false}
+                            isRunning={false}
+                            wireType={wireStyle}
+                            isPreview
+                          />
+                        );
+                      });
+                    })()}
                   {Object.values(snapshot.components).map((c) => {
                     // Viewport culling: skip components outside the visible area
                     if (!visibleComponents.has(c.id)) return null;
@@ -1181,7 +1221,15 @@ function DigitalGateApp() {
                           if (showObstacleMap) return;
 
                           if (kind === PIN_KIND.IN)
-                            finishWire(e, c, pin, snapshot, addWire, addLog);
+                            finishWire(
+                              e,
+                              c,
+                              pin,
+                              snapshot,
+                              addWireRaw,
+                              addLog,
+                              pushHistory,
+                            );
                         }}
                       />
                     );

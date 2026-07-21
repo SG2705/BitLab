@@ -59,10 +59,18 @@ export interface DigitalEngineControls {
     toComp: string,
     toPin: number,
   ) => Wire | null;
+  /** Raw addWire without pushing history — caller manages undo entry */
+  addWireRaw: (
+    fromComp: string,
+    fromPin: number,
+    toComp: string,
+    toPin: number,
+  ) => Wire | null;
   removeWire: (id: string) => void;
   removeWires: (ids: string[]) => void;
 
   // ── Project / history ────────────────────────────────────────────────────
+  pushHistory: () => void;
   undo: () => void;
   redo: () => void;
   newProject: () => void;
@@ -258,6 +266,13 @@ export function useDigitalEngine(
     [manager, pushHistory],
   );
 
+  const addWireRaw = useCallback(
+    (fromComp: string, fromPin: number, toComp: string, toPin: number) => {
+      return manager.addWire(fromComp, fromPin, toComp, toPin);
+    },
+    [manager],
+  );
+
   const removeWire = useCallback(
     (id: string) => {
       manager.removeWire(id);
@@ -343,8 +358,10 @@ export function useDigitalEngine(
     setInput,
     duplicateComponents,
     addWire,
+    addWireRaw,
     removeWire,
     removeWires,
+    pushHistory,
     undo,
     redo,
     newProject,

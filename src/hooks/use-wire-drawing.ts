@@ -6,19 +6,48 @@ import { useCallback, useState } from "react";
 
 import type { CircuitSnapshot, ComponentInstance, Wire } from "@/engine";
 import { library } from "@/engine";
+import type { PinPair } from "@/engine/AutoConnectService";
+import {
+  executeAutoConnect,
+  getEligibleInputPins,
+  getEligibleOutputPins,
+  matchPins,
+} from "@/engine/AutoConnectService";
 import { CONSOLE_TAB } from "@/lib/constants";
+import { isAutoConnectModifier } from "@/lib/platform";
 import type { ConsoleTab } from "@/lib/types";
+
+// Re-export for use in subsequent tasks (4.2, 4.4)
+export {
+  executeAutoConnect,
+  getEligibleInputPins,
+  getEligibleOutputPins,
+  isAutoConnectModifier,
+  matchPins,
+};
+export type { PinPair };
 
 export interface PendingWire {
   from: { comp: string; pin: number };
   mx: number;
   my: number;
   isBus?: boolean;
+  isAutoConnect?: boolean;
+}
+
+export interface AutoConnectPreview {
+  pairs: PinPair[];
+  sourceComp: string;
+  targetComp: string;
 }
 
 export interface WireDrawingControls {
   pendingWire: PendingWire | null;
   setPendingWire: React.Dispatch<React.SetStateAction<PendingWire | null>>;
+  autoConnectPreview: AutoConnectPreview | null;
+  setAutoConnectPreview: React.Dispatch<
+    React.SetStateAction<AutoConnectPreview | null>
+  >;
   startWire: (
     e: React.MouseEvent,
     comp: ComponentInstance,
@@ -37,7 +66,15 @@ export interface WireDrawingControls {
       toPin: number,
     ) => Wire | null,
     addLog: (kind: ConsoleTab, msg: string) => void,
+    pushHistory: () => void,
   ) => void;
+  updateAutoConnectPreview: (
+    targetComp: ComponentInstance,
+    targetPin: number,
+    snapshot: CircuitSnapshot,
+  ) => void;
+  clearAutoConnectPreview: () => void;
+  cancelAutoConnect: () => void;
 }
 
 /**
@@ -45,6 +82,8 @@ export interface WireDrawingControls {
  */
 export function useWireDrawing(): WireDrawingControls {
   const [pendingWire, setPendingWire] = useState<PendingWire | null>(null);
+  const [autoConnectPreview, setAutoConnectPreview] =
+    useState<AutoConnectPreview | null>(null);
 
   const startWire = useCallback(
     (
@@ -63,7 +102,15 @@ export function useWireDrawing(): WireDrawingControls {
         (def.isBusOutput === true ||
           (def.busOutputGroups?.some(([s]) => s === pin) ?? false));
 
-      setPendingWire({ from: { comp: comp.id, pin }, mx: p.x, my: p.y, isBus });
+      const isAutoConnect = !isBus && isAutoConnectModifier(e);
+
+      setPendingWire({
+        from: { comp: comp.id, pin },
+        mx: p.x,
+        my: p.y,
+        isBus,
+        ...(isAutoConnect ? { isAutoConnect: true } : {}),
+      });
     },
     [],
   );
@@ -81,6 +128,7 @@ export function useWireDrawing(): WireDrawingControls {
         toPin: number,
       ) => Wire | null,
       addLog: (kind: ConsoleTab, msg: string) => void,
+      pushHistory: () => void,
     ) => {
       e.stopPropagation();
 
@@ -88,8 +136,69 @@ export function useWireDrawing(): WireDrawingControls {
 
       if (pendingWire.from.comp === comp.id) {
         setPendingWire(null);
+        setAutoConnectPreview(null);
 
         return;
+      }
+
+      // ── Auto-connect variant ──────────────────────────────────────────────
+      if (pendingWire.isAutoConnect) {
+        // Look up source component from snapshot
+        const sourceComp = snapshot.components[pendingWire.from.comp];
+
+        if (
+          !sourceComp ||
+          !library.has(sourceComp.type) ||
+          !library.has(comp.type)
+        ) {
+          // Cannot resolve definitions — fall through to single-wire logic
+        } else {
+          const sourceDef = library.get(sourceComp.type);
+          const targetDef = library.get(comp.type);
+
+          // Compute eligible pins
+          const eligibleOutputs = getEligibleOutputPins(sourceDef);
+          const eligibleInputs = getEligibleInputPins(targetDef);
+
+          // Match pins positionally
+          const pairs = matchPins(eligibleOutputs, eligibleInputs);
+
+          if (pairs.length > 0) {
+            // Execute auto-connect: iterate pairs and call addWire for each
+            let created = 0;
+            const total = pairs.length;
+
+            for (const pair of pairs) {
+              const wire = addWire(
+                pendingWire.from.comp,
+                pair.fromPin,
+                comp.id,
+                pair.toPin,
+              );
+
+              if (wire) created += 1;
+            }
+
+            if (created > 0) {
+              pushHistory();
+              addLog(
+                CONSOLE_TAB.LOG,
+                `Auto-connected: ${created} of ${total} wires`,
+              );
+            } else {
+              addLog(
+                CONSOLE_TAB.WARN,
+                `Auto-connect: all ${total} wire(s) skipped (targets occupied or validation failed)`,
+              );
+            }
+
+            setPendingWire(null);
+            setAutoConnectPreview(null);
+
+            return;
+          }
+          // pairs is empty (count mismatch) — fall through to single-wire logic
+        }
       }
 
       // ── Bus wire variant ──────────────────────────────────────────────────
@@ -148,6 +257,8 @@ export function useWireDrawing(): WireDrawingControls {
         if (created > 0)
           addLog(CONSOLE_TAB.LOG, `Bus connected: ${created} wires created`);
 
+        if (created > 0) pushHistory();
+
         setPendingWire(null);
 
         return;
@@ -183,17 +294,124 @@ export function useWireDrawing(): WireDrawingControls {
         pin,
       );
 
-      if (wire) addLog(CONSOLE_TAB.LOG, `Wire connected (${wire.id})`);
+      if (wire) {
+        pushHistory();
+        addLog(CONSOLE_TAB.LOG, `Wire connected (${wire.id})`);
+      }
 
       setPendingWire(null);
     },
     [pendingWire],
   );
 
+  /**
+   * Computes the auto-connect preview when hovering over a target pin.
+   * Identifies eligible pins on both source and target, matches them,
+   * and sets the preview state for rendering.
+   */
+  const updateAutoConnectPreview = useCallback(
+    (
+      targetComp: ComponentInstance,
+      _targetPin: number,
+      snapshot: CircuitSnapshot,
+    ) => {
+      // Only compute preview in auto-connect mode
+      if (!pendingWire?.isAutoConnect) {
+        setAutoConnectPreview(null);
+
+        return;
+      }
+
+      // Reject self-connection
+      if (pendingWire.from.comp === targetComp.id) {
+        setAutoConnectPreview(null);
+
+        return;
+      }
+
+      // Look up source component from snapshot
+      // If the source component was removed during drag, cancel the entire gesture (Req 11.6)
+      const sourceComp = snapshot.components[pendingWire.from.comp];
+
+      if (!sourceComp) {
+        setPendingWire(null);
+        setAutoConnectPreview(null);
+
+        return;
+      }
+
+      // If the target component was removed during drag, clear preview (Req 11.6)
+      if (!snapshot.components[targetComp.id]) {
+        setAutoConnectPreview(null);
+
+        return;
+      }
+
+      // Look up component definitions from the library
+      if (!library.has(sourceComp.type) || !library.has(targetComp.type)) {
+        setAutoConnectPreview(null);
+
+        return;
+      }
+
+      const sourceDef = library.get(sourceComp.type);
+      const targetDef = library.get(targetComp.type);
+
+      // Get eligible pins
+      const eligibleOutputs = getEligibleOutputPins(sourceDef);
+      const eligibleInputs = getEligibleInputPins(targetDef);
+
+      // Match pins positionally
+      const pairs = matchPins(eligibleOutputs, eligibleInputs);
+
+      if (pairs.length > 0) {
+        setAutoConnectPreview({
+          pairs,
+          sourceComp: pendingWire.from.comp,
+          targetComp: targetComp.id,
+        });
+      } else {
+        // Pin count mismatch or no eligible pins — no preview
+        setAutoConnectPreview(null);
+      }
+    },
+    [pendingWire],
+  );
+
+  /**
+   * Clears the auto-connect preview (e.g., when mouse leaves a target pin area).
+   */
+  const clearAutoConnectPreview = useCallback(() => {
+    setAutoConnectPreview(null);
+  }, []);
+
+  /**
+   * Cancels auto-connect mode, reverting to single-wire preview.
+   * Called when the modifier key is released during a drag.
+   */
+  const cancelAutoConnect = useCallback(() => {
+    if (pendingWire?.isAutoConnect) {
+      setPendingWire((prev) => {
+        if (!prev) return null;
+
+        const { isAutoConnect, ...rest } = prev;
+
+        return rest;
+      });
+    }
+
+    setAutoConnectPreview(null);
+  }, [pendingWire]);
+
   return {
     pendingWire,
     setPendingWire,
+    autoConnectPreview,
+    setAutoConnectPreview,
     startWire,
     finishWire,
+    updateAutoConnectPreview,
+    clearAutoConnectPreview,
+    cancelAutoConnect,
   };
 }
