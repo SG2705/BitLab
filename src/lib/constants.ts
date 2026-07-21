@@ -103,6 +103,9 @@ export const MESSAGES = defineMessages({
   lb_tristate: { id: "/Hbmdf", defaultMessage: "Tri-State" },
   lb_tristate_inv: { id: "v0J1vP", defaultMessage: "Tri-State (inv)" },
   lb_transceiver: { id: "Gh9RbN", defaultMessage: "Transceiver" },
+  lb_ctrl_and4: { id: "zzmvcO", defaultMessage: "Ctrl AND 4" },
+  lb_ctrl_and8: { id: "sNne9T", defaultMessage: "Ctrl AND 8" },
+  lb_ctrl_and16: { id: "GildCq", defaultMessage: "Ctrl AND 16" },
 });
 
 export type Messages = keyof typeof MESSAGES;

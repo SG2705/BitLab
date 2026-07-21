@@ -1057,3 +1057,25 @@ export const evalTransceiver = (inputs: SignalValue[]): EvaluateResult => {
   // DIR is X or Z → both outputs unknown
   return { outputs: [UNKNOWN, UNKNOWN], state: null };
 };
+
+// ── Controlled AND Gate Array ────────────────────────────────────────────────
+//
+// Inputs: [D0, D1, ..., D(N-1), CTRL]   (N data pins + 1 control pin)
+// Outputs: [Y0, Y1, ..., Y(N-1)]
+// Each output Y[i] = AND(D[i], CTRL)
+//
+// When CTRL = HIGH: outputs pass through the data inputs.
+// When CTRL = LOW: all outputs are forced LOW.
+// Effectively a bus enable gate.
+
+export const evalCtrlAnd = (inputs: SignalValue[]): EvaluateResult => {
+  const width = inputs.length - 1; // last pin is CTRL
+  const ctrl = normalizeInput(inputs[width]);
+  const outputs: SignalValue[] = new Array<SignalValue>(width);
+
+  for (let i = 0; i < width; i += 1) {
+    outputs[i] = AND_TABLE[normalizeInput(inputs[i])][ctrl];
+  }
+
+  return { outputs, state: null };
+};

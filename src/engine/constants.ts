@@ -113,6 +113,11 @@ export const GATE_TYPE_TRISTATE = "TRISTATE";
 export const GATE_TYPE_TRISTATE_INV = "TRISTATE_INV";
 export const GATE_TYPE_TRANSCEIVER = "TRANSCEIVER";
 
+// ── Controlled AND Gate Array ────────────────────────────────────────────────
+export const GATE_TYPE_CTRL_AND4 = "CTRL_AND4";
+export const GATE_TYPE_CTRL_AND8 = "CTRL_AND8";
+export const GATE_TYPE_CTRL_AND16 = "CTRL_AND16";
+
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
 export const ENGINE_EVENT_TYPE = {
@@ -248,4 +253,7 @@ export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_TRISTATE]: "lb_tristate",
   [GATE_TYPE_TRISTATE_INV]: "lb_tristate_inv",
   [GATE_TYPE_TRANSCEIVER]: "lb_transceiver",
+  [GATE_TYPE_CTRL_AND4]: "lb_ctrl_and4",
+  [GATE_TYPE_CTRL_AND8]: "lb_ctrl_and8",
+  [GATE_TYPE_CTRL_AND16]: "lb_ctrl_and16",
 } as const;
