@@ -312,7 +312,7 @@ export function computeBusWireGroups(
     );
 
     result.push({
-      id: `bus:${group.fromComp}${KEY_SEPARATOR}${group.toComp}`,
+      id: `bus${KEY_SEPARATOR}${group.fromComp}${KEY_SEPARATOR}${group.toComp}`,
       fromComp: group.fromComp,
       toComp: group.toComp,
       wireIds: group.wires.map((w) => w.id),

@@ -5,7 +5,11 @@ import { ChevronRight, Copy, Pin, PinOff, Replace, Trash2 } from "lucide-react";
 
 import type { ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { GATE_CATEGORY_INPUT, GATE_CATEGORY_OUTPUT } from "@/engine/constants";
+import {
+  GATE_CATEGORY_INPUT,
+  GATE_CATEGORY_OUTPUT,
+  KEY_SEPARATOR,
+} from "@/engine/constants";
 import { GATES } from "@/lib/circuit";
 import { cn, getGateLabel } from "@/lib/utils";
 
@@ -36,7 +40,7 @@ function signature(type: string): string {
 
   const def = library.get(type);
 
-  return `${def.inputs}:${def.outputs}:${def.isSequential ? "seq" : "comb"}`;
+  return `${def.inputs}${KEY_SEPARATOR}${def.outputs}${KEY_SEPARATOR}${def.isSequential ? "seq" : "comb"}`;
 }
 
 /**

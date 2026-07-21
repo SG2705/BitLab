@@ -3,7 +3,6 @@ import { FormattedMessage, useIntl } from "react-intl";
 import {
   Clock,
   Command,
-  Download,
   FolderOpen,
   ImageDown,
   Layers,
@@ -41,7 +40,7 @@ interface TopBarProps {
   importToCanvas: () => void;
   newProject: () => void;
   openCmd: () => void;
-  importCircuit: () => void;
+  // importCircuit: () => void;
   createCircuitFromGates: () => void;
   hasComponents: boolean;
   showObstacleMap: boolean;
@@ -93,7 +92,7 @@ function TopBar({
   newProject,
   openCmd,
   createCircuitFromGates,
-  importCircuit,
+  // importCircuit,
   hasComponents,
   showObstacleMap,
   toggleObstacleMap,
@@ -118,6 +117,7 @@ function TopBar({
         icon={<Plus className="h-4 w-4" />}
         label="New"
       />
+      <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
         onClick={loadProjectFromLocal}
         icon={<FolderOpen className="h-4 w-4" />}
@@ -128,15 +128,16 @@ function TopBar({
         icon={<Save className="h-4 w-4" />}
         label="Save to local"
       />
+      <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
         onClick={exportProject}
         icon={<ImageDown className="h-4 w-4 rotate-180" />}
-        label="Export"
+        label="Export to file"
       />
       <TBBtn
         onClick={importToCanvas}
         icon={<FolderOpen className="h-4 w-4" />}
-        label="Import circuit to canvas"
+        label="Import from file"
       />
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
@@ -144,11 +145,11 @@ function TopBar({
         icon={<Package className="h-4 w-4" />}
         label="Save current circuit as reusable"
       />
-      <TBBtn
+      {/* <TBBtn
         onClick={importCircuit}
         icon={<Download className="h-4 w-4" />}
         label="Import circuit from file"
-      />
+      /> */}
       <div className="w-px h-6 bg-border mx-1" />
       <TBBtn
         onClick={undo}

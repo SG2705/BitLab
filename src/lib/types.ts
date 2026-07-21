@@ -27,7 +27,7 @@ export interface LogEntry {
 }
 
 export interface BusWireGroup {
-  /** Unique ID: "bus:{fromComp}:{toComp}" */
+  /** Unique ID: "bus:{fromComp}{KEY_SEPARATOR}{toComp}" */
   id: string;
   /** Source component ID */
   fromComp: string;

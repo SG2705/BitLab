@@ -850,7 +850,7 @@ function DigitalGateApp() {
         newProject={newProject}
         openCmd={() => setCmdOpen(true)}
         createCircuitFromGates={handleCreateCircuit}
-        importCircuit={() => fileInputRef.current?.click()}
+        // importCircuit={() => fileInputRef.current?.click()}
         hasComponents={Object.keys(snapshot.components).length > 0}
         showObstacleMap={showObstacleMap}
         toggleObstacleMap={toggleObstacleMap}
