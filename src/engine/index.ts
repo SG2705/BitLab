@@ -72,7 +72,6 @@ export {
   evalGateXnor,
   evalGateNot,
   evalGateBuffer,
-  evalTriStateBuffer,
   resolveSignal,
   resolveBus,
   migrateSignal,

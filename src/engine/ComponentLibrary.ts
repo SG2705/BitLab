@@ -3,9 +3,15 @@
 /**
  * ComponentLibrary — authoritative registry of all component definitions.
  *
- * Each definition is a pure description: no mutable state, no side effects.
- * The evaluate() function is a pure function of (inputs, state) → (outputs, state).
- * The tick() function (clock-only) is a pure function of (state, dt) → (outputs, state).
+ * This module contains only the registry class. All component definitions
+ * are imported from `./definitions/` where each component or family has its
+ * own file with co-located evaluation logic.
+ *
+ * Responsibilities:
+ *   • Stores a Map<string, ComponentDefinition>
+ *   • Validates definitions on registration (pin counts, labels, evaluate contract)
+ *   • Registers/unregisters custom circuits (sub-circuit compilation)
+ *   • Provides category ordering for the toolbox panel
  */
 import { v4 as uuidv4 } from "uuid";
 
@@ -51,9 +57,6 @@ import {
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
   GATE_TYPE_COUNTER4,
-  GATE_TYPE_CTRL_AND4,
-  GATE_TYPE_CTRL_AND8,
-  GATE_TYPE_CTRL_AND16,
   GATE_TYPE_DEBUS4,
   GATE_TYPE_DEBUS8,
   GATE_TYPE_DEBUS16,
@@ -99,70 +102,9 @@ import {
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
   KEY_SEPARATOR,
-  LB_MAP,
   PINC0,
-  PINC1,
-  PINC2,
-  PINC3,
-  PINC4,
-  PINC5,
-  PINC6,
-  PINC8,
-  PINC9,
-  PINC11,
-  PINC16,
 } from "./constants";
-import {
-  evalBusAnd,
-  evalBusDisplay,
-  evalBusInput,
-  evalBusNot,
-  evalBusOr,
-  evalClockTick,
-  evalCmp4,
-  evalComment,
-  evalComparator,
-  evalCounter4,
-  evalCtrlAnd,
-  evalDecoder2,
-  evalDecoder3,
-  evalDemux2,
-  evalDff,
-  evalDigitBin,
-  evalDisplay7,
-  evalDlatch,
-  evalEncoder4,
-  evalFullAdder,
-  evalFullSub,
-  evalGateAnd,
-  evalGateBuffer,
-  evalGateNand,
-  evalGateNor,
-  evalGateNot,
-  evalGateNotMulti,
-  evalGateOr,
-  evalGateXnor,
-  evalGateXor,
-  evalGnd,
-  evalHalfAdder,
-  evalHalfSub,
-  evalInput,
-  evalJkff,
-  evalLed,
-  evalMux2,
-  evalMux4,
-  evalMux8,
-  evalPassthrough,
-  evalProbe,
-  evalReg4,
-  evalShreg4,
-  evalSplitter,
-  evalSrLatch,
-  evalTiff,
-  evalUreg4,
-  evalUreg8,
-  evalVcc,
-} from "./logic";
+import { DEFINITIONS } from "./definitions";
 import type {
   CircuitSnapshot,
   ComponentDefinition,
@@ -181,1592 +123,6 @@ export interface CustomGateMeta {
   outputLabels: string[];
   circuit: CircuitSnapshot;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const H_OVERRIDES = [GATE_TYPE_PROBE, GATE_TYPE_DISPLAY7, GATE_TYPE_DIGIT_BIN];
-
-const hw = (c: ComponentDefinition): ComponentDefinition => {
-  const skipResize = H_OVERRIDES.includes(c.type);
-
-  if (skipResize) {
-    return { ...c, label: LB_MAP[c.type] };
-  }
-
-  // Count bus slots per side to pass to height calculation
-  const inputBusSlots = c.busInputGroups?.length ?? 0;
-  const outputBusSlots = c.busOutputGroups?.length ?? 0;
-
-  // Determine which side has more slots (accounting for bus grouping)
-  const inputSlotCount = c.busInputGroups
-    ? c.inputs -
-      c.busInputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
-      inputBusSlots
-    : c.inputs;
-  const outputSlotCount = c.busOutputGroups
-    ? c.outputs -
-      c.busOutputGroups.reduce((sum, [s, e]) => sum + (e - s), 0) +
-      outputBusSlots
-    : c.outputs;
-
-  const maxSlots = Math.max(inputSlotCount, outputSlotCount);
-  const busSlots =
-    inputSlotCount >= outputSlotCount ? inputBusSlots : outputBusSlots;
-
-  return {
-    ...c,
-    label: LB_MAP[c.type],
-    width: Math.max(MIN_COMP_SIZE, c.width),
-    height: getHeightForPinCount(maxSlots, busSlots),
-  };
-};
-
-type CbFields = Omit<
-  ComponentDefinition,
-  "isSequential" | "isClock" | "isInput" | "isOutput" | "initialState"
-> & {
-  evaluate: (inputs: SignalValue[], state: null) => EvaluateResult;
-};
-
-const cb = (fields: CbFields): ComponentDefinition =>
-  hw({
-    ...fields,
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => null,
-  });
-
-// ── Definition table ──────────────────────────────────────────────────────────
-
-const DEFINITIONS: ComponentDefinition[] = [
-  // ── Logic Gates ─────────────────────────────────────────────────────────────
-  cb({
-    type: GATE_TYPE_AND,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "&",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateAnd,
-  }),
-  cb({
-    type: GATE_TYPE_OR,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "≥1",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateOr,
-  }),
-  cb({
-    type: GATE_TYPE_XOR,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "=1",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateXor,
-  }),
-  cb({
-    type: GATE_TYPE_XNOR,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "=",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateXnor,
-  }),
-  cb({
-    type: GATE_TYPE_NAND,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "&̄",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateNand,
-  }),
-  cb({
-    type: GATE_TYPE_NOR,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC1,
-    width: 60,
-    height: 60,
-    symbol: "≥1̄",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y"],
-    evaluate: evalGateNor,
-  }),
-  cb({
-    type: GATE_TYPE_NOT,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC1,
-    outputs: PINC1,
-    width: 60,
-    height: 50,
-    symbol: "!",
-    inputLabels: ["A"],
-    outputLabels: ["Y"],
-    evaluate: evalGateNot,
-  }),
-  cb({
-    type: GATE_TYPE_BUFFER,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC1,
-    outputs: PINC1,
-    width: 60,
-    height: 50,
-    symbol: "1",
-    inputLabels: ["A"],
-    outputLabels: ["Y"],
-    evaluate: evalGateBuffer,
-  }),
-  cb({
-    type: GATE_TYPE_AND3,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC3,
-    outputs: PINC1,
-    width: 60,
-    height: 70,
-    symbol: "&3",
-    inputLabels: ["A", "B", "C"],
-    outputLabels: ["Y"],
-    evaluate: evalGateAnd,
-  }),
-  cb({
-    type: GATE_TYPE_OR3,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC3,
-    outputs: PINC1,
-    width: 60,
-    height: 70,
-    symbol: "≥1·3",
-    inputLabels: ["A", "B", "C"],
-    outputLabels: ["Y"],
-    evaluate: evalGateOr,
-  }),
-
-  // ── Multi-input gate variants ─────────────────────────────────────────────
-  cb({
-    type: GATE_TYPE_AND4,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC4,
-    outputs: PINC1,
-    width: 60,
-    height: 80,
-    symbol: "&4",
-    inputLabels: ["A", "B", "C", "D"],
-    outputLabels: ["Y"],
-    evaluate: evalGateAnd,
-  }),
-  cb({
-    type: GATE_TYPE_AND8,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC8,
-    outputs: PINC1,
-    width: 60,
-    height: 120,
-    symbol: "&8",
-    inputLabels: ["A", "B", "C", "D", "E", "F", "G", "H"],
-    outputLabels: ["Y"],
-    evaluate: evalGateAnd,
-  }),
-  cb({
-    type: GATE_TYPE_AND16,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC16,
-    outputs: PINC1,
-    width: 60,
-    height: 200,
-    symbol: "&16",
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "A8",
-      "A9",
-      "A10",
-      "A11",
-      "A12",
-      "A13",
-      "A14",
-      "A15",
-    ],
-    outputLabels: ["Y"],
-    evaluate: evalGateAnd,
-  }),
-  cb({
-    type: GATE_TYPE_OR4,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC4,
-    outputs: PINC1,
-    width: 60,
-    height: 80,
-    symbol: "≥1·4",
-    inputLabels: ["A", "B", "C", "D"],
-    outputLabels: ["Y"],
-    evaluate: evalGateOr,
-  }),
-  cb({
-    type: GATE_TYPE_OR8,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC8,
-    outputs: PINC1,
-    width: 60,
-    height: 120,
-    symbol: "≥1·8",
-    inputLabels: ["A", "B", "C", "D", "E", "F", "G", "H"],
-    outputLabels: ["Y"],
-    evaluate: evalGateOr,
-  }),
-  cb({
-    type: GATE_TYPE_OR16,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC16,
-    outputs: PINC1,
-    width: 60,
-    height: 200,
-    symbol: "≥1·16",
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "A8",
-      "A9",
-      "A10",
-      "A11",
-      "A12",
-      "A13",
-      "A14",
-      "A15",
-    ],
-    outputLabels: ["Y"],
-    evaluate: evalGateOr,
-  }),
-  cb({
-    type: GATE_TYPE_NOT2,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 60,
-    height: 60,
-    symbol: "!2",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y0", "Y1"],
-    evaluate: evalGateNotMulti,
-  }),
-  cb({
-    type: GATE_TYPE_NOT4,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC4,
-    outputs: PINC4,
-    width: 60,
-    height: 80,
-    symbol: "!4",
-    inputLabels: ["A", "B", "C", "D"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalGateNotMulti,
-  }),
-  cb({
-    type: GATE_TYPE_NOT8,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC8,
-    outputs: PINC8,
-    width: 60,
-    height: 120,
-    symbol: "!8",
-    inputLabels: ["A", "B", "C", "D", "E", "F", "G", "H"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalGateNotMulti,
-  }),
-
-  // ── Controlled AND Gate Array (data + single CTRL pin) ─────────────────────
-  cb({
-    type: GATE_TYPE_CTRL_AND4,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC5,
-    outputs: PINC4,
-    width: 80,
-    height: 110,
-    symbol: "&C4",
-    inputLabels: ["D0", "D1", "D2", "D3", "CTRL"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalCtrlAnd,
-  }),
-  cb({
-    type: GATE_TYPE_CTRL_AND8,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: PINC9,
-    outputs: PINC8,
-    width: 80,
-    height: 200,
-    symbol: "&C8",
-    inputLabels: ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "CTRL"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalCtrlAnd,
-  }),
-  cb({
-    type: GATE_TYPE_CTRL_AND16,
-    label: "",
-    category: GATE_CATEGORY_LOGIC,
-    inputs: 17,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "&C16",
-    inputLabels: [
-      "D0",
-      "D1",
-      "D2",
-      "D3",
-      "D4",
-      "D5",
-      "D6",
-      "D7",
-      "D8",
-      "D9",
-      "D10",
-      "D11",
-      "D12",
-      "D13",
-      "D14",
-      "D15",
-      "CTRL",
-    ],
-    outputLabels: [
-      "Y0",
-      "Y1",
-      "Y2",
-      "Y3",
-      "Y4",
-      "Y5",
-      "Y6",
-      "Y7",
-      "Y8",
-      "Y9",
-      "Y10",
-      "Y11",
-      "Y12",
-      "Y13",
-      "Y14",
-      "Y15",
-    ],
-    evaluate: evalCtrlAnd,
-  }),
-
-  // ── Inputs ───────────────────────────────────────────────────────────────────
-  hw({
-    type: GATE_TYPE_TOGGLE,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 50,
-    symbol: "T",
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    initialState: () => ({ on: false }),
-    evaluate: evalInput,
-  }),
-  hw({
-    type: GATE_TYPE_BUTTON,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 50,
-    symbol: "B",
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    initialState: () => ({ on: false }),
-    evaluate: evalInput,
-  }),
-  hw({
-    type: GATE_TYPE_CONST,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 40,
-    symbol: "1",
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    initialState: () => ({ on: true }),
-    evaluate: evalInput,
-  }),
-  hw({
-    type: GATE_TYPE_CLOCK,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 50,
-    symbol: "⏲",
-    isSequential: false,
-    isClock: true,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ on: false }),
-    evaluate: evalInput,
-    tick: evalClockTick,
-  }),
-
-  // ── Digit→Binary input ───────────────────────────────────────────────────────
-  hw({
-    type: GATE_TYPE_DIGIT_BIN,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    outputLabels: ["B0", "B1", "B2", "B3"],
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    initialState: () => ({ digit: 0 }),
-    evaluate: evalDigitBin,
-  }),
-
-  // ── Power Rails (no port in custom circuits) ─────────────────────────────────
-  hw({
-    type: GATE_TYPE_VCC,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 40,
-    symbol: "5V",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ on: true }),
-    evaluate: evalVcc,
-  }),
-  hw({
-    type: GATE_TYPE_GND,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC1,
-    width: 50,
-    height: 40,
-    symbol: "⏚",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ on: false }),
-    evaluate: evalGnd,
-  }),
-
-  // ── Bus Inputs ────────────────────────────────────────────────────────────────
-  hw({
-    type: GATE_TYPE_BUS_INPUT4,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "⇐4",
-    isBusOutput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    outputLabels: ["B0", "B1", "B2", "B3"],
-    initialState: () => ({ signal: 0, width: 4 }),
-    evaluate: evalBusInput,
-  }),
-  hw({
-    type: GATE_TYPE_BUS_INPUT8,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC8,
-    width: 80,
-    height: 110,
-    symbol: "⇐8",
-    isBusOutput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    initialState: () => ({ signal: 0, width: 8 }),
-    evaluate: evalBusInput,
-  }),
-  hw({
-    type: GATE_TYPE_BUS_INPUT16,
-    label: "",
-    category: GATE_CATEGORY_INPUT,
-    inputs: PINC0,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "⇐16",
-    isBusOutput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: true,
-    isOutput: false,
-    outputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    initialState: () => ({ signal: 0, width: 16 }),
-    evaluate: evalBusInput,
-  }),
-
-  // ── Outputs ──────────────────────────────────────────────────────────────────
-  hw({
-    type: GATE_TYPE_LED,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC1,
-    outputs: PINC0,
-    width: 50,
-    height: 50,
-    symbol: "◉",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    initialState: () => ({ on: false }),
-    evaluate: evalLed,
-  }),
-  hw({
-    type: GATE_TYPE_DISPLAY7,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC4,
-    outputs: PINC0,
-    width: 80,
-    height: 90,
-    symbol: "7",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    inputLabels: ["D0", "D1", "D2", "D3"],
-    initialState: () => ({ value: 0 }),
-    evaluate: evalDisplay7,
-  }),
-  hw({
-    type: GATE_TYPE_PROBE,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC1,
-    outputs: PINC0,
-    width: 120,
-    height: 70,
-    inputLabels: ["IN"],
-    isSequential: false,
-    samplesEveryTick: true,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    initialState: () => ({
-      history: [] as Array<{ v: boolean; t: number }>,
-    }),
-    evaluate: evalProbe,
-  }),
-  hw({
-    type: GATE_TYPE_BUS_DISPLAY,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC4,
-    outputs: PINC0,
-    width: 80,
-    height: 80,
-    symbol: "◉4",
-    isBusInput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    inputLabels: ["B0", "B1", "B2", "B3"],
-    initialState: () => ({ value: 0 }),
-    evaluate: evalBusDisplay,
-  }),
-  hw({
-    type: GATE_TYPE_BUS_DISPLAY8,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC8,
-    outputs: PINC0,
-    width: 80,
-    height: 110,
-    symbol: "◉8",
-    isBusInput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    initialState: () => ({ value: 0 }),
-    evaluate: evalBusDisplay,
-  }),
-  hw({
-    type: GATE_TYPE_BUS_DISPLAY16,
-    label: "",
-    category: GATE_CATEGORY_OUTPUT,
-    inputs: PINC16,
-    outputs: PINC0,
-    width: 80,
-    height: 200,
-    symbol: "◉16",
-    isBusInput: true,
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: true,
-    inputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    initialState: () => ({ value: 0 }),
-    evaluate: evalBusDisplay,
-  }),
-
-  // ── Sequential ────────────────────────────────────────────────────────────────
-  hw({
-    type: GATE_TYPE_SR_LATCH,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "SR",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["S", "R"],
-    outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false }),
-    evaluate: evalSrLatch,
-  }),
-  hw({
-    type: GATE_TYPE_DFF,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "D",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["D", "CLK"],
-    outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: ZERO }),
-    evaluate: evalDff,
-  }),
-  hw({
-    type: GATE_TYPE_JKFF,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC3,
-    outputs: PINC2,
-    width: 80,
-    height: 80,
-    symbol: "JK",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["J", "K", "CLK"],
-    outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: ZERO }),
-    evaluate: evalJkff,
-  }),
-  hw({
-    type: GATE_TYPE_TIFF,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "T",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["T", "CLK"],
-    outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false, prevClk: ZERO }),
-    evaluate: evalTiff,
-  }),
-  hw({
-    type: GATE_TYPE_DLATCH,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "DL",
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["D", "E"],
-    outputLabels: ["Q", "Q'"],
-    initialState: () => ({ q: false }),
-    evaluate: evalDlatch,
-  }),
-  hw({
-    type: GATE_TYPE_REG4,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC5,
-    outputs: PINC4,
-    width: 80,
-    height: 100,
-    symbol: "REG",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["D0", "D1", "D2", "D3", "CLK"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ q: 0, prevClk: ZERO }),
-    evaluate: evalReg4,
-  }),
-  hw({
-    type: GATE_TYPE_COUNTER4,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC2,
-    outputs: PINC4,
-    width: 80,
-    height: 90,
-    symbol: "CTR",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["CLK", "RST"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ count: 0, prevClk: ZERO }),
-    evaluate: evalCounter4,
-  }),
-  hw({
-    type: GATE_TYPE_SHREG4,
-    label: "",
-    category: GATE_CATEGORY_SEQUENTIAL,
-    inputs: PINC3,
-    outputs: PINC4,
-    width: 80,
-    height: 90,
-    symbol: "SHR",
-    isSequential: true,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    inputLabels: ["SI", "CLK", "RST"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    initialState: () => ({ bits: 0, prevClk: ZERO }),
-    evaluate: evalShreg4,
-  }),
-
-  // ── Arithmetic ────────────────────────────────────────────────────────────────
-  cb({
-    type: GATE_TYPE_HALF_ADDER,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 60,
-    symbol: "½+",
-    inputLabels: ["A", "B"],
-    outputLabels: ["S", "C"],
-    evaluate: evalHalfAdder,
-  }),
-  cb({
-    type: GATE_TYPE_FULL_ADDER,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC3,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "Σ",
-    inputLabels: ["A", "B", "Cin"],
-    outputLabels: ["S", "Co"],
-    evaluate: evalFullAdder,
-  }),
-  cb({
-    type: GATE_TYPE_MUX2,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC3,
-    outputs: PINC1,
-    width: 80,
-    height: 70,
-    symbol: "M",
-    inputLabels: ["D0", "D1", "S"],
-    outputLabels: ["Y"],
-    evaluate: evalMux2,
-  }),
-  cb({
-    type: GATE_TYPE_MUX4,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC6,
-    outputs: PINC1,
-    width: 80,
-    height: 90,
-    symbol: "M4",
-    inputLabels: ["D0", "D1", "D2", "D3", "S0", "S1"],
-    outputLabels: ["Y"],
-    evaluate: evalMux4,
-  }),
-  cb({
-    type: GATE_TYPE_DEMUX2,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 60,
-    symbol: "DM",
-    inputLabels: ["D", "S"],
-    outputLabels: ["Y0", "Y1"],
-    evaluate: evalDemux2,
-  }),
-  cb({
-    type: GATE_TYPE_DECODER2,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC2,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "DEC",
-    inputLabels: ["A", "B"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalDecoder2,
-  }),
-  cb({
-    type: GATE_TYPE_ENCODER4,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC4,
-    outputs: PINC2,
-    width: 80,
-    height: 80,
-    symbol: "ENC",
-    inputLabels: ["D0", "D1", "D2", "D3"],
-    outputLabels: ["A", "B"],
-    evaluate: evalEncoder4,
-  }),
-  cb({
-    type: GATE_TYPE_COMPARATOR,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC2,
-    outputs: PINC3,
-    width: 80,
-    height: 70,
-    symbol: "CMP",
-    inputLabels: ["A", "B"],
-    outputLabels: ["<", "=", ">"],
-    evaluate: evalComparator,
-  }),
-  cb({
-    type: GATE_TYPE_DECODER3,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC3,
-    outputs: PINC8,
-    width: 80,
-    height: 120,
-    symbol: "3:8",
-    inputLabels: ["A", "B", "C"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalDecoder3,
-  }),
-  cb({
-    type: GATE_TYPE_MUX8,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC11,
-    outputs: PINC1,
-    width: 80,
-    height: 160,
-    symbol: "M8",
-    inputLabels: [
-      "D0",
-      "D1",
-      "D2",
-      "D3",
-      "D4",
-      "D5",
-      "D6",
-      "D7",
-      "S0",
-      "S1",
-      "S2",
-    ],
-    outputLabels: ["Y"],
-    evaluate: evalMux8,
-  }),
-  cb({
-    type: GATE_TYPE_HALF_SUB,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC2,
-    outputs: PINC2,
-    width: 80,
-    height: 60,
-    symbol: "½−",
-    inputLabels: ["A", "B"],
-    outputLabels: ["D", "Bo"],
-    evaluate: evalHalfSub,
-  }),
-  cb({
-    type: GATE_TYPE_FULL_SUB,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC3,
-    outputs: PINC2,
-    width: 80,
-    height: 70,
-    symbol: "Σ−",
-    inputLabels: ["A", "B", "Bin"],
-    outputLabels: ["D", "Bo"],
-    evaluate: evalFullSub,
-  }),
-  cb({
-    type: GATE_TYPE_CMP4,
-    label: "",
-    category: GATE_CATEGORY_ARITHMETIC,
-    inputs: PINC8,
-    outputs: PINC3,
-    width: 80,
-    height: 120,
-    symbol: "≥≤",
-    inputLabels: ["A0", "A1", "A2", "A3", "B0", "B1", "B2", "B3"],
-    outputLabels: ["<", "=", ">"],
-    evaluate: evalCmp4,
-  }),
-
-  // ── Utility ──────────────────────────────────────────────────────────────────
-  cb({
-    type: GATE_TYPE_SPLITTER,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC1,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "1:4",
-    inputLabels: ["IN"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    evaluate: evalSplitter,
-  }),
-  cb({
-    type: GATE_TYPE_COMMENT,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: 0,
-    outputs: 0,
-    width: 120,
-    height: 34,
-    isAnnotation: true,
-    evaluate: evalComment,
-  }),
-  cb({
-    type: GATE_TYPE_BUS4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC4,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "⇒4",
-    isBusOutput: true,
-    inputLabels: ["B0", "B1", "B2", "B3"],
-    outputLabels: ["B0", "B1", "B2", "B3"],
-    evaluate: evalPassthrough,
-  }),
-  cb({
-    type: GATE_TYPE_BUS8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC8,
-    outputs: PINC8,
-    width: 80,
-    height: 110,
-    symbol: "⇒8",
-    isBusOutput: true,
-    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    evaluate: evalPassthrough,
-  }),
-  cb({
-    type: GATE_TYPE_BUS16,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC16,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "⇒16",
-    isBusOutput: true,
-    inputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    outputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    evaluate: evalPassthrough,
-  }),
-  cb({
-    type: GATE_TYPE_DEBUS4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC4,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "⇐4",
-    isBusInput: true,
-    inputLabels: ["B0", "B1", "B2", "B3"],
-    outputLabels: ["B0", "B1", "B2", "B3"],
-    evaluate: evalPassthrough,
-  }),
-  cb({
-    type: GATE_TYPE_DEBUS8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC8,
-    outputs: PINC8,
-    width: 80,
-    height: 110,
-    symbol: "⇐8",
-    isBusInput: true,
-    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
-    evaluate: evalPassthrough,
-  }),
-  cb({
-    type: GATE_TYPE_DEBUS16,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC16,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "⇐16",
-    isBusInput: true,
-    inputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    outputLabels: [
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    evaluate: evalPassthrough,
-  }),
-
-  // ── Bus Logic Gates ────────────────────────────────────────────────────────
-  cb({
-    type: GATE_TYPE_BUS_AND4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC8,
-    outputs: PINC4,
-    width: 80,
-    height: 110,
-    symbol: "&4",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: ["A0", "A1", "A2", "A3", "B0", "B1", "B2", "B3"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalBusAnd,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_AND8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC16,
-    outputs: PINC8,
-    width: 80,
-    height: 200,
-    symbol: "&8",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-    ],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalBusAnd,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_AND16,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: 32,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "&16",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "A8",
-      "A9",
-      "A10",
-      "A11",
-      "A12",
-      "A13",
-      "A14",
-      "A15",
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    outputLabels: [
-      "Y0",
-      "Y1",
-      "Y2",
-      "Y3",
-      "Y4",
-      "Y5",
-      "Y6",
-      "Y7",
-      "Y8",
-      "Y9",
-      "Y10",
-      "Y11",
-      "Y12",
-      "Y13",
-      "Y14",
-      "Y15",
-    ],
-    evaluate: evalBusAnd,
-  }),
-
-  cb({
-    type: GATE_TYPE_BUS_OR4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC8,
-    outputs: PINC4,
-    width: 80,
-    height: 110,
-    symbol: "≥4",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: ["A0", "A1", "A2", "A3", "B0", "B1", "B2", "B3"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalBusOr,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_OR8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC16,
-    outputs: PINC8,
-    width: 80,
-    height: 200,
-    symbol: "≥8",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-    ],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalBusOr,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_OR16,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: 32,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "≥16",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "A8",
-      "A9",
-      "A10",
-      "A11",
-      "A12",
-      "A13",
-      "A14",
-      "A15",
-      "B0",
-      "B1",
-      "B2",
-      "B3",
-      "B4",
-      "B5",
-      "B6",
-      "B7",
-      "B8",
-      "B9",
-      "B10",
-      "B11",
-      "B12",
-      "B13",
-      "B14",
-      "B15",
-    ],
-    outputLabels: [
-      "Y0",
-      "Y1",
-      "Y2",
-      "Y3",
-      "Y4",
-      "Y5",
-      "Y6",
-      "Y7",
-      "Y8",
-      "Y9",
-      "Y10",
-      "Y11",
-      "Y12",
-      "Y13",
-      "Y14",
-      "Y15",
-    ],
-    evaluate: evalBusOr,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_NOT4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC4,
-    outputs: PINC4,
-    width: 80,
-    height: 80,
-    symbol: "!4",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: ["A0", "A1", "A2", "A3"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
-    evaluate: evalBusNot,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_NOT8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC8,
-    outputs: PINC8,
-    width: 80,
-    height: 110,
-    symbol: "!8",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: ["A0", "A1", "A2", "A3", "A4", "A5", "A6", "A7"],
-    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
-    evaluate: evalBusNot,
-  }),
-  cb({
-    type: GATE_TYPE_BUS_NOT16,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC16,
-    outputs: PINC16,
-    width: 80,
-    height: 200,
-    symbol: "!16",
-    isBusInput: true,
-    isBusOutput: true,
-    inputLabels: [
-      "A0",
-      "A1",
-      "A2",
-      "A3",
-      "A4",
-      "A5",
-      "A6",
-      "A7",
-      "A8",
-      "A9",
-      "A10",
-      "A11",
-      "A12",
-      "A13",
-      "A14",
-      "A15",
-    ],
-    outputLabels: [
-      "Y0",
-      "Y1",
-      "Y2",
-      "Y3",
-      "Y4",
-      "Y5",
-      "Y6",
-      "Y7",
-      "Y8",
-      "Y9",
-      "Y10",
-      "Y11",
-      "Y12",
-      "Y13",
-      "Y14",
-      "Y15",
-    ],
-    evaluate: evalBusNot,
-  }),
-
-  hw({
-    type: GATE_TYPE_UREG4,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC5,
-    outputs: PINC4,
-    width: 80,
-    height: 90,
-    inputLabels: ["D0", "D1", "D2", "D3", "WE"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3"],
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ val: 0 }),
-    evaluate: evalUreg4,
-  }),
-  hw({
-    type: GATE_TYPE_UREG8,
-    label: "",
-    category: GATE_CATEGORY_UTILITY,
-    inputs: PINC9,
-    outputs: PINC8,
-    width: 80,
-    height: 130,
-    inputLabels: ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "WE"],
-    outputLabels: ["Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7"],
-    isSequential: false,
-    isClock: false,
-    isInput: false,
-    isOutput: false,
-    initialState: () => ({ val: 0 }),
-    evaluate: evalUreg8,
-  }),
-];
 
 // ── Registry class ────────────────────────────────────────────────────────────
 
@@ -1864,7 +220,7 @@ export class ComponentLibrary {
    * Rejects duplicate type IDs unless the type was previously unregistered.
    */
   register(def: ComponentDefinition): void {
-    // Reject duplicates for safety (#5)
+    // Reject duplicates for safety
     if (this.typeMap.has(def.type) && !this.customTypes.has(def.type)) {
       throw new ComponentValidationError(
         def.type,
@@ -1877,32 +233,16 @@ export class ComponentLibrary {
 
   // ── Validation ─────────────────────────────────────────────────────────────
 
-  /**
-   * Validate a component definition against all invariants and register it.
-   * Called during construction (for built-in defs) and during register().
-   */
   private validateAndRegister(def: ComponentDefinition): void {
-    // #1: Pin definition validation
     this.validatePinDefinition(def);
-
-    // #4: Default state validation
     this.validateInitialState(def);
-
-    // #2: Pin ordering — validate evaluator produces correct output count
     this.validateEvaluatorContract(def);
-
-    // Registration
     this.typeMap.set(def.type, def);
   }
 
-  /**
-   * Validate pin definitions: counts, labels, bus groups, dimensions.
-   * Addresses findings #1 and #6.
-   */
   private validatePinDefinition(def: ComponentDefinition): void {
     const t = def.type;
 
-    // Basic sanity
     if (def.inputs < 0) {
       throw new ComponentValidationError(
         t,
@@ -1931,7 +271,6 @@ export class ComponentLibrary {
       );
     }
 
-    // Pin label counts must match pin counts (#6)
     if (def.inputLabels && def.inputLabels.length !== def.inputs) {
       throw new ComponentValidationError(
         t,
@@ -1946,7 +285,6 @@ export class ComponentLibrary {
       );
     }
 
-    // Pin label uniqueness within each side
     if (def.inputLabels) {
       const seen = new Set<string>();
 
@@ -1977,7 +315,6 @@ export class ComponentLibrary {
       }
     }
 
-    // Bus group range validation
     if (def.busInputGroups) {
       for (const [start, end] of def.busInputGroups) {
         if (start < 0 || end > def.inputs || start >= end) {
@@ -2001,16 +338,10 @@ export class ComponentLibrary {
     }
   }
 
-  /**
-   * Validate that initialState() produces a non-throwing result.
-   * For sequential components, validates state structure basics.
-   * Addresses finding #4.
-   */
   private validateInitialState(def: ComponentDefinition): void {
     try {
       const state = def.initialState();
 
-      // Sequential components with prevClk should have it as a number (LogicValue)
       if (def.isSequential && state && "prevClk" in state) {
         const { prevClk } = state;
 
@@ -2030,15 +361,8 @@ export class ComponentLibrary {
     }
   }
 
-  /**
-   * Validate that the evaluator produces the correct number of outputs
-   * when called with default inputs and initial state.
-   * Addresses finding #2.
-   */
   private validateEvaluatorContract(def: ComponentDefinition): void {
-    // Skip annotation components (no pins)
     if (def.isAnnotation) return;
-    // Skip components with 0 inputs and 0 outputs
     if (def.inputs === 0 && def.outputs === 0) return;
 
     try {
@@ -2062,8 +386,7 @@ export class ComponentLibrary {
   }
 
   /**
-   * Returns a list of custom gate type strings that depend on the given type
-   * (i.e. their internal circuit contains a component of this type).
+   * Returns a list of custom gate type strings that depend on the given type.
    */
   getDependents(type: string): string[] {
     const dependents: string[] = [];
@@ -2083,8 +406,7 @@ export class ComponentLibrary {
 
   /**
    * Returns true if all custom gate dependencies of the given type are
-   * currently registered in the library. Returns false if any component in
-   * the gate's circuit references an unknown custom type.
+   * currently registered in the library.
    */
   hasValidDependencies(type: string): boolean {
     const meta = this.customMeta.get(type);
@@ -2103,7 +425,6 @@ export class ComponentLibrary {
   /**
    * Remove a previously registered component (custom gates only).
    * Returns an error message if the type has dependents, null on success.
-   * Pass force=true to bypass the dependency check (used during remapping).
    */
   unregister(type: string, force = false): string | null {
     if (!force) {
@@ -2126,10 +447,7 @@ export class ComponentLibrary {
   }
 
   /**
-   * Compile `circuit` into a reusable black-box component.
-   *
-   * Each source output becomes an input port and each output-sink input
-   * becomes an output port.
+   * Compile a circuit into a reusable black-box component.
    */
   registerCustomCircuit(
     name: string,
@@ -2186,7 +504,7 @@ export class ComponentLibrary {
       return pinCount === 1 ? base : `${base}.${pinLabel ?? `P${pin}`}`;
     };
 
-    // Build input ports in original sorted order, tracking bus groups
+    // Build input ports
     const inputPorts: Array<{ compId: string; pin: number; label: string }> =
       [];
     const busInputGroups: [number, number][] = [];
@@ -2215,14 +533,10 @@ export class ComponentLibrary {
     }
 
     if (hasInternalClocks) {
-      inputPorts.push({
-        compId: "__CLK__",
-        pin: PINC0,
-        label: "CLK",
-      });
+      inputPorts.push({ compId: "__CLK__", pin: PINC0, label: "CLK" });
     }
 
-    // Build output ports in original sorted order, tracking bus groups
+    // Build output ports
     const busOutputGroups: [number, number][] = [];
     const outputPorts: Array<{ compId: string; pin: number; label: string }> =
       [];
@@ -2567,7 +881,7 @@ export class ComponentLibrary {
     return type;
   }
 
-  /** Category → sorted list of types */
+  /** Category → sorted list of types for the toolbox panel */
   getCategories(): Array<{ name: string; gates: string[] }> {
     const ORDER = [
       GATE_CATEGORY_LOGIC,
@@ -2578,7 +892,6 @@ export class ComponentLibrary {
       GATE_CATEGORY_UTILITY,
     ];
 
-    // Display order within each category — related variants are grouped
     const GATE_ORDER: Record<string, string[]> = {
       [GATE_CATEGORY_LOGIC]: [
         GATE_TYPE_AND,
@@ -2586,9 +899,6 @@ export class ComponentLibrary {
         GATE_TYPE_AND4,
         GATE_TYPE_AND8,
         GATE_TYPE_AND16,
-        GATE_TYPE_CTRL_AND4,
-        GATE_TYPE_CTRL_AND8,
-        GATE_TYPE_CTRL_AND16,
         GATE_SEPARATOR,
         GATE_TYPE_OR,
         GATE_TYPE_OR3,
@@ -2707,13 +1017,11 @@ export class ComponentLibrary {
       const order = GATE_ORDER[cat];
 
       if (order) {
-        // Build ordered list with separators injected
         const ordered: string[] = [];
         const remaining = new Set(gates);
 
         for (const entry of order) {
           if (entry === GATE_SEPARATOR) {
-            // Only add separator if there's content before it
             if (
               ordered.length > 0 &&
               ordered[ordered.length - 1] !== GATE_SEPARATOR
@@ -2726,12 +1034,10 @@ export class ComponentLibrary {
           }
         }
 
-        // Append any gates not in the order list at the end
         for (const g of remaining) {
           ordered.push(g);
         }
 
-        // Remove trailing separator
         if (ordered[ordered.length - 1] === GATE_SEPARATOR) {
           ordered.pop();
         }
@@ -2750,5 +1056,6 @@ export class ComponentLibrary {
   }
 }
 
-/** Singleton library used across the engine */
+// ── Singleton ────────────────────────────────────────────────────────────────
+
 export const library = new ComponentLibrary();

@@ -1,0 +1,96 @@
+/**
+ * Controlled AND gate arrays: data pins + single CTRL enable pin.
+ */
+import {
+  GATE_CATEGORY_LOGIC,
+  GATE_TYPE_CTRL_AND4,
+  GATE_TYPE_CTRL_AND8,
+  GATE_TYPE_CTRL_AND16,
+  PINC4,
+  PINC5,
+  PINC8,
+  PINC9,
+  PINC16,
+} from "../../constants";
+import { evalCtrlAnd } from "../../logic";
+import type { ComponentDefinition } from "../../types";
+import { cb } from "../helpers";
+
+export const CtrlAndGates: ComponentDefinition[] = [
+  cb({
+    type: GATE_TYPE_CTRL_AND4,
+    label: "",
+    category: GATE_CATEGORY_LOGIC,
+    inputs: PINC5,
+    outputs: PINC4,
+    width: 80,
+    height: 110,
+    symbol: "&C4",
+    inputLabels: ["D0", "D1", "D2", "D3", "CTRL"],
+    outputLabels: ["Y0", "Y1", "Y2", "Y3"],
+    evaluate: evalCtrlAnd,
+  }),
+  cb({
+    type: GATE_TYPE_CTRL_AND8,
+    label: "",
+    category: GATE_CATEGORY_LOGIC,
+    inputs: PINC9,
+    outputs: PINC8,
+    width: 80,
+    height: 200,
+    symbol: "&C8",
+    inputLabels: ["D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", "CTRL"],
+    outputLabels: ["Y0", "Y1", "Y2", "Y3", "Y4", "Y5", "Y6", "Y7"],
+    evaluate: evalCtrlAnd,
+  }),
+  cb({
+    type: GATE_TYPE_CTRL_AND16,
+    label: "",
+    category: GATE_CATEGORY_LOGIC,
+    inputs: 17,
+    outputs: PINC16,
+    width: 80,
+    height: 200,
+    symbol: "&C16",
+    inputLabels: [
+      "D0",
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6",
+      "D7",
+      "D8",
+      "D9",
+      "D10",
+      "D11",
+      "D12",
+      "D13",
+      "D14",
+      "D15",
+      "CTRL",
+    ],
+    outputLabels: [
+      "Y0",
+      "Y1",
+      "Y2",
+      "Y3",
+      "Y4",
+      "Y5",
+      "Y6",
+      "Y7",
+      "Y8",
+      "Y9",
+      "Y10",
+      "Y11",
+      "Y12",
+      "Y13",
+      "Y14",
+      "Y15",
+    ],
+    evaluate: evalCtrlAnd,
+  }),
+];
+
+export default CtrlAndGates;

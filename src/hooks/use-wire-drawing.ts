@@ -6,13 +6,13 @@ import { useCallback, useState } from "react";
 
 import type { CircuitSnapshot, ComponentInstance, Wire } from "@/engine";
 import { library } from "@/engine";
-import type { PinPair } from "@/engine/AutoConnectService";
 import {
   executeAutoConnect,
   getEligibleInputPins,
   getEligibleOutputPins,
   matchPins,
-} from "@/engine/AutoConnectService";
+  type PinPair,
+} from "@/engine/BatchConnect";
 import { CONSOLE_TAB } from "@/lib/constants";
 import { isAutoConnectModifier } from "@/lib/platform";
 import type { ConsoleTab } from "@/lib/types";

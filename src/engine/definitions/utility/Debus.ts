@@ -1,0 +1,96 @@
+/**
+ * Debus components: DEBUS4, DEBUS8, DEBUS16 (split bus back to individual signals).
+ */
+import {
+  GATE_CATEGORY_UTILITY,
+  GATE_TYPE_DEBUS4,
+  GATE_TYPE_DEBUS8,
+  GATE_TYPE_DEBUS16,
+  PINC4,
+  PINC8,
+  PINC16,
+} from "../../constants";
+import { evalPassthrough } from "../../logic";
+import type { ComponentDefinition } from "../../types";
+import { cb } from "../helpers";
+
+export const Debus: ComponentDefinition[] = [
+  cb({
+    type: GATE_TYPE_DEBUS4,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC4,
+    outputs: PINC4,
+    width: 80,
+    height: 80,
+    symbol: "⇐4",
+    isBusInput: true,
+    inputLabels: ["B0", "B1", "B2", "B3"],
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    evaluate: evalPassthrough,
+  }),
+  cb({
+    type: GATE_TYPE_DEBUS8,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC8,
+    outputs: PINC8,
+    width: 80,
+    height: 110,
+    symbol: "⇐8",
+    isBusInput: true,
+    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    evaluate: evalPassthrough,
+  }),
+  cb({
+    type: GATE_TYPE_DEBUS16,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC16,
+    outputs: PINC16,
+    width: 80,
+    height: 200,
+    symbol: "⇐16",
+    isBusInput: true,
+    inputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    outputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    evaluate: evalPassthrough,
+  }),
+];
+
+export default Debus;

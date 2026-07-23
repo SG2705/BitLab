@@ -1,0 +1,96 @@
+/**
+ * Bus passthrough components: BUS4, BUS8, BUS16 (collect individual wires into a bus).
+ */
+import {
+  GATE_CATEGORY_UTILITY,
+  GATE_TYPE_BUS4,
+  GATE_TYPE_BUS8,
+  GATE_TYPE_BUS16,
+  PINC4,
+  PINC8,
+  PINC16,
+} from "../../constants";
+import { evalPassthrough } from "../../logic";
+import type { ComponentDefinition } from "../../types";
+import { cb } from "../helpers";
+
+export const BusPassthrough: ComponentDefinition[] = [
+  cb({
+    type: GATE_TYPE_BUS4,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC4,
+    outputs: PINC4,
+    width: 80,
+    height: 80,
+    symbol: "⇒4",
+    isBusOutput: true,
+    inputLabels: ["B0", "B1", "B2", "B3"],
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    evaluate: evalPassthrough,
+  }),
+  cb({
+    type: GATE_TYPE_BUS8,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC8,
+    outputs: PINC8,
+    width: 80,
+    height: 110,
+    symbol: "⇒8",
+    isBusOutput: true,
+    inputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    evaluate: evalPassthrough,
+  }),
+  cb({
+    type: GATE_TYPE_BUS16,
+    label: "",
+    category: GATE_CATEGORY_UTILITY,
+    inputs: PINC16,
+    outputs: PINC16,
+    width: 80,
+    height: 200,
+    symbol: "⇒16",
+    isBusOutput: true,
+    inputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    outputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    evaluate: evalPassthrough,
+  }),
+];
+
+export default BusPassthrough;

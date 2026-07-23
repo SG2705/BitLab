@@ -1,0 +1,92 @@
+/**
+ * Bus Input components: 4-bit, 8-bit, 16-bit bus signal sources.
+ */
+import {
+  GATE_CATEGORY_INPUT,
+  GATE_TYPE_BUS_INPUT4,
+  GATE_TYPE_BUS_INPUT8,
+  GATE_TYPE_BUS_INPUT16,
+  PINC0,
+  PINC4,
+  PINC8,
+  PINC16,
+} from "../../constants";
+import { evalBusInput } from "../../logic";
+import type { ComponentDefinition } from "../../types";
+import { hw } from "../helpers";
+
+export const BusInputs: ComponentDefinition[] = [
+  hw({
+    type: GATE_TYPE_BUS_INPUT4,
+    label: "",
+    category: GATE_CATEGORY_INPUT,
+    inputs: PINC0,
+    outputs: PINC4,
+    width: 80,
+    height: 80,
+    symbol: "⇐4",
+    isBusOutput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    outputLabels: ["B0", "B1", "B2", "B3"],
+    initialState: () => ({ signal: 0, width: 4 }),
+    evaluate: evalBusInput,
+  }),
+  hw({
+    type: GATE_TYPE_BUS_INPUT8,
+    label: "",
+    category: GATE_CATEGORY_INPUT,
+    inputs: PINC0,
+    outputs: PINC8,
+    width: 80,
+    height: 110,
+    symbol: "⇐8",
+    isBusOutput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    outputLabels: ["B0", "B1", "B2", "B3", "B4", "B5", "B6", "B7"],
+    initialState: () => ({ signal: 0, width: 8 }),
+    evaluate: evalBusInput,
+  }),
+  hw({
+    type: GATE_TYPE_BUS_INPUT16,
+    label: "",
+    category: GATE_CATEGORY_INPUT,
+    inputs: PINC0,
+    outputs: PINC16,
+    width: 80,
+    height: 200,
+    symbol: "⇐16",
+    isBusOutput: true,
+    isSequential: false,
+    isClock: false,
+    isInput: true,
+    isOutput: false,
+    outputLabels: [
+      "B0",
+      "B1",
+      "B2",
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+    ],
+    initialState: () => ({ signal: 0, width: 16 }),
+    evaluate: evalBusInput,
+  }),
+];
+
+export default BusInputs;

@@ -1,5 +1,5 @@
 /**
- * AutoConnectService.ts — Pure utility functions for multi-pin auto-connect.
+ * BatchConnect.ts — Pure utility functions for multi-pin auto-connect.
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  * MODULE OVERVIEW
