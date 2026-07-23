@@ -1267,6 +1267,7 @@ function DigitalGateApp() {
           {selectedComp && (
             <GateProperties
               comp={selectedComp}
+              snapshot={snapshot}
               onUpdate={(id: string, patch: Partial<ComponentInstance>) => {
                 updateComponent(id, patch);
 
@@ -1406,11 +1407,13 @@ function DigitalGateApp() {
           x={ctxMenu.x}
           y={ctxMenu.y}
           comp={snapshot.components[ctxMenu.compId]}
+          snapshot={snapshot}
           onClose={() => setCtxMenu(null)}
           onPin={handleCtxPin}
           onReplace={handleCtxReplace}
           onDuplicate={handleCtxDuplicate}
           onDelete={handleCtxDelete}
+          onUpdateComponent={updateComponent}
         />
       )}
     </div>

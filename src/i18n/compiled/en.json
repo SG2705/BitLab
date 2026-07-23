@@ -1560,5 +1560,17 @@
       "type": 0,
       "value": "EN"
     }
+  ],
+  "vBc3Tx": [
+    {
+      "type": 0,
+      "value": "Broadcaster"
+    }
+  ],
+  "kRw9Lm": [
+    {
+      "type": 0,
+      "value": "Receiver"
+    }
   ]
 }

@@ -89,6 +89,7 @@ export type { AddComponentOptions } from "./CircuitManager";
 export { CircuitManager } from "./CircuitManager";
 export type { SerializedProject } from "./ProjectManager";
 export { ProjectManager } from "./ProjectManager";
+export { getBroadcasterChannels } from "./ViaService";
 
 // ── Convenience factory ────────────────────────────────────────────────────────
 

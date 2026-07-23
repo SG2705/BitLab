@@ -113,6 +113,10 @@ export const GATE_TYPE_CTRL_AND4 = "CTRL_AND4";
 export const GATE_TYPE_CTRL_AND8 = "CTRL_AND8";
 export const GATE_TYPE_CTRL_AND16 = "CTRL_AND16";
 
+// ── Via Components (Broadcaster / Receiver) ──────────────────────────────────
+export const GATE_TYPE_BROADCASTER = "BROADCASTER";
+export const GATE_TYPE_RECEIVER = "RECEIVER";
+
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
 export const ENGINE_EVENT_TYPE = {
@@ -248,4 +252,6 @@ export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_CTRL_AND4]: "lb_ctrl_and4",
   [GATE_TYPE_CTRL_AND8]: "lb_ctrl_and8",
   [GATE_TYPE_CTRL_AND16]: "lb_ctrl_and16",
+  [GATE_TYPE_BROADCASTER]: "lb_broadcaster",
+  [GATE_TYPE_RECEIVER]: "lb_receiver",
 } as const;

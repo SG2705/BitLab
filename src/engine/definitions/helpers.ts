@@ -7,9 +7,11 @@
 import { MIN_COMP_SIZE } from "@/globals";
 
 import {
+  GATE_TYPE_BROADCASTER,
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_PROBE,
+  GATE_TYPE_RECEIVER,
   LB_MAP,
 } from "../constants";
 import type {
@@ -19,7 +21,13 @@ import type {
 } from "../types";
 import { getHeightForPinCount } from "../utils";
 
-const H_OVERRIDES = [GATE_TYPE_PROBE, GATE_TYPE_DISPLAY7, GATE_TYPE_DIGIT_BIN];
+const H_OVERRIDES = [
+  GATE_TYPE_PROBE,
+  GATE_TYPE_DISPLAY7,
+  GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_BROADCASTER,
+  GATE_TYPE_RECEIVER,
+];
 
 /**
  * `hw()` — "hardware" helper: applies height auto-sizing based on pin count

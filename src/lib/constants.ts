@@ -106,6 +106,8 @@ export const MESSAGES = defineMessages({
   lb_ctrl_and4: { id: "zzmvcO", defaultMessage: "Ctrl AND 4" },
   lb_ctrl_and8: { id: "sNne9T", defaultMessage: "Ctrl AND 8" },
   lb_ctrl_and16: { id: "GildCq", defaultMessage: "Ctrl AND 16" },
+  lb_broadcaster: { id: "v7eElJ", defaultMessage: "Broadcaster" },
+  lb_receiver: { id: "Xd735s", defaultMessage: "Receiver" },
 });
 
 export type Messages = keyof typeof MESSAGES;

@@ -4,10 +4,12 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { ChevronRight, Copy, Pin, PinOff, Replace, Trash2 } from "lucide-react";
 
 import type { ComponentInstance } from "@/engine";
-import { library } from "@/engine";
+import { getBroadcasterChannels, library } from "@/engine";
 import {
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_OUTPUT,
+  GATE_TYPE_BROADCASTER,
+  GATE_TYPE_RECEIVER,
   KEY_SEPARATOR,
 } from "@/engine/constants";
 import { GATES } from "@/lib/circuit";
@@ -21,11 +23,13 @@ export interface ContextMenuProps {
   x: number;
   y: number;
   comp: ComponentInstance;
+  snapshot: { components: Record<string, ComponentInstance> };
   onClose: () => void;
   onPin: () => void;
   onReplace: (type: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onUpdateComponent?: (id: string, patch: Partial<ComponentInstance>) => void;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -110,11 +114,13 @@ export function RightClickMenu({
   x,
   y,
   comp,
+  snapshot,
   onClose,
   onPin,
   onReplace,
   onDuplicate,
   onDelete,
+  onUpdateComponent,
 }: ContextMenuProps) {
   const intl = useIntl();
   const [subOpen, setSubOpen] = useState(false);
@@ -182,8 +188,20 @@ export function RightClickMenu({
         onKeyDown={() => {}}
       >
         {/* Header */}
-        <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border/70 mb-1">
-          {def ? getGateLabel(def.type, def.label, intl) : comp.type}
+        <div className="px-3 py-1.5 border-b border-border/70 mb-1">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {def ? getGateLabel(def.type, def.label, intl) : comp.type}
+          </div>
+          {(comp.type === GATE_TYPE_BROADCASTER ||
+            comp.type === GATE_TYPE_RECEIVER) && (
+            <div className="text-xs font-mono text-primary mt-0.5">
+              {(comp.properties?.channel as string) ||
+                intl.formatMessage({
+                  id: "CXzd0U",
+                  defaultMessage: "— no channel —",
+                })}
+            </div>
+          )}
         </div>
 
         {/* Pin / Unpin */}
@@ -211,10 +229,12 @@ export function RightClickMenu({
               })}
         </button>
 
-        {/* Replace with → submenu (hidden for Input/Output category components) */}
+        {/* Replace with → submenu (hidden for Input/Output/Broadcaster/Receiver) */}
         {def &&
           def.category !== GATE_CATEGORY_INPUT &&
-          def.category !== GATE_CATEGORY_OUTPUT && (
+          def.category !== GATE_CATEGORY_OUTPUT &&
+          comp.type !== GATE_TYPE_BROADCASTER &&
+          comp.type !== GATE_TYPE_RECEIVER && (
             <div
               className="relative"
               onMouseEnter={openSub}
@@ -299,6 +319,125 @@ export function RightClickMenu({
             </div>
           )}
 
+        {/* Receiver: Channel selection submenu */}
+        {comp.type === GATE_TYPE_RECEIVER && onUpdateComponent && (
+          <div
+            className="relative"
+            onMouseEnter={openSub}
+            onMouseLeave={closeSub}
+          >
+            <button
+              type="button"
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md hover:bg-secondary transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Replace className="w-4 h-4" />
+                {intl.formatMessage({
+                  id: "/Ry3cR",
+                  defaultMessage: "Select Channel",
+                })}
+              </span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {subOpen && (
+              <div
+                className="absolute left-full top-0 ml-1 min-w-[200px] max-h-[340px] overflow-auto rounded-lg border border-border bg-popover shadow-xl p-1"
+                onMouseEnter={openSub}
+                onMouseLeave={closeSub}
+              >
+                <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <FormattedMessage
+                    id="sWf4Ru"
+                    defaultMessage="Available Channels"
+                  />
+                </div>
+                {(() => {
+                  const channels = Array.from(
+                    getBroadcasterChannels(snapshot.components).keys(),
+                  );
+                  const currentChannel =
+                    (comp.properties?.channel as string) ?? "";
+
+                  if (channels.length === 0) {
+                    return (
+                      <div className="px-3 py-2 text-xs text-muted-foreground">
+                        <FormattedMessage
+                          id="aVd0Px"
+                          defaultMessage="No broadcasters in circuit"
+                        />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <>
+                      {/* None option */}
+                      <button
+                        type="button"
+                        className={cn(
+                          "w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary transition-colors",
+                          !currentChannel && "bg-secondary",
+                        )}
+                        onClick={() => {
+                          onUpdateComponent(comp.id, {
+                            properties: {
+                              ...(comp.properties ?? {}),
+                              channel: "",
+                            },
+                            label: undefined,
+                          });
+                          onClose();
+                        }}
+                      >
+                        <span className="text-xs text-muted-foreground">
+                          <FormattedMessage
+                            id="eOJyfZ"
+                            defaultMessage="— None —"
+                          />
+                        </span>
+                      </button>
+                      {channels.map((ch) => (
+                        <button
+                          type="button"
+                          key={ch}
+                          className={cn(
+                            "w-full text-left flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-secondary transition-colors",
+                            ch === currentChannel && "bg-secondary",
+                          )}
+                          onClick={() => {
+                            onUpdateComponent(comp.id, {
+                              properties: {
+                                ...(comp.properties ?? {}),
+                                channel: ch,
+                              },
+                              label: ch,
+                            });
+                            onClose();
+                          }}
+                        >
+                          <span className="font-mono text-xs">
+                            <FormattedMessage id="rOIb4Q" defaultMessage="📡" />
+                          </span>
+                          <span>{ch}</span>
+                          {ch === currentChannel && (
+                            <span className="ml-auto text-[10px] text-muted-foreground">
+                              <FormattedMessage
+                                id="gbNumd"
+                                defaultMessage="✓"
+                              />
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="h-px bg-border/70 my-1" />
 
         {/* Duplicate */}
@@ -332,5 +471,9 @@ export function RightClickMenu({
     </>
   );
 }
+
+RightClickMenu.defaultProps = {
+  onUpdateComponent: undefined,
+};
 
 export default RightClickMenu;

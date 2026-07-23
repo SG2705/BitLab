@@ -4,12 +4,20 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { Copy, RotateCw, Settings2, Trash2 } from "lucide-react";
 
 import { Button, Input } from "@/components/ui";
-import { type ComponentInstance, library, LogicValue } from "@/engine";
 import {
+  type CircuitSnapshot,
+  type ComponentInstance,
+  getBroadcasterChannels,
+  library,
+  LogicValue,
+} from "@/engine";
+import {
+  GATE_TYPE_BROADCASTER,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
   GATE_TYPE_PROBE,
+  GATE_TYPE_RECEIVER,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
 import { CELL_SIZE } from "@/globals";
@@ -17,6 +25,7 @@ import { cn, getGateLabel } from "@/lib/utils";
 
 interface PropertiesPanelProps {
   comp: ComponentInstance;
+  snapshot: CircuitSnapshot;
   onUpdate: (id: string, patch: Partial<ComponentInstance>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -24,6 +33,7 @@ interface PropertiesPanelProps {
 
 function GateProperties({
   comp,
+  snapshot,
   onUpdate,
   onDelete,
   onDuplicate,
@@ -78,6 +88,70 @@ function GateProperties({
             </p>
           )}
         </div>
+        {/* Broadcaster channel name */}
+        {comp.type === GATE_TYPE_BROADCASTER && (
+          <div>
+            <label className="text-[10px] uppercase text-muted-foreground">
+              <FormattedMessage id="hh0xW7" defaultMessage="Channel Name" />
+            </label>
+            <Input
+              value={(comp.properties?.channel as string) ?? ""}
+              placeholder="e.g. CLK, DATA..."
+              onChange={(e) => {
+                const channel = e.target.value;
+
+                onUpdate(comp.id, {
+                  properties: { ...(comp.properties ?? {}), channel },
+                  label: channel,
+                });
+              }}
+              className="h-8 mt-1 bg-background/60"
+            />
+            <p className="text-[9px] text-muted-foreground mt-1 leading-tight">
+              <FormattedMessage
+                id="hgpzgN"
+                defaultMessage="Unique name. Receivers subscribe to this channel"
+              />
+            </p>
+          </div>
+        )}
+        {/* Receiver channel selector */}
+        {comp.type === GATE_TYPE_RECEIVER && (
+          <div>
+            <label className="text-[10px] uppercase text-muted-foreground">
+              <FormattedMessage id="KeO51o" defaultMessage="Channel" />
+            </label>
+            <select
+              value={(comp.properties?.channel as string) ?? ""}
+              onChange={(e) => {
+                const channel = e.target.value;
+
+                onUpdate(comp.id, {
+                  properties: { ...(comp.properties ?? {}), channel },
+                  label: channel || undefined,
+                });
+              }}
+              className="w-full h-8 mt-1 rounded-md border border-border bg-background/60 px-2 text-sm"
+            >
+              <option value="">
+                <FormattedMessage id="eOJyfZ" defaultMessage="— None —" />
+              </option>
+              {Array.from(
+                getBroadcasterChannels(snapshot.components).keys(),
+              ).map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch}
+                </option>
+              ))}
+            </select>
+            <p className="text-[9px] text-muted-foreground mt-1 leading-tight">
+              <FormattedMessage
+                id="lKPym8"
+                defaultMessage="Select a broadcaster to receive its signal"
+              />
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[10px] uppercase text-muted-foreground">

@@ -42,7 +42,11 @@ import {
   type ComponentLibrary,
   library as defaultComponentLibrary,
 } from "./ComponentLibrary";
-import { ENGINE_EVENT_TYPE } from "./constants";
+import {
+  ENGINE_EVENT_TYPE,
+  GATE_TYPE_BROADCASTER,
+  GATE_TYPE_RECEIVER,
+} from "./constants";
 import { GraphManager } from "./GraphManager";
 import { SignalPropagator } from "./SignalPropagator";
 import { SimulationEngine } from "./SimulationEngine";
@@ -57,6 +61,7 @@ import type {
   Wire,
 } from "./types";
 import { LogicValue } from "./types";
+import { onBroadcasterAdded, propagateViaSignals } from "./ViaService";
 
 const U = LogicValue.HIGH_IMPEDANCE;
 
@@ -211,6 +216,13 @@ export class CircuitManager {
     this.emit({ type: ENGINE_EVENT_TYPE.COMPONENT_ADDED, payload: comp });
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
 
+    // Via service: auto-assign channel name to new broadcasters
+    if (type === GATE_TYPE_BROADCASTER) {
+      onBroadcasterAdded(cid, this.components, (id, patch) =>
+        this.updateComponent(id, patch),
+      );
+    }
+
     return comp;
   }
 
@@ -270,6 +282,18 @@ export class CircuitManager {
 
     this.components[id] = { ...comp, ...patch };
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
+
+    // Via service: propagate via signals if channel property changed
+    if (
+      patch.properties &&
+      (comp.type === GATE_TYPE_BROADCASTER || comp.type === GATE_TYPE_RECEIVER)
+    ) {
+      const changed = propagateViaSignals(this.components);
+
+      if (changed.length > 0) {
+        this.triggerPropagate(changed);
+      }
+    }
   }
 
   /**
@@ -542,6 +566,14 @@ export class CircuitManager {
 
     // Full propagation pass to restore signal state
     this.propagator.recomputeAll(this.components);
+
+    // Propagate via signals (broadcaster → receiver) after full recomputation
+    const viaChanged = propagateViaSignals(this.components);
+
+    if (viaChanged.length > 0) {
+      this.triggerPropagate(viaChanged);
+    }
+
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
   }
 
@@ -580,6 +612,13 @@ export class CircuitManager {
     }
 
     this.engine.triggerPropagation(seeds);
+
+    // After propagation, sync via signals (broadcaster input → receiver output)
+    const viaChanged = propagateViaSignals(this.components);
+
+    if (viaChanged.length > 0) {
+      this.engine.triggerPropagation(viaChanged);
+    }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
