@@ -49,7 +49,8 @@
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library } from "@/engine";
-import { CELL_SIZE } from "@/globals";
+import { GATE_TYPE_JUNCTION } from "@/engine/constants";
+import { CELL_SIZE, PIN_OFFSET_UNITS } from "@/globals";
 
 import {
   CellState,
@@ -520,6 +521,13 @@ export class ObstacleMap {
    * Pin-bearing edges have NO padding — wires approach pins directly.
    */
   private addObstacle(comp: ComponentInstance): void {
+    // Junction: circular obstacle map (blocked center + padded circle)
+    if (comp.type === GATE_TYPE_JUNCTION) {
+      this.addJunctionObstacle(comp);
+
+      return;
+    }
+
     const size = this.getCompSize(comp);
     const r = comp.rotation ?? 0;
     const isVertical = r === 0 || r === 180;
@@ -552,6 +560,59 @@ export class ObstacleMap {
   }
 
   // ── Private: Cell marking ──────────────────────────────────────────────────
+
+  /**
+   * Junction obstacle: a circle of BLOCKED at center + PADDED ring.
+   * The center cell (where the dot is) is always BLOCKED.
+   * Cells within obstaclePadding radius are marked PADDED.
+   */
+  private addJunctionObstacle(comp: ComponentInstance): void {
+    const size = this.getCompSize(comp);
+
+    // World-coordinate center of the junction dot
+    const centerX = comp.x + size.w / 2;
+    const centerY = comp.y + size.h / 2;
+
+    const centerCell = this.worldToGrid({ x: centerX, y: centerY });
+    const radius = PIN_OFFSET_UNITS;
+
+    // Minimal bounds for the obstacle (used for removal/overlap detection)
+    const pad = radius * this.config.cellSize;
+    const bounds: Rect = {
+      x: centerX - this.config.cellSize / 2,
+      y: centerY - this.config.cellSize / 2,
+      width: this.config.cellSize,
+      height: this.config.cellSize,
+    };
+    const paddedBounds: Rect = {
+      x: centerX - pad,
+      y: centerY - pad,
+      width: pad * 2,
+      height: pad * 2,
+    };
+
+    const obstacle: Obstacle = { compId: comp.id, bounds, paddedBounds };
+
+    this.obstacles.set(comp.id, obstacle);
+
+    // Mark cells in a circle: center = BLOCKED, ring = PADDED
+    for (let dr = -radius; dr <= radius; dr += 1) {
+      for (let dc = -radius; dc <= radius; dc += 1) {
+        const distSq = dr * dr + dc * dc;
+
+        if (distSq > radius * radius) continue;
+
+        const c = centerCell.col + dc;
+        const r = centerCell.row + dr;
+
+        if (c < 0 || c >= this.cols || r < 0 || r >= this.rows) continue;
+
+        const idx = r * this.cols + c;
+
+        this.grid[idx] = CellState.PADDED;
+      }
+    }
+  }
 
   private markBlockedRect(
     x: number,

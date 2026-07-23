@@ -29,6 +29,7 @@ export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
 export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
 export const GATE_CATEGORY_CUSTOM = "gate_category-custom";
 export const GATE_CATEGORY_UTILITY = "gate_category-utility";
+export const GATE_CATEGORY_HIDDEN = "gate_category-hidden";
 
 // ── Gate Types ───────────────────────────────────────────────────────────────
 
@@ -117,6 +118,9 @@ export const GATE_TYPE_TRANSCEIVER = "TRANSCEIVER";
 export const GATE_TYPE_CTRL_AND4 = "CTRL_AND4";
 export const GATE_TYPE_CTRL_AND8 = "CTRL_AND8";
 export const GATE_TYPE_CTRL_AND16 = "CTRL_AND16";
+
+// ── Hidden category components ───────────────────────────────────────────────
+export const GATE_TYPE_JUNCTION = "JUNCTION";
 
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
@@ -256,4 +260,5 @@ export const LB_MAP: Record<string, string> = {
   [GATE_TYPE_CTRL_AND4]: "lb_ctrl_and4",
   [GATE_TYPE_CTRL_AND8]: "lb_ctrl_and8",
   [GATE_TYPE_CTRL_AND16]: "lb_ctrl_and16",
+  [GATE_TYPE_JUNCTION]: "lb_junction",
 } as const;

@@ -7,9 +7,9 @@
 
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library, LogicValue } from "@/engine";
-import { KEY_SEPARATOR } from "@/engine/constants";
+import { GATE_TYPE_JUNCTION, KEY_SEPARATOR } from "@/engine/constants";
 import { CELL_SIZE, PIN_OFFSET, PIN_SPACING_UNITS } from "@/globals";
-import { PIN_DIR, PIN_KIND } from "@/lib/constants";
+import { PIN_DIR, PIN_KIND, WIRE_JUNCTION_RADIUS } from "@/lib/constants";
 import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";
@@ -62,6 +62,19 @@ export function pinPos(
   if (!library.has(comp.type)) return { x: comp.x, y: comp.y };
 
   const def = library.get(comp.type);
+
+  // Junction: wires terminate at the boundary of the dot (radius 4.5)
+  // Input pin → left edge of dot, Output pin → right edge of dot
+  if (comp.type === GATE_TYPE_JUNCTION) {
+    const DOT_RADIUS = WIRE_JUNCTION_RADIUS * CELL_SIZE;
+
+    if (kind === PIN_KIND.IN) {
+      return { x: comp.x - DOT_RADIUS, y: comp.y };
+    }
+
+    return { x: comp.x + DOT_RADIUS, y: comp.y };
+  }
+
   const r = comp.rotation ?? 0;
 
   // At 90°/270° the component is rendered with swapped dimensions

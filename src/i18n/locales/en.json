@@ -47,6 +47,9 @@
   "2yUX2y": {
     "defaultMessage": "{count} cells"
   },
+  "30gRv/": {
+    "defaultMessage": "Junction"
+  },
   "3zydi4": {
     "defaultMessage": "Topo Ver."
   },
@@ -418,6 +421,9 @@
   },
   "gkDS3C": {
     "defaultMessage": "Cache Size"
+  },
+  "h1dD3n": {
+    "defaultMessage": "Hidden"
   },
   "h9w0Wr": {
     "defaultMessage": "{cols} x {rows}"

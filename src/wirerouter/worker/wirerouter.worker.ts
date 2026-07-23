@@ -29,9 +29,10 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  */
 
+import { GATE_TYPE_JUNCTION } from "@/engine/constants";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine/types";
 import { CELL_SIZE, PIN_OFFSET, PIN_SPACING_UNITS } from "@/globals";
-import { PIN_DIR, PIN_KIND } from "@/lib/constants";
+import { PIN_DIR, PIN_KIND, WIRE_JUNCTION_RADIUS } from "@/lib/constants";
 import type { PinDir, PinKind } from "@/lib/types";
 
 import type { Point } from "../model/types";
@@ -78,6 +79,17 @@ function pinPosWorker(
   const def = getGeometry(comp.type);
 
   if (!def) return { x: comp.x, y: comp.y };
+
+  // Junction: wires terminate at the boundary of the dot (radius 4.5)
+  if (comp.type === GATE_TYPE_JUNCTION) {
+    const DOT_RADIUS = WIRE_JUNCTION_RADIUS * CELL_SIZE;
+
+    if (kind === PIN_KIND.IN) {
+      return { x: comp.x - DOT_RADIUS, y: comp.y };
+    }
+
+    return { x: comp.x + DOT_RADIUS, y: comp.y };
+  }
 
   const r = comp.rotation ?? 0;
   const rw = r === 90 || r === 270 ? def.height : def.width;

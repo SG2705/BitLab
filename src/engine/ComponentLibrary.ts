@@ -14,6 +14,7 @@ import { MIN_COMP_SIZE } from "@/globals";
 import {
   GATE_CATEGORY_ARITHMETIC,
   GATE_CATEGORY_CUSTOM,
+  GATE_CATEGORY_HIDDEN,
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_LOGIC,
   GATE_CATEGORY_OUTPUT,
@@ -74,6 +75,7 @@ import {
   GATE_TYPE_HALF_ADDER,
   GATE_TYPE_HALF_SUB,
   GATE_TYPE_JKFF,
+  GATE_TYPE_JUNCTION,
   GATE_TYPE_LED,
   GATE_TYPE_MUX2,
   GATE_TYPE_MUX4,
@@ -154,6 +156,7 @@ import {
   evalHalfSub,
   evalInput,
   evalJkff,
+  evalJunction,
   evalLed,
   evalMux2,
   evalMux4,
@@ -190,7 +193,12 @@ export interface CustomGateMeta {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const H_OVERRIDES = [GATE_TYPE_PROBE, GATE_TYPE_DISPLAY7, GATE_TYPE_DIGIT_BIN];
+const H_OVERRIDES = [
+  GATE_TYPE_PROBE,
+  GATE_TYPE_DISPLAY7,
+  GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_JUNCTION,
+];
 
 const hw = (c: ComponentDefinition): ComponentDefinition => {
   const skipResize = H_OVERRIDES.includes(c.type);
@@ -1813,6 +1821,21 @@ const DEFINITIONS: ComponentDefinition[] = [
     initialState: () => ({ val: 0 }),
     evaluate: evalUreg8,
   }),
+
+  // ── Hidden ──────────────────────────────────────────────────────────────────
+  cb({
+    type: GATE_TYPE_JUNCTION,
+    label: "",
+    category: GATE_CATEGORY_HIDDEN,
+    inputs: PINC2,
+    outputs: PINC1,
+    width: 5,
+    height: 5,
+    symbol: "●",
+    inputLabels: ["A", "B"],
+    outputLabels: ["Y"],
+    evaluate: evalJunction,
+  }),
 ];
 
 // ── Registry class ────────────────────────────────────────────────────────────
@@ -2623,10 +2646,12 @@ export class ComponentLibrary {
       GATE_CATEGORY_SEQUENTIAL,
       GATE_CATEGORY_ARITHMETIC,
       GATE_CATEGORY_UTILITY,
+      GATE_CATEGORY_HIDDEN,
     ];
 
     // Display order within each category — related variants are grouped
     const GATE_ORDER: Record<string, string[]> = {
+      [GATE_CATEGORY_HIDDEN]: [GATE_TYPE_JUNCTION],
       [GATE_CATEGORY_LOGIC]: [
         GATE_TYPE_AND,
         GATE_TYPE_AND3,

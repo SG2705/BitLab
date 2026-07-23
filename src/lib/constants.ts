@@ -6,6 +6,7 @@ import { defineMessages } from "react-intl";
 import {
   GATE_CATEGORY_ARITHMETIC,
   GATE_CATEGORY_CUSTOM,
+  GATE_CATEGORY_HIDDEN,
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_LOGIC,
   GATE_CATEGORY_OUTPUT,
@@ -106,6 +107,8 @@ export const MESSAGES = defineMessages({
   lb_ctrl_and4: { id: "zzmvcO", defaultMessage: "Ctrl AND 4" },
   lb_ctrl_and8: { id: "sNne9T", defaultMessage: "Ctrl AND 8" },
   lb_ctrl_and16: { id: "GildCq", defaultMessage: "Ctrl AND 16" },
+  lb_junction: { id: "30gRv/", defaultMessage: "Junction" },
+  lb_hidden: { id: "ThUvIL", defaultMessage: "Hidden" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -117,6 +120,8 @@ export const WIRE_TYPE = {
   ORTHO: "ortho",
   OPTIMIZED: "optimized",
 };
+export const WIRE_JUNCTION_RADIUS = 2;
+export const JUNCTION_HIT_THRESHOLD = 3;
 export const PIN_KIND = { IN: "in", OUT: "out" };
 export const PIN_DIR = {
   LEFT: "left",
@@ -158,6 +163,7 @@ export const GATE_CATEGORY_LABELS: Record<
   [GATE_CATEGORY_ARITHMETIC]: { en: "Arithmetic", messageKey: "lb_arithmetic" },
   [GATE_CATEGORY_CUSTOM]: { en: "Custom", messageKey: "lb_custom" },
   [GATE_CATEGORY_UTILITY]: { en: "Utility", messageKey: "lb_utility" },
+  [GATE_CATEGORY_HIDDEN]: { en: "Hidden", messageKey: "lb_hidden" },
 };
 
 export const GATE_TYPE_LABELS: Record<

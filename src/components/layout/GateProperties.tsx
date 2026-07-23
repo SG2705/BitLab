@@ -9,6 +9,7 @@ import {
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
   GATE_TYPE_DISPLAY7,
+  GATE_TYPE_JUNCTION,
   GATE_TYPE_PROBE,
   GATE_TYPE_TOGGLE,
 } from "@/engine/constants";
@@ -38,6 +39,83 @@ function GateProperties({
   if (!library.has(comp.type)) return null;
 
   const gate = library.get(comp.type);
+
+  // Junction: minimal properties panel (type, label, x, y only)
+  if (comp.type === GATE_TYPE_JUNCTION) {
+    return (
+      <div className="p-3 border-b border-border max-h-1/2 overflow-y-auto">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-3">
+          <Settings2 className="h-3.5 w-3.5" />
+          <FormattedMessage id="aI80kg" defaultMessage="Properties" />
+        </div>
+        <div className="space-y-3">
+          <div>
+            <div className="text-[10px] uppercase text-muted-foreground mb-1">
+              <FormattedMessage id="+U6ozc" defaultMessage="Type" />
+            </div>
+            <div className="text-sm font-mono text-primary">
+              {getGateLabel(gate.type, gate.label, intl)}
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] uppercase text-muted-foreground">
+              <FormattedMessage id="753yX5" defaultMessage="Label" />
+            </label>
+            <Input
+              value={labelValue}
+              placeholder="e.g. NET_A, VCC…"
+              onChange={(e) => {
+                setLabelValue(e.target.value);
+                onUpdate(comp.id, { label: e.target.value });
+              }}
+              className="h-8 mt-1 bg-background/60"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground">
+                <FormattedMessage id="MXPwVk" defaultMessage="X" />
+              </label>
+              <Input
+                type="number"
+                value={comp.x}
+                step={CELL_SIZE}
+                onChange={(e) =>
+                  onUpdate(comp.id, { x: Number(e.target.value) })
+                }
+                className="h-8 mt-1 bg-background/60"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] uppercase text-muted-foreground">
+                <FormattedMessage id="SSHeHt" defaultMessage="Y" />
+              </label>
+              <Input
+                type="number"
+                value={comp.y}
+                step={CELL_SIZE}
+                onChange={(e) =>
+                  onUpdate(comp.id, { y: Number(e.target.value) })
+                }
+                className="h-8 mt-1 bg-background/60"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2 border-t border-border">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onDelete}
+              className="flex-1 h-8 gap-1 hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <Trash2 className="h-3 w-3" />
+              <FormattedMessage id="K3r6DQ" defaultMessage="Delete" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-3 border-b border-border max-h-1/2 overflow-y-auto">

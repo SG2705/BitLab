@@ -6,6 +6,7 @@ export { default as GATE_ICON } from "./GateIcon";
 export { default as BusWirePath } from "./BusWirePath";
 export { default as GateChip } from "./GateChip";
 export { default as GateNode } from "./GateNode";
+export { default as JunctionVisual } from "./JunctionVisual";
 export { default as ToolBtn } from "./ToolBtn";
 export { default as WirePath } from "./WirePath";
 export { default as EmptyCanvas } from "./EmptyCanvas";

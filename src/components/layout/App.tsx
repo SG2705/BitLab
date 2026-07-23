@@ -14,6 +14,7 @@ import {
   EmptyCanvas,
   ErrorBoundary,
   GateNode,
+  JunctionVisual,
   RightClickMenu,
   WirePath,
 } from "@/components/ui";
@@ -26,9 +27,11 @@ import {
   GATE_TYPE_BUTTON,
   GATE_TYPE_CONST,
   GATE_TYPE_DIGIT_BIN,
+  GATE_TYPE_JUNCTION,
   GATE_TYPE_TOGGLE,
   SIMULATION_STATUS,
 } from "@/engine/constants";
+import { CELL_SIZE } from "@/globals";
 import {
   useCanvasInteraction,
   useClipboard,
@@ -47,6 +50,7 @@ import {
 import {
   CONSOLE_TAB,
   DEFAULT_CLOCK,
+  JUNCTION_HIT_THRESHOLD,
   PIN_KIND,
   SAVE_LOCAL_ON_ACTION,
   TOOL,
@@ -606,6 +610,90 @@ function DigitalGateApp() {
 
       const def = library.get(type);
       const { x, y } = toWorld(e.clientX, e.clientY);
+
+      // ── Junction: drop onto wire splits it ────────────────────────────────
+      if (type === GATE_TYPE_JUNCTION) {
+        // Find the nearest wire to the drop point
+        const HIT_THRESHOLD = JUNCTION_HIT_THRESHOLD * CELL_SIZE;
+        let closestWire: { id: string; dist: number } | null = null;
+
+        for (const w of Object.values(snapshot.wires)) {
+          const a = snapshot.components[w.from.comp];
+          const b = snapshot.components[w.to.comp];
+
+          if (!a || !b) continue;
+
+          const p1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
+          const p2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+
+          // Point-to-line-segment distance
+          const dx = p2.x - p1.x;
+          const dy = p2.y - p1.y;
+          const lenSq = dx * dx + dy * dy;
+
+          let dist: number;
+
+          if (lenSq === 0) {
+            dist = Math.hypot(x - p1.x, y - p1.y);
+          } else {
+            const t = Math.max(
+              0,
+              Math.min(1, ((x - p1.x) * dx + (y - p1.y) * dy) / lenSq),
+            );
+            const proj = { x: p1.x + t * dx, y: p1.y + t * dy };
+
+            dist = Math.hypot(x - proj.x, y - proj.y);
+          }
+
+          if (
+            dist < HIT_THRESHOLD &&
+            (!closestWire || dist < closestWire.dist)
+          ) {
+            closestWire = { id: w.id, dist };
+          }
+        }
+
+        if (closestWire) {
+          // Split the wire: remove original, insert junction, create two new wires
+          const wire = snapshot.wires[closestWire.id];
+          const nx = snap(x - def.width / 2);
+          const ny = snap(y - def.height / 2);
+
+          // Remove the original wire
+          removeWires([wire.id]);
+
+          // Add the junction component
+          const junctionComp = addComponent(type, nx, ny);
+
+          // Wire: original source → junction input (pin 0)
+          addWire(wire.from.comp, wire.from.pin, junctionComp.id, 0);
+          // Wire: junction output (pin 0) → original target
+          addWire(junctionComp.id, 0, wire.to.comp, wire.to.pin);
+
+          setSelection(new Set([junctionComp.id]));
+          setSelWires(new Set());
+
+          addLog(
+            CONSOLE_TAB.LOG,
+            `Junction inserted on wire — split into two segments`,
+          );
+
+          if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+          setDragType(null);
+
+          return;
+        }
+
+        // Junction dropped on empty canvas — not allowed
+        addLog(
+          CONSOLE_TAB.WARN,
+          `Junction must be dropped on a wire to split it`,
+        );
+        setDragType(null);
+
+        return;
+      }
+
       const nx = snap(x - def.width / 2);
       const ny = snap(y - def.height / 2);
       const comp = addComponent(type, nx, ny);
@@ -627,9 +715,13 @@ function DigitalGateApp() {
       dragType,
       toWorld,
       addComponent,
+      addWire,
+      removeWires,
       addLog,
       saveProjectToLocal,
       showObstacleMap,
+      snapshot.wires,
+      snapshot.components,
       setSelection,
       setSelWires,
     ],
@@ -730,6 +822,50 @@ function DigitalGateApp() {
     ],
   );
 
+  // ── Junction cleanup: dissolve junctions with ≤ 2 wires ────────────────────
+  // Runs as an effect whenever the snapshot changes
+  useEffect(() => {
+    for (const comp of Object.values(snapshot.components)) {
+      if (comp.type !== GATE_TYPE_JUNCTION) continue;
+
+      // Count wires connected to this junction (inputs + outputs)
+      const connectedWires = Object.values(snapshot.wires).filter(
+        (w) => w.from.comp === comp.id || w.to.comp === comp.id,
+      );
+
+      if (connectedWires.length > 2) continue;
+
+      // Junction has ≤ 2 wires — dissolve it
+      const inputWire = connectedWires.find((w) => w.to.comp === comp.id);
+      const outputWire = connectedWires.find((w) => w.from.comp === comp.id);
+
+      if (inputWire && outputWire) {
+        // Reconnect: inputWire.source → outputWire.target directly
+        const fromComp = inputWire.from.comp;
+        const fromPin = inputWire.from.pin;
+        const toComp = outputWire.to.comp;
+        const toPin = outputWire.to.pin;
+
+        // Remove all junction wires and the junction itself
+        removeWires(connectedWires.map((w) => w.id));
+        removeComponents([comp.id]);
+
+        // Create direct connection
+        addWire(fromComp, fromPin, toComp, toPin);
+
+        return; // Process one at a time to avoid stale snapshot issues
+      }
+
+      if (connectedWires.length <= 1) {
+        // Junction with 0 or 1 wire — just remove it
+        removeWires(connectedWires.map((w) => w.id));
+        removeComponents([comp.id]);
+
+        return; // Process one at a time
+      }
+    }
+  }, [snapshot, removeWires, removeComponents, addWire]);
+
   const onCanvasMouseUp = useCallback(() => {
     const wasDragging = dragCompRef.current?.moved;
 
@@ -743,7 +879,210 @@ function DigitalGateApp() {
       setSelection(lassoSelection);
     }
 
-    if (pendingWire) setPendingWire(null);
+    // ── Pending wire dropped over an existing wire → insert T-junction ──────
+    if (pendingWire) {
+      const dropX = pendingWire.mx;
+      const dropY = pendingWire.my;
+      const HIT_THRESHOLD = JUNCTION_HIT_THRESHOLD * CELL_SIZE;
+
+      // 1. Check if the drop point is near an existing junction — merge into it
+      let nearbyJunction: ComponentInstance | null = null;
+
+      for (const comp of Object.values(snapshot.components)) {
+        if (comp.type !== GATE_TYPE_JUNCTION) continue;
+
+        const jDef = library.get(GATE_TYPE_JUNCTION);
+        const jCenterX = comp.x + jDef.width / 2;
+        const jCenterY = comp.y + jDef.height / 2;
+        const jDist = Math.hypot(dropX - jCenterX, dropY - jCenterY);
+
+        if (jDist < HIT_THRESHOLD * 2) {
+          nearbyJunction = comp;
+          break;
+        }
+      }
+
+      if (nearbyJunction) {
+        // Merge: connect pending wire source to existing junction's free input
+        // Find a free input pin on the junction (one without an incoming wire)
+        const jDef = library.get(GATE_TYPE_JUNCTION);
+        let freePin = -1;
+
+        for (let pin = 0; pin < jDef.inputs; pin += 1) {
+          const hasWire = Object.values(snapshot.wires).some(
+            (w) => w.to.comp === nearbyJunction?.id && w.to.pin === pin,
+          );
+
+          if (!hasWire) {
+            freePin = pin;
+            break;
+          }
+        }
+
+        if (freePin >= 0) {
+          addWire(
+            pendingWire.from.comp,
+            pendingWire.from.pin,
+            nearbyJunction.id,
+            freePin,
+          );
+
+          setSelection(new Set([nearbyJunction.id]));
+          setSelWires(new Set());
+          addLog(CONSOLE_TAB.LOG, `Wire connected to existing junction`);
+
+          if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+        }
+
+        setPendingWire(null);
+
+        return;
+      }
+
+      // 2. Check if the drop point is over an existing wire — create new junction
+      let closestWire: { id: string; dist: number } | null = null;
+
+      for (const w of Object.values(snapshot.wires)) {
+        const a = snapshot.components[w.from.comp];
+        const b = snapshot.components[w.to.comp];
+
+        if (!a || !b) continue;
+
+        const wp1 = pinPos(a, PIN_KIND.OUT, w.from.pin);
+        const wp2 = pinPos(b, PIN_KIND.IN, w.to.pin);
+        const dx = wp2.x - wp1.x;
+        const dy = wp2.y - wp1.y;
+        const lenSq = dx * dx + dy * dy;
+        let dist: number;
+
+        if (lenSq === 0) {
+          dist = Math.hypot(dropX - wp1.x, dropY - wp1.y);
+        } else {
+          const t = Math.max(
+            0,
+            Math.min(1, ((dropX - wp1.x) * dx + (dropY - wp1.y) * dy) / lenSq),
+          );
+          const proj = { x: wp1.x + t * dx, y: wp1.y + t * dy };
+
+          dist = Math.hypot(dropX - proj.x, dropY - proj.y);
+        }
+
+        if (dist < HIT_THRESHOLD && (!closestWire || dist < closestWire.dist)) {
+          closestWire = { id: w.id, dist };
+        }
+      }
+
+      if (closestWire && library.has(GATE_TYPE_JUNCTION)) {
+        const wire = snapshot.wires[closestWire.id];
+
+        // Check if either end of the wire is already a junction — merge instead
+        const fromComp = snapshot.components[wire.from.comp];
+        const toComp = snapshot.components[wire.to.comp];
+
+        if (fromComp?.type === GATE_TYPE_JUNCTION) {
+          // Merge into the source junction
+          const jDef = library.get(GATE_TYPE_JUNCTION);
+          let freePin = -1;
+
+          for (let pin = 0; pin < jDef.inputs; pin += 1) {
+            const hasWire = Object.values(snapshot.wires).some(
+              (w) => w.to.comp === fromComp.id && w.to.pin === pin,
+            );
+
+            if (!hasWire) {
+              freePin = pin;
+              break;
+            }
+          }
+
+          if (freePin >= 0) {
+            addWire(
+              pendingWire.from.comp,
+              pendingWire.from.pin,
+              fromComp.id,
+              freePin,
+            );
+            addLog(CONSOLE_TAB.LOG, `Wire merged into existing junction`);
+
+            if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+          }
+
+          setPendingWire(null);
+
+          return;
+        }
+
+        if (toComp?.type === GATE_TYPE_JUNCTION) {
+          // Merge into the target junction
+          const jDef = library.get(GATE_TYPE_JUNCTION);
+          let freePin = -1;
+
+          for (let pin = 0; pin < jDef.inputs; pin += 1) {
+            const hasWire = Object.values(snapshot.wires).some(
+              (w) => w.to.comp === toComp.id && w.to.pin === pin,
+            );
+
+            if (!hasWire) {
+              freePin = pin;
+              break;
+            }
+          }
+
+          if (freePin >= 0) {
+            addWire(
+              pendingWire.from.comp,
+              pendingWire.from.pin,
+              toComp.id,
+              freePin,
+            );
+            addLog(CONSOLE_TAB.LOG, `Wire merged into existing junction`);
+
+            if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+          }
+
+          setPendingWire(null);
+
+          return;
+        }
+
+        // No nearby junction — create a new one
+        const jDef = library.get(GATE_TYPE_JUNCTION);
+        const nx = snap(dropX - jDef.width / 2);
+        const ny = snap(dropY - jDef.height / 2);
+
+        // Remove the existing wire being split
+        removeWires([wire.id]);
+
+        // Add junction at the drop point
+        const junctionComp = addComponent(GATE_TYPE_JUNCTION, nx, ny);
+
+        // Wire 1: original source → junction input[0]
+        addWire(wire.from.comp, wire.from.pin, junctionComp.id, 0);
+        // Wire 2: pending wire source → junction input[1]
+        addWire(
+          pendingWire.from.comp,
+          pendingWire.from.pin,
+          junctionComp.id,
+          1,
+        );
+        // Wire 3: junction output[0] → original target
+        addWire(junctionComp.id, 0, wire.to.comp, wire.to.pin);
+
+        setSelection(new Set([junctionComp.id]));
+        setSelWires(new Set());
+
+        addLog(
+          CONSOLE_TAB.LOG,
+          `T-junction created — 3 wires connected through net node`,
+        );
+
+        if (SAVE_LOCAL_ON_ACTION) saveProjectToLocal();
+      }
+
+      setPendingWire(null);
+
+      return;
+    }
 
     // After drag ends, bump the reroute trigger so the effect fires
     if (wasDragging && wireStyle === WIRE_TYPE.OPTIMIZED) {
@@ -756,7 +1095,13 @@ function DigitalGateApp() {
     pendingWire,
     setPendingWire,
     setSelection,
+    setSelWires,
     wireStyle,
+    addComponent,
+    addWire,
+    removeWires,
+    addLog,
+    saveProjectToLocal,
   ]);
 
   // ── Custom circuit wrappers ─────────────────────────────────────────────────
@@ -897,6 +1242,7 @@ function DigitalGateApp() {
               <ObstacleMapInfo
                 obstacleMap={obstacleMapRef.current}
                 routingMetrics={wireRouter.getMetrics()}
+                snapshot={snapshot}
                 version={obstacleMapVersion}
               />
             )}
@@ -941,6 +1287,7 @@ function DigitalGateApp() {
                   obstacleMap={obstacleMapRef.current}
                   view={view}
                   size={size}
+                  snapshot={snapshot}
                   version={obstacleMapVersion}
                 />
               )}
@@ -1162,6 +1509,49 @@ function DigitalGateApp() {
                   {Object.values(snapshot.components).map((c) => {
                     // Viewport culling: skip components outside the visible area
                     if (!visibleComponents.has(c.id)) return null;
+
+                    // Junction: render as a simple dot instead of a full GateNode
+                    if (c.type === GATE_TYPE_JUNCTION) {
+                      const jDef = library.get(c.type);
+                      const jActive = c.outputs[0] === LogicValue.ONE;
+                      // Center the dot on the component's center
+                      const cx = c.x + jDef.width / 2;
+                      const cy = c.y + jDef.height / 2;
+
+                      return (
+                        <g key={c.id} transform={`translate(${cx}, ${cy})`}>
+                          <JunctionVisual
+                            active={jActive}
+                            onPinDown={(e: React.MouseEvent) => {
+                              if (showObstacleMap) return;
+                              e.stopPropagation();
+                              e.preventDefault();
+                              // Only drag — no wire starts from junction
+                              startCompDrag(e, c);
+                            }}
+                            onPinUp={(e: React.MouseEvent) => {
+                              if (showObstacleMap) return;
+
+                              // Complete a pending wire into this junction's input pin
+                              if (pendingWire) {
+                                finishWire(
+                                  e,
+                                  c,
+                                  0,
+                                  snapshot,
+                                  addWireRaw,
+                                  addLog,
+                                  pushHistory,
+                                );
+                              }
+                            }}
+                            onContextMenu={(e: React.MouseEvent) =>
+                              handleContextMenu(e, c.id)
+                            }
+                          />
+                        </g>
+                      );
+                    }
 
                     return (
                       <GateNode

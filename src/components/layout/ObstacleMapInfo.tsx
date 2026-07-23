@@ -1,12 +1,16 @@
 import { memo } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
+import type { CircuitSnapshot } from "@/engine";
+import { GATE_TYPE_JUNCTION } from "@/engine/constants";
 import type { ObstacleMap, RoutingMetrics } from "@/wirerouter";
 
 interface ObstacleMapInfoProps {
   obstacleMap: ObstacleMap;
   /** Routing metrics from WireRouter */
   routingMetrics?: RoutingMetrics;
+  /** Circuit snapshot for component/wire counts */
+  snapshot?: CircuitSnapshot;
   /** Incremented when the obstacle map is rebuilt, to break memoization */
   // eslint-disable-next-line react/no-unused-prop-types
   version: number;
@@ -14,6 +18,7 @@ interface ObstacleMapInfoProps {
 
 ObstacleMapInfo.defaultProps = {
   routingMetrics: undefined,
+  snapshot: undefined,
 };
 
 /**
@@ -23,12 +28,21 @@ ObstacleMapInfo.defaultProps = {
 function ObstacleMapInfo({
   obstacleMap,
   routingMetrics,
+  snapshot,
 }: ObstacleMapInfoProps) {
   const intl = useIntl();
   const config = obstacleMap.getConfig();
   const { cols, rows } = obstacleMap.getGridSize();
   const obstacles = obstacleMap.getObstacles();
   const stats = obstacleMap.getStats();
+
+  // Circuit counts
+  const components = snapshot ? Object.values(snapshot.components) : [];
+  const totalComponents = components.length;
+  const totalJunctions = components.filter(
+    (c) => c.type === GATE_TYPE_JUNCTION,
+  ).length;
+  const totalWires = snapshot ? Object.keys(snapshot.wires).length : 0;
 
   return (
     <div className="absolute z-20 top-14 left-3 glass-panel rounded-lg p-2.5 shadow-lg text-xs font-mono text-muted-foreground space-y-1 min-w-[210px] max-h-[calc(100vh-120px)] overflow-y-auto">
@@ -150,6 +164,31 @@ function ObstacleMapInfo({
             }}
           />
         </span>
+      </div>
+
+      <div className="w-full h-px bg-border my-1" />
+
+      {/* Circuit counts */}
+      <div className="text-foreground font-semibold text-[10px] uppercase tracking-wide mb-1">
+        <FormattedMessage id="AfJBvt" defaultMessage="Circuit" />
+      </div>
+      <div className="flex justify-between">
+        <span>
+          <FormattedMessage id="AcAA5x" defaultMessage="Components" />
+        </span>
+        <span className="text-foreground">{totalComponents}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>
+          <FormattedMessage id="GRfNdy" defaultMessage="Junctions" />
+        </span>
+        <span className="text-foreground">{totalJunctions}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>
+          <FormattedMessage id="0X2/qr" defaultMessage="Wires" />
+        </span>
+        <span className="text-foreground">{totalWires}</span>
       </div>
 
       {/* Routing Metrics */}

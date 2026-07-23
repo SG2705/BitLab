@@ -921,6 +921,34 @@ export const evalPassthrough = (inputs: SignalValue[]): EvaluateResult => ({
   state: null,
 });
 
+/**
+ * Junction — acts as a net node. 2 inputs, 1 output.
+ * Resolves multiple drivers: if either input is HIGH, output is HIGH.
+ * Follows wired-OR resolution for combining signals on a net.
+ */
+export const evalJunction = (inputs: SignalValue[]): EvaluateResult => {
+  // Resolve: ONE wins over ZERO, UNKNOWN over Hi-Z
+  let result: SignalValue = LogicValue.ZERO;
+
+  for (const inp of inputs) {
+    if (inp === LogicValue.ONE) {
+      result = LogicValue.ONE;
+      break;
+    }
+
+    if (inp === LogicValue.UNKNOWN) {
+      result = LogicValue.UNKNOWN;
+    } else if (
+      inp === LogicValue.HIGH_IMPEDANCE &&
+      result === LogicValue.ZERO
+    ) {
+      result = LogicValue.HIGH_IMPEDANCE;
+    }
+  }
+
+  return { outputs: [result], state: null };
+};
+
 export const evalUreg4 = (
   inputs: SignalValue[],
   state: Record<string, unknown> | null,

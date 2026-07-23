@@ -637,7 +637,7 @@ function runAstar(
 
       // Padded cell penalty
       if (!isExempt && !obstacleMap.isFree(nc, nr)) {
-        moveCost += 10;
+        moveCost += 40;
       }
 
       // Wire congestion

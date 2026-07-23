@@ -4,6 +4,7 @@ import { Copy, Cpu, RotateCw, Trash2 } from "lucide-react";
 
 import { Button, GATE_ICON, type GateIcon } from "@/components/ui";
 import type { CircuitSnapshot, ComponentInstance } from "@/engine";
+import { GATE_CATEGORY_HIDDEN } from "@/engine/constants";
 import { GATES } from "@/lib/circuit";
 import { GATE_CATEGORY_LABELS } from "@/lib/constants";
 import { cn, fm, getGateLabel, resolveLabel } from "@/lib/utils";
@@ -31,6 +32,9 @@ function ExplorerPanel({
 
   for (const c of Object.values(snapshot.components)) {
     const cat = GATES[c.type]?.category ?? "Other";
+
+    // Skip hidden category components (e.g. Junction)
+    if (cat === GATE_CATEGORY_HIDDEN) continue;
 
     (groups[cat] ||= []).push(c);
   }

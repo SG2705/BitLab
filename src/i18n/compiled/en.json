@@ -111,6 +111,12 @@
       "value": " cells"
     }
   ],
+  "30gRv/": [
+    {
+      "type": 0,
+      "value": "Junction"
+    }
+  ],
   "3zydi4": [
     {
       "type": 0,
@@ -1001,6 +1007,12 @@
     {
       "type": 0,
       "value": "Cache Size"
+    }
+  ],
+  "h1dD3n": [
+    {
+      "type": 0,
+      "value": "Hidden"
     }
   ],
   "h9w0Wr": [
