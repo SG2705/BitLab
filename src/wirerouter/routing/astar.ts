@@ -473,6 +473,17 @@ export function findPath(
     waypoints[0] = startWorld;
     waypoints[waypoints.length - 1] = endWorld;
 
+    // Ensure no diagonal segments: if only 2 waypoints and they don't share
+    // an x or y coordinate, insert an L-shaped intermediate point
+    if (waypoints.length === 2) {
+      const w0 = waypoints[0];
+      const w1 = waypoints[1];
+
+      if (w0.x !== w1.x && w0.y !== w1.y) {
+        waypoints.splice(1, 0, { x: w1.x, y: w0.y });
+      }
+    }
+
     if (waypoints.length >= 3) {
       const exitDc = DIR_DC[exitDir];
       const exitDr = DIR_DR[exitDir];

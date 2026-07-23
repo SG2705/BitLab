@@ -41,7 +41,8 @@
  */
 
 import type { CircuitSnapshot, Wire } from "@/engine";
-import { pinDirection, pinPos } from "@/lib/circuit";
+import { GATE_TYPE_JUNCTION } from "@/engine/constants";
+import { junctionPinDirection, pinDirection, pinPos } from "@/lib/circuit";
 import { PIN_KIND } from "@/lib/constants";
 import type { PinDir } from "@/lib/types";
 
@@ -358,8 +359,16 @@ export class WireRouter {
 
     const p1 = pinPos(sourceComp, PIN_KIND.OUT, wire.from.pin);
     const p2 = pinPos(targetComp, PIN_KIND.IN, wire.to.pin);
-    const dir1: PinDir = pinDirection(sourceComp, PIN_KIND.OUT);
-    const dir2: PinDir = pinDirection(targetComp, PIN_KIND.IN);
+
+    // Junctions can receive/send wires from any direction — pick direction toward the other end
+    const dir1: PinDir =
+      sourceComp.type === GATE_TYPE_JUNCTION
+        ? junctionPinDirection(sourceComp, p2)
+        : pinDirection(sourceComp, PIN_KIND.OUT);
+    const dir2: PinDir =
+      targetComp.type === GATE_TYPE_JUNCTION
+        ? junctionPinDirection(targetComp, p1)
+        : pinDirection(targetComp, PIN_KIND.IN);
 
     const startTime =
       typeof performance !== "undefined" ? performance.now() : 0;

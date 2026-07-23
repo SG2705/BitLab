@@ -142,7 +142,9 @@ function DigitalGateApp() {
     addWire,
     addWireRaw,
     removeWires,
+    removeWiresRaw,
     removeComponents,
+    removeComponentsRaw,
     updateComponent,
     duplicateComponents,
     setInput,
@@ -656,8 +658,8 @@ function DigitalGateApp() {
         if (closestWire) {
           // Split the wire: remove original, insert junction, create two new wires
           const wire = snapshot.wires[closestWire.id];
-          const nx = snap(x - def.width / 2);
-          const ny = snap(y - def.height / 2);
+          const nx = snap(x);
+          const ny = snap(y);
 
           // Remove the original wire
           removeWires([wire.id]);
@@ -823,7 +825,8 @@ function DigitalGateApp() {
   );
 
   // ── Junction cleanup: dissolve junctions with ≤ 2 wires ────────────────────
-  // Runs as an effect whenever the snapshot changes
+  // Uses raw methods (no history push) so the cleanup is part of the same
+  // undo entry as the action that triggered it.
   useEffect(() => {
     for (const comp of Object.values(snapshot.components)) {
       if (comp.type !== GATE_TYPE_JUNCTION) continue;
@@ -835,36 +838,43 @@ function DigitalGateApp() {
 
       if (connectedWires.length > 2) continue;
 
-      // Junction has ≤ 2 wires — dissolve it
-      const inputWire = connectedWires.find((w) => w.to.comp === comp.id);
-      const outputWire = connectedWires.find((w) => w.from.comp === comp.id);
+      // Junction has exactly 2 wires — dissolve and reconnect directly
+      if (connectedWires.length === 2) {
+        const inputWire = connectedWires.find((w) => w.to.comp === comp.id);
+        const outputWire = connectedWires.find((w) => w.from.comp === comp.id);
 
-      if (inputWire && outputWire) {
-        // Reconnect: inputWire.source → outputWire.target directly
-        const fromComp = inputWire.from.comp;
-        const fromPin = inputWire.from.pin;
-        const toComp = outputWire.to.comp;
-        const toPin = outputWire.to.pin;
+        if (inputWire && outputWire) {
+          const fromComp = inputWire.from.comp;
+          const fromPin = inputWire.from.pin;
+          const toComp = outputWire.to.comp;
+          const toPin = outputWire.to.pin;
 
-        // Remove all junction wires and the junction itself
-        removeWires(connectedWires.map((w) => w.id));
-        removeComponents([comp.id]);
+          // Remove junction wires and component (no history push)
+          removeWiresRaw(connectedWires.map((w) => w.id));
+          removeComponentsRaw([comp.id]);
 
-        // Create direct connection
-        addWire(fromComp, fromPin, toComp, toPin);
+          // Only create direct wire if source and target are different
+          if (fromComp !== toComp) {
+            addWireRaw(fromComp, fromPin, toComp, toPin);
+          }
 
-        return; // Process one at a time to avoid stale snapshot issues
+          return; // Process one at a time to avoid stale snapshot issues
+        }
+
+        // Edge case: malformed — just remove
+        removeWiresRaw(connectedWires.map((w) => w.id));
+        removeComponentsRaw([comp.id]);
+
+        return;
       }
 
-      if (connectedWires.length <= 1) {
-        // Junction with 0 or 1 wire — just remove it
-        removeWires(connectedWires.map((w) => w.id));
-        removeComponents([comp.id]);
+      // Junction with 0 or 1 wire — just remove it
+      removeWiresRaw(connectedWires.map((w) => w.id));
+      removeComponentsRaw([comp.id]);
 
-        return; // Process one at a time
-      }
+      return; // Process one at a time
     }
-  }, [snapshot, removeWires, removeComponents, addWire]);
+  }, [snapshot, removeWiresRaw, removeComponentsRaw, addWireRaw]);
 
   const onCanvasMouseUp = useCallback(() => {
     const wasDragging = dragCompRef.current?.moved;
@@ -1046,9 +1056,8 @@ function DigitalGateApp() {
         }
 
         // No nearby junction — create a new one
-        const jDef = library.get(GATE_TYPE_JUNCTION);
-        const nx = snap(dropX - jDef.width / 2);
-        const ny = snap(dropY - jDef.height / 2);
+        const nx = snap(dropX);
+        const ny = snap(dropY);
 
         // Remove the existing wire being split
         removeWires([wire.id]);
@@ -1512,14 +1521,10 @@ function DigitalGateApp() {
 
                     // Junction: render as a simple dot instead of a full GateNode
                     if (c.type === GATE_TYPE_JUNCTION) {
-                      const jDef = library.get(c.type);
                       const jActive = c.outputs[0] === LogicValue.ONE;
-                      // Center the dot on the component's center
-                      const cx = c.x + jDef.width / 2;
-                      const cy = c.y + jDef.height / 2;
 
                       return (
-                        <g key={c.id} transform={`translate(${cx}, ${cy})`}>
+                        <g key={c.id} transform={`translate(${c.x}, ${c.y})`}>
                           <JunctionVisual
                             active={jActive}
                             onPinDown={(e: React.MouseEvent) => {

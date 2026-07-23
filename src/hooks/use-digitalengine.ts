@@ -68,6 +68,10 @@ export interface DigitalEngineControls {
   ) => Wire | null;
   removeWire: (id: string) => void;
   removeWires: (ids: string[]) => void;
+  /** Raw removeWires without pushing history — caller manages undo entry */
+  removeWiresRaw: (ids: string[]) => void;
+  /** Raw removeComponents without pushing history — caller manages undo entry */
+  removeComponentsRaw: (ids: string[]) => void;
 
   // ── Project / history ────────────────────────────────────────────────────
   pushHistory: () => void;
@@ -291,6 +295,22 @@ export function useDigitalEngine(
     [manager, pushHistory],
   );
 
+  /** Raw removeWires without pushing history — caller manages undo entry */
+  const removeWiresRaw = useCallback(
+    (ids: string[]) => {
+      manager.removeWires(ids);
+    },
+    [manager],
+  );
+
+  /** Raw removeComponents without pushing history — caller manages undo entry */
+  const removeComponentsRaw = useCallback(
+    (ids: string[]) => {
+      manager.removeComponents(ids);
+    },
+    [manager],
+  );
+
   // ── Project ops ───────────────────────────────────────────────────────────
 
   const undo = useCallback(() => {
@@ -361,6 +381,8 @@ export function useDigitalEngine(
     addWireRaw,
     removeWire,
     removeWires,
+    removeWiresRaw,
+    removeComponentsRaw,
     pushHistory,
     undo,
     redo,

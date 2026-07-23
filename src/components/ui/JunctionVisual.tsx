@@ -29,8 +29,8 @@ export function JunctionVisual({
         cy={0}
         r={10}
         fill="transparent"
+        // fill="var(--color-wire)"
         // stroke="var(--color-wire)"
-        // strokeWidth={active ? "2" : "1"}
         onMouseDown={onPinDown}
         onMouseUp={onPinUp}
       />

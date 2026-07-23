@@ -9,7 +9,7 @@ import type { CircuitSnapshot, ComponentInstance } from "@/engine";
 import { library, LogicValue } from "@/engine";
 import { GATE_TYPE_JUNCTION, KEY_SEPARATOR } from "@/engine/constants";
 import { CELL_SIZE, PIN_OFFSET, PIN_SPACING_UNITS } from "@/globals";
-import { PIN_DIR, PIN_KIND, WIRE_JUNCTION_RADIUS } from "@/lib/constants";
+import { PIN_DIR, PIN_KIND } from "@/lib/constants";
 import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 
 export type { Wire } from "@/engine";
@@ -63,16 +63,10 @@ export function pinPos(
 
   const def = library.get(comp.type);
 
-  // Junction: wires terminate at the boundary of the dot (radius 4.5)
-  // Input pin → left edge of dot, Output pin → right edge of dot
+  // Junction: all wires terminate at the exact center of the dot.
+  // The solid dot (r=4.5) visually covers the wire endpoints.
   if (comp.type === GATE_TYPE_JUNCTION) {
-    const DOT_RADIUS = WIRE_JUNCTION_RADIUS * CELL_SIZE;
-
-    if (kind === PIN_KIND.IN) {
-      return { x: comp.x - DOT_RADIUS, y: comp.y };
-    }
-
-    return { x: comp.x + DOT_RADIUS, y: comp.y };
+    return { x: comp.x, y: comp.y };
   }
 
   const r = comp.rotation ?? 0;
@@ -233,6 +227,26 @@ export function pinDirection(comp: ComponentInstance, kind: PinKind): PinDir {
   if (r === 180) return PIN_DIR.RIGHT;
 
   return PIN_DIR.DOWN;
+}
+
+/**
+ * For junctions, compute the pin direction based on the OTHER endpoint's
+ * position so the stub/wire exits toward the target. This allows junctions
+ * to receive wires from any of the 4 sides.
+ */
+export function junctionPinDirection(
+  junctionComp: ComponentInstance,
+  otherPoint: { x: number; y: number },
+): PinDir {
+  const dx = otherPoint.x - junctionComp.x;
+  const dy = otherPoint.y - junctionComp.y;
+
+  // Pick the dominant axis
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0 ? PIN_DIR.RIGHT : PIN_DIR.LEFT;
+  }
+
+  return dy >= 0 ? PIN_DIR.DOWN : PIN_DIR.UP;
 }
 
 // Dynamic proxy — always reflects the live library, including custom gates.
