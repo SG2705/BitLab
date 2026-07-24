@@ -587,7 +587,7 @@ function DigitalGateApp() {
       if (!type || !library.has(type)) return;
 
       if (library.isCustom(type) && !library.hasValidDependencies(type)) {
-        const meta = library.getCustomMeta(type);
+        const meta = library.getCustomCircuit(type);
 
         if (meta) {
           library.registerCustomCircuit(meta.name, meta.circuit, type);
@@ -1344,7 +1344,7 @@ function DigitalGateApp() {
                       library.isCustom(g) &&
                       !library.hasValidDependencies(g)
                     ) {
-                      const meta = library.getCustomMeta(g);
+                      const meta = library.getCustomCircuit(g);
 
                       if (meta) {
                         library.registerCustomCircuit(

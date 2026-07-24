@@ -21,7 +21,7 @@ export const ConstInput: ComponentDefinition = hw({
   isClock: false,
   isInput: true,
   isOutput: false,
-  initialState: () => ({ on: true }),
+  initialState: () => ({ on: false }),
   evaluate: evalInput,
 });
 

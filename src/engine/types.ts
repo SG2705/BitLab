@@ -140,11 +140,18 @@ export interface CircuitSnapshot {
  * The result of evaluating a component.
  * Contains new output signals and optionally updated internal state.
  */
+
+export type TransientState = Record<string, unknown> | null;
+
+export interface TransientContext {
+  tick: number;
+  snapshotInputs?: SignalValue[];
+}
 export interface EvaluateResult {
   /** New output signal values (length must equal definition.outputs) */
   outputs: SignalValue[];
   /** Updated internal state, or null if stateless */
-  state: Record<string, unknown> | null;
+  state: TransientState;
 }
 
 export interface ComponentDefinition {
@@ -195,15 +202,15 @@ export interface ComponentDefinition {
    * Same format as busInputGroups.
    */
   busOutputGroups?: [number, number][];
-  initialState: () => Record<string, unknown> | null;
+  initialState: () => TransientState;
   /**
    * Pure combinational / sequential evaluation.
    * Called by SignalPropagator whenever any input changes.
    */
   evaluate: (
     inputs: SignalValue[],
-    state: Record<string, unknown> | null,
-    context?: { tick: number; snapshotInputs?: SignalValue[] },
+    state: TransientState,
+    context?: TransientContext,
   ) => EvaluateResult;
   /**
    * Time-based advancement for clock/timer components.

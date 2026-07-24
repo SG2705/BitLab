@@ -59,6 +59,7 @@ import {
   GATE_TYPE_COMPARATOR,
   GATE_TYPE_CONST,
   GATE_TYPE_COUNTER4,
+  GATE_TYPE_CUSTOM,
   GATE_TYPE_DEBUS4,
   GATE_TYPE_DEBUS8,
   GATE_TYPE_DEBUS16,
@@ -105,6 +106,7 @@ import {
   GATE_TYPE_XNOR,
   GATE_TYPE_XOR,
   KEY_SEPARATOR,
+  PIN_TYPE_CLOCK,
   PINC0,
 } from "./constants";
 import { DEFINITIONS } from "./definitions";
@@ -117,9 +119,9 @@ import type {
 import { LogicValue } from "./types";
 import { getHeightForPinCount } from "./utils";
 
-const { ZERO } = LogicValue;
+const { ZERO: Z } = LogicValue;
 
-export interface CustomGateMeta {
+export interface CustomCircuitDefinition {
   type: string;
   name: string;
   inputLabels: string[];
@@ -172,236 +174,228 @@ export interface CustomGateMeta {
 
 /** Validation error thrown when a component definition is invalid */
 class ComponentValidationError extends Error {
-  constructor(type: string, issue: string) {
-    super(`[ComponentLibrary] Invalid definition for "${type}": ${issue}`);
+  private readonly type: string;
+
+  constructor(type: string) {
+    super();
     this.name = "ComponentValidationError";
+    this.type = type;
+  }
+
+  raiseValidationError(issue: string): never {
+    throw new Error(
+      `[ComponentLibrary] Invalid definition for "${this.type}": ${issue}`,
+    );
   }
 }
 
 export class ComponentLibrary {
-  private typeMap: Map<string, ComponentDefinition> = new Map();
-  private customTypes: Set<string> = new Set();
-  private customMeta: Map<string, CustomGateMeta> = new Map();
+  private componentMap: Map<string, ComponentDefinition> = new Map();
+  private customCircuitMap: Map<string, CustomCircuitDefinition> = new Map();
 
-  constructor(defs: ComponentDefinition[] = DEFINITIONS) {
-    for (const d of defs) {
-      this.validateAndRegister(d);
-    }
+  constructor(components: ComponentDefinition[] = DEFINITIONS) {
+    components.forEach((c) => this.validateAndRegisterComponent(c));
   }
 
+  // Basic type and component checks
   get(type: string): ComponentDefinition {
-    const def = this.typeMap.get(type);
+    const component = this.componentMap.get(type);
 
-    if (!def) throw new Error(`Unknown component type: "${type}"`);
+    if (!component) throw new Error(`Unknown "${type}" requested!`);
 
-    return def;
+    return component;
   }
 
   has(type: string): boolean {
-    return this.typeMap.has(type);
+    return this.componentMap.has(type);
   }
 
   isCustom(type: string): boolean {
-    return this.customTypes.has(type);
+    return this.customCircuitMap.has(type);
   }
 
-  getCustomMeta(type: string): CustomGateMeta | undefined {
-    return this.customMeta.get(type);
-  }
-
-  getCustomGates(): CustomGateMeta[] {
-    return Array.from(this.customMeta.values());
+  getCustomCircuit(type: string): CustomCircuitDefinition | undefined {
+    return this.customCircuitMap.get(type);
   }
 
   getAll(): ComponentDefinition[] {
-    return Array.from(this.typeMap.values());
+    return Array.from(this.componentMap.values());
   }
 
-  /**
-   * Register a component definition with full validation.
-   * Throws ComponentValidationError if the definition is invalid.
-   * Rejects duplicate type IDs unless the type was previously unregistered.
-   */
-  register(def: ComponentDefinition): void {
-    // Reject duplicates for safety
-    if (this.typeMap.has(def.type) && !this.customTypes.has(def.type)) {
-      throw new ComponentValidationError(
-        def.type,
-        `Type "${def.type}" is already registered. Unregister it first or use a unique type ID.`,
-      );
-    }
-
-    this.validateAndRegister(def);
+  getAllCustom(): CustomCircuitDefinition[] {
+    return Array.from(this.customCircuitMap.values());
   }
 
   // ── Validation ─────────────────────────────────────────────────────────────
+  private validateComponentDefinition(comp: ComponentDefinition): void {
+    const t = comp.type;
+    const eo = new ComponentValidationError(t);
 
-  private validateAndRegister(def: ComponentDefinition): void {
-    this.validatePinDefinition(def);
-    this.validateInitialState(def);
-    this.validateEvaluatorContract(def);
-    this.typeMap.set(def.type, def);
-  }
-
-  private validatePinDefinition(def: ComponentDefinition): void {
-    const t = def.type;
-
-    if (def.inputs < 0) {
-      throw new ComponentValidationError(
-        t,
-        `inputs must be >= 0, got ${def.inputs}`,
+    if (
+      this.componentMap.has(comp.type) &&
+      !this.customCircuitMap.has(comp.type)
+    ) {
+      eo.raiseValidationError(
+        `Type "${comp.type}" is already registered. Unregister it first or use a unique type ID.`,
       );
     }
 
-    if (def.outputs < 0) {
-      throw new ComponentValidationError(
-        t,
-        `outputs must be >= 0, got ${def.outputs}`,
+    if (comp.inputs < 0) {
+      eo.raiseValidationError(
+        `Input pin count must be >= 0, got ${comp.inputs}`,
       );
     }
 
-    if (def.width <= 0) {
-      throw new ComponentValidationError(
-        t,
-        `width must be > 0, got ${def.width}`,
+    if (comp.outputs < 0) {
+      eo.raiseValidationError(
+        `Output pin count must be >= 0, got ${comp.outputs}`,
       );
     }
 
-    if (def.height <= 0) {
-      throw new ComponentValidationError(
-        t,
-        `height must be > 0, got ${def.height}`,
+    if (comp.width <= 0) {
+      eo.raiseValidationError(`Width must be > 0, got ${comp.width}`);
+    }
+
+    if (comp.height <= 0) {
+      eo.raiseValidationError(`Height must be > 0, got ${comp.height}`);
+    }
+
+    if (comp.inputLabels && comp.inputLabels.length !== comp.inputs) {
+      eo.raiseValidationError(
+        `Input label count (${comp.inputLabels.length}) does not match inputs (${comp.inputs})`,
       );
     }
 
-    if (def.inputLabels && def.inputLabels.length !== def.inputs) {
-      throw new ComponentValidationError(
-        t,
-        `inputLabels length (${def.inputLabels.length}) does not match inputs (${def.inputs})`,
+    if (comp.outputLabels && comp.outputLabels.length !== comp.outputs) {
+      eo.raiseValidationError(
+        `Output label count (${comp.outputLabels.length}) does not match outputs (${comp.outputs})`,
       );
     }
 
-    if (def.outputLabels && def.outputLabels.length !== def.outputs) {
-      throw new ComponentValidationError(
-        t,
-        `outputLabels length (${def.outputLabels.length}) does not match outputs (${def.outputs})`,
-      );
+    if (
+      comp.inputLabels &&
+      comp.inputLabels.length !== new Set(comp.inputLabels).size
+    ) {
+      eo.raiseValidationError("Duplicate input label");
     }
 
-    if (def.inputLabels) {
-      const seen = new Set<string>();
+    if (
+      comp.outputLabels &&
+      comp.outputLabels.length !== new Set(comp.outputLabels).size
+    ) {
+      eo.raiseValidationError("Duplicate output label");
+    }
 
-      for (const label of def.inputLabels) {
-        if (seen.has(label)) {
-          throw new ComponentValidationError(
-            t,
-            `Duplicate input label: "${label}"`,
+    if (comp.busInputGroups) {
+      comp.busInputGroups.forEach(([start, end]) => {
+        if (start < 0 || end > comp.inputs || start >= end)
+          eo.raiseValidationError(
+            `Invalid busInputGroup [${start}, ${end}) for ${comp.inputs} inputs`,
           );
-        }
-
-        seen.add(label);
-      }
+      });
     }
 
-    if (def.outputLabels) {
-      const seen = new Set<string>();
-
-      for (const label of def.outputLabels) {
-        if (seen.has(label)) {
-          throw new ComponentValidationError(
-            t,
-            `Duplicate output label: "${label}"`,
+    if (comp.busOutputGroups) {
+      comp.busOutputGroups.forEach(([start, end]) => {
+        if (start < 0 || end > comp.outputs || start >= end)
+          eo.raiseValidationError(
+            `Invalid busOutputGroup [${start}, ${end}) for ${comp.outputs} outputs`,
           );
-        }
-
-        seen.add(label);
-      }
-    }
-
-    if (def.busInputGroups) {
-      for (const [start, end] of def.busInputGroups) {
-        if (start < 0 || end > def.inputs || start >= end) {
-          throw new ComponentValidationError(
-            t,
-            `Invalid busInputGroup [${start}, ${end}) for ${def.inputs} inputs`,
-          );
-        }
-      }
-    }
-
-    if (def.busOutputGroups) {
-      for (const [start, end] of def.busOutputGroups) {
-        if (start < 0 || end > def.outputs || start >= end) {
-          throw new ComponentValidationError(
-            t,
-            `Invalid busOutputGroup [${start}, ${end}) for ${def.outputs} outputs`,
-          );
-        }
-      }
+      });
     }
   }
 
-  private validateInitialState(def: ComponentDefinition): void {
+  private validateInitialState(comp: ComponentDefinition): void {
+    const t = comp.type;
+    const eo = new ComponentValidationError(t);
+
     try {
-      const state = def.initialState();
+      const state = comp.initialState();
 
-      if (def.isSequential && state && "prevClk" in state) {
+      if (comp.isSequential && state && "prevClk" in state) {
         const { prevClk } = state;
 
         if (typeof prevClk !== "number" || prevClk < 0 || prevClk > 3) {
-          throw new ComponentValidationError(
-            def.type,
+          eo.raiseValidationError(
             `prevClk in initialState must be a valid LogicValue (0-3), got ${String(prevClk)}`,
           );
         }
       }
     } catch (e) {
       if (e instanceof ComponentValidationError) throw e;
-      throw new ComponentValidationError(
-        def.type,
+
+      eo.raiseValidationError(
         `initialState() threw: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
 
-  private validateEvaluatorContract(def: ComponentDefinition): void {
-    if (def.isAnnotation) return;
-    if (def.inputs === 0 && def.outputs === 0) return;
+  private validateEvaluatorContract(comp: ComponentDefinition): void {
+    if (comp.isAnnotation) return;
+    if (comp.inputs === 0 && comp.outputs === 0) return;
+
+    const t = comp.type;
+    const eo = new ComponentValidationError(t);
 
     try {
-      const state = def.initialState();
-      const defaultInputs = new Array<SignalValue>(def.inputs).fill(ZERO);
-      const result = def.evaluate(defaultInputs, state, { tick: 0 });
+      // Checking with default/initial inputs
+      const testResult = comp.evaluate(
+        new Array<SignalValue>(comp.inputs).fill(Z),
+        comp.initialState(),
+        {
+          tick: 0,
+        },
+      );
 
-      if (result.outputs.length !== def.outputs) {
-        throw new ComponentValidationError(
-          def.type,
-          `Evaluator returned ${result.outputs.length} outputs but definition declares ${def.outputs}`,
+      if (testResult.outputs.length !== comp.outputs) {
+        eo.raiseValidationError(
+          `Evaluator returned ${testResult.outputs.length} outputs but definition declares ${comp.outputs}`,
         );
       }
     } catch (e) {
       if (e instanceof ComponentValidationError) throw e;
-      throw new ComponentValidationError(
-        def.type,
+
+      eo.raiseValidationError(
         `Evaluator threw on default inputs: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }
 
+  private validateAndRegisterComponent(comp: ComponentDefinition): void {
+    // This validation is required, validations should happen sequentially
+    this.validateComponentDefinition(comp);
+    this.validateInitialState(comp);
+    this.validateEvaluatorContract(comp);
+
+    // Once validated setting component to map
+    this.componentMap.set(comp.type, comp);
+  }
+
   /**
-   * Returns a list of custom gate type strings that depend on the given type.
+   * Register a new component definition with full validation.
+   * Throws ComponentValidationError if the definition is invalid.
+   * Rejects duplicate type IDs unless the type was previously unregistered.
    */
-  getDependents(type: string): string[] {
+  register(comp: ComponentDefinition): void {
+    this.validateAndRegisterComponent(comp);
+  }
+
+  /**
+   * Returns a list of custom circuit child type strings that depend on the given type.
+   */
+  private getDependentsInCustom(type: string): string[] {
     const dependents: string[] = [];
 
-    for (const [depType, meta] of this.customMeta) {
+    for (const [depType, customCircuit] of this.customCircuitMap) {
+      // Skip for self check
       if (depType === type) continue;
 
-      const usesType = Object.values(meta.circuit.components).some(
+      // Check if the custom circuit uses the given type inside the siblings
+      const hasUsetype = Object.values(customCircuit.circuit.components).some(
         (c) => c.type === type,
       );
 
-      if (usesType) dependents.push(depType);
+      if (hasUsetype) dependents.push(depType);
     }
 
     return dependents;
@@ -412,13 +406,16 @@ export class ComponentLibrary {
    * currently registered in the library.
    */
   hasValidDependencies(type: string): boolean {
-    const meta = this.customMeta.get(type);
+    const customCircuit = this.customCircuitMap.get(type);
 
-    if (!meta) return true;
+    if (!customCircuit) return true;
 
-    for (const comp of Object.values(meta.circuit.components)) {
-      if (!comp.type.startsWith("CUSTOM_")) continue;
+    for (const comp of Object.values(customCircuit.circuit.components)) {
+      // Skip for self check
       if (comp.type === type) continue;
+
+      // Skip generic components
+      if (comp.type.startsWith(GATE_TYPE_CUSTOM)) continue;
       if (!this.has(comp.type)) return false;
     }
 
@@ -431,20 +428,19 @@ export class ComponentLibrary {
    */
   unregister(type: string, force = false): string | null {
     if (!force) {
-      const dependents = this.getDependents(type);
+      const dependentTypes = this.getDependentsInCustom(type);
 
-      if (dependents.length > 0) {
-        const names = dependents
-          .map((t) => this.customMeta.get(t)?.name ?? t)
+      if (dependentTypes.length > 0) {
+        const names = dependentTypes
+          .map((t) => this.customCircuitMap.get(t)?.name ?? t)
           .join(", ");
 
         return `Cannot delete: used by ${names}`;
       }
     }
 
-    this.typeMap.delete(type);
-    this.customTypes.delete(type);
-    this.customMeta.delete(type);
+    this.componentMap.delete(type);
+    this.customCircuitMap.delete(type);
 
     return null;
   }
@@ -457,6 +453,7 @@ export class ComponentLibrary {
     circuit: CircuitSnapshot,
     existingType?: string,
   ): string | null {
+    // Pull all the components first and sort them according to postion on canvas
     const knownComps = Object.values(circuit.components)
       .flatMap((component) => {
         if (!this.has(component.type)) return [];
@@ -468,23 +465,29 @@ export class ComponentLibrary {
           left.component.y - right.component.y ||
           left.component.x - right.component.x,
       );
+
+    // Component map by ID
     const compById = new Map(
       knownComps.map(({ component, def }) => [
         component.id,
         { component, def },
       ]),
     );
+
+    // Source and sinks for input and output pins
     const sourceComps = knownComps.filter(
       ({ def }) => def.isInput || def.isClock,
     );
     const sinkComps = knownComps.filter(({ def }) => def.isOutput);
 
+    // Source and sinks validation
     if (sourceComps.length === 0 && sinkComps.length === 0) return null;
 
+    // Segregate clock and non clock
     const clockComps = sourceComps.filter(({ def }) => def.isClock);
     const nonClockSourceComps = sourceComps.filter(({ def }) => !def.isClock);
-    const hasInternalClocks = clockComps.length > 0;
 
+    // Segregate source, normal and sink component ids
     const sourceIds = new Set(sourceComps.map(({ component }) => component.id));
     const sinkIds = new Set(sinkComps.map(({ component }) => component.id));
     const executable = knownComps.filter(
@@ -535,8 +538,8 @@ export class ComponentLibrary {
       }
     }
 
-    if (hasInternalClocks) {
-      inputPorts.push({ compId: "__CLK__", pin: PINC0, label: "CLK" });
+    if (clockComps.length > 0) {
+      inputPorts.push({ compId: PIN_TYPE_CLOCK, pin: PINC0, label: "CLK" });
     }
 
     // Build output ports
@@ -544,8 +547,8 @@ export class ComponentLibrary {
     const outputPorts: Array<{ compId: string; pin: number; label: string }> =
       [];
 
-    for (let ci = 0; ci < sinkComps.length; ci += 1) {
-      const { component, def } = sinkComps[ci];
+    for (let co = 0; co < sinkComps.length; co += 1) {
+      const { component, def } = sinkComps[co];
       const startIdx = outputPorts.length;
 
       for (let pin = 0; pin < def.inputs; pin += 1) {
@@ -557,7 +560,7 @@ export class ComponentLibrary {
             def.inputLabels?.[pin],
             pin,
             def.inputs,
-            def.isBusInput ? `BOUT${ci}` : `OUT${ci}`,
+            def.isBusInput ? `BOUT${co}` : `OUT${co}`,
           ),
         });
       }
@@ -623,6 +626,7 @@ export class ComponentLibrary {
         const nextDegree = (inDegree.get(target) ?? 0) - 1;
 
         inDegree.set(target, nextDegree);
+
         if (nextDegree === 0) queue.push(target);
       }
     }
@@ -640,9 +644,9 @@ export class ComponentLibrary {
     const safeName = name.replace(/\W+/g, "_").toUpperCase();
     const type =
       existingType ??
-      `CUSTOM_${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
+      `${GATE_TYPE_CUSTOM}${safeName}_${uuidv4().toUpperCase().replace(/-/g, "")}`;
     const hasSequentialInternals =
-      hasInternalClocks ||
+      clockComps.length > 0 ||
       executable.some(({ def }) => def.isSequential || def.needsInputSnapshot);
     const createInitialStates = (): Record<
       string,
@@ -658,7 +662,7 @@ export class ComponentLibrary {
       Object.fromEntries(
         executable.map(({ component, def }) => [
           component.id,
-          new Array<SignalValue>(def.outputs).fill(ZERO),
+          new Array<SignalValue>(def.outputs).fill(Z),
         ]),
       );
 
@@ -683,14 +687,14 @@ export class ComponentLibrary {
       for (const { component, def } of knownComps) {
         const prior = savedOutputs[component.id];
         const outputs =
-          prior?.slice() ?? new Array<SignalValue>(def.outputs).fill(ZERO);
+          prior?.slice() ?? new Array<SignalValue>(def.outputs).fill(Z);
 
         signals[component.id] = outputs;
         priorSignals[component.id] = outputs.slice();
       }
 
       inputPorts.forEach((port, index) => {
-        if (port.compId === "__CLK__") {
+        if (port.compId === PIN_TYPE_CLOCK) {
           const clkVal = externalInputs[index];
           const clkPrior = snapshotInputs?.[index] ?? externalInputs[index];
 
@@ -726,7 +730,7 @@ export class ComponentLibrary {
           const wire = inputWires.get(`${compId}${KEY_SEPARATOR}${pin}`);
 
           if (wire)
-            inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? ZERO;
+            inputs[pin] = sourceSignals[wire.fromComp]?.[wire.fromPin] ?? Z;
         }
 
         return inputs;
@@ -784,7 +788,7 @@ export class ComponentLibrary {
       }
 
       const outputs = outputPorts.map(
-        (port) => readInputs(port.compId, false)[port.pin] ?? ZERO,
+        (port) => readInputs(port.compId, false)[port.pin] ?? Z,
       );
       const compOutputs = Object.fromEntries(
         executable.map(({ component }) => [
@@ -816,6 +820,7 @@ export class ComponentLibrary {
         ? busInputGroups.length
         : busOutputGroups.length;
 
+    // Creating definition fror custom circuit
     const def: ComponentDefinition = {
       type,
       label: name,
@@ -855,25 +860,24 @@ export class ComponentLibrary {
         };
 
         return evaluateCompiled(
-          new Array<SignalValue>(numInputs).fill(ZERO),
+          new Array<SignalValue>(numInputs).fill(Z),
           blankState,
           undefined,
           0,
         ).state;
       },
-      evaluate(externalInputs, state, context) {
-        return evaluateCompiled(
+      evaluate: (externalInputs, state, context) =>
+        evaluateCompiled(
           externalInputs,
           state,
           context?.snapshotInputs,
           context?.tick ?? 0,
-        );
-      },
+        ),
     };
 
-    this.validateAndRegister(def);
-    this.customTypes.add(type);
-    this.customMeta.set(type, {
+    // Registering custom circuit
+    this.validateAndRegisterComponent(def);
+    this.customCircuitMap.set(type, {
       type,
       name,
       inputLabels,
@@ -1012,10 +1016,10 @@ export class ComponentLibrary {
     const groups = new Map<string, string[]>();
     const result: Array<{ name: string; gates: string[] }> = [];
 
-    for (const def of this.typeMap.values()) {
-      if (!groups.has(def.category)) groups.set(def.category, []);
+    for (const comp of this.componentMap.values()) {
+      if (!groups.has(comp.category)) groups.set(comp.category, []);
 
-      groups.get(def.category)?.push(def.type);
+      groups.get(comp.category)?.push(comp.type);
     }
 
     for (const cat of ORDER) {
@@ -1029,13 +1033,12 @@ export class ComponentLibrary {
         const remaining = new Set(gates);
 
         for (const entry of order) {
-          if (entry === GATE_SEPARATOR) {
-            if (
-              ordered.length > 0 &&
-              ordered[ordered.length - 1] !== GATE_SEPARATOR
-            ) {
-              ordered.push(GATE_SEPARATOR);
-            }
+          if (
+            entry === GATE_SEPARATOR &&
+            ordered.length > 0 &&
+            ordered[ordered.length - 1] !== GATE_SEPARATOR
+          ) {
+            ordered.push(GATE_SEPARATOR);
           } else if (remaining.has(entry)) {
             ordered.push(entry);
             remaining.delete(entry);

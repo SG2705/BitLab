@@ -118,6 +118,9 @@ export const GATE_TYPE_CTRL_AND16 = "CTRL_AND16";
 export const GATE_TYPE_BROADCASTER = "BROADCASTER";
 export const GATE_TYPE_RECEIVER = "RECEIVER";
 
+// ── Custom Gate type prefix ────────────────────────────────────────────────
+export const GATE_TYPE_CUSTOM = "CUSTOM_";
+
 // ── Engine Events & Status ───────────────────────────────────────────────────
 
 export const ENGINE_EVENT_TYPE = {
@@ -155,6 +158,7 @@ export const CURR_CIR_KEY = "current-circuit-key";
 // ── Internal ─────────────────────────────────────────────────────────────────
 
 export const KEY_SEPARATOR = ":";
+export const PIN_TYPE_CLOCK = "__CLK__";
 
 /** Separator marker used in GATE_ORDER to insert a visual divider in the category panel */
 export const GATE_SEPARATOR = "---";

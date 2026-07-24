@@ -134,7 +134,7 @@ function CategoryPanel({
                       onInspect={
                         library.isCustom(g)
                           ? () => {
-                              const meta = library.getCustomMeta(g);
+                              const meta = library.getCustomCircuit(g);
 
                               if (meta)
                                 onInspectCustom(meta.name, meta.circuit);
