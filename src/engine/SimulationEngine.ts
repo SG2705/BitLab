@@ -26,6 +26,7 @@ import type {
   SimulationStatus,
 } from "./types";
 import { LogicValue } from "./types";
+import { propagateViaSignals } from "./ViaService";
 
 const U = LogicValue.HIGH_IMPEDANCE;
 
@@ -307,6 +308,19 @@ export class SimulationEngine {
       }
     }
 
+    // Post-tick: propagate via signals (broadcaster → receiver)
+    const viaChanged = propagateViaSignals(this.components);
+
+    if (viaChanged.length > 0) {
+      const viaResult = this.propagator.propagate(
+        viaChanged,
+        this.components,
+        this.tick,
+      );
+
+      this.eventsProcessed += viaResult.evaluations;
+    }
+
     // Sample probes and other samplesEveryTick components
     for (const id of Object.keys(this.components)) {
       const comp = this.components[id];
@@ -408,6 +422,20 @@ export class SimulationEngine {
 
       // Post-propagation: reconcile output sinks
       this.reconcileOutputSinks();
+
+      // Post-propagation: sync via signals (broadcaster → receiver)
+      const viaChanged = propagateViaSignals(this.components);
+
+      if (viaChanged.length > 0) {
+        const viaResult = this.propagator.propagate(
+          viaChanged,
+          this.components,
+          this.tick,
+        );
+
+        this.eventsProcessed += viaResult.evaluations;
+        this.reconcileOutputSinks();
+      }
     } finally {
       this.isPropagating = false;
     }
