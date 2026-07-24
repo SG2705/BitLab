@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { CircuitSnapshot } from "@/engine";
 import { library } from "@/engine";
+import { GATE_TYPE_CUSTOM } from "@/engine/constants";
 import { CONSOLE_TAB, CUSTOM_CIR_KEYS } from "@/lib/constants";
 import type { ConsoleTab } from "@/lib/types";
 import { getGateLabel } from "@/lib/utils";
@@ -38,7 +39,7 @@ export function useCustomCircuits(
 
   const saveCustomCircuitToLocal = useCallback(() => {
     try {
-      const gates = library.getCustomGates();
+      const gates = library.getAllCustom();
 
       localStorage.setItem(
         CUSTOM_CIR_KEYS,
@@ -87,7 +88,7 @@ export function useCustomCircuits(
         visited.add(key);
 
         for (const comp of Object.values(entry.circuit.components)) {
-          if (!comp.type.startsWith("CUSTOM_")) continue;
+          if (!comp.type.startsWith(GATE_TYPE_CUSTOM)) continue;
 
           const dep = typeToEntry.get(comp.type);
 
@@ -119,14 +120,14 @@ export function useCustomCircuits(
         const prefixToType = new Map<string, string>();
 
         for (const [name, assignedType] of nameToType) {
-          const prefix = `CUSTOM_${name.replace(/\W+/g, "_").toUpperCase()}_`;
+          const prefix = `${GATE_TYPE_CUSTOM}${name.replace(/\W+/g, "_").toUpperCase()}_`;
 
           prefixToType.set(prefix, assignedType);
         }
 
         let remapped = false;
 
-        for (const meta of library.getCustomGates()) {
+        for (const meta of library.getAllCustom()) {
           if (library.hasValidDependencies(meta.type)) continue;
 
           const remappedCircuit = {
@@ -137,7 +138,7 @@ export function useCustomCircuits(
 
           for (const [id, comp] of Object.entries(remappedCircuit.components)) {
             if (library.has(comp.type)) continue;
-            if (!comp.type.startsWith("CUSTOM_")) continue;
+            if (!comp.type.startsWith(GATE_TYPE_CUSTOM)) continue;
 
             for (const [prefix, newType] of prefixToType) {
               if (comp.type.startsWith(prefix) || comp.type === newType) {
@@ -160,7 +161,7 @@ export function useCustomCircuits(
         }
 
         // Final validation and re-registration pass
-        const allMetas = library.getCustomGates();
+        const allMetas = library.getAllCustom();
         const metaByType = new Map(allMetas.map((m) => [m.type, m]));
         const reregistered = new Set<string>();
 
@@ -176,7 +177,7 @@ export function useCustomCircuits(
 
           for (const comp of Object.values(meta.circuit.components)) {
             if (
-              comp.type.startsWith("CUSTOM_") &&
+              comp.type.startsWith(GATE_TYPE_CUSTOM) &&
               comp.type !== type &&
               metaByType.has(comp.type)
             ) {
@@ -201,7 +202,7 @@ export function useCustomCircuits(
         }
 
         if (remapped) {
-          const gates = library.getCustomGates();
+          const gates = library.getAllCustom();
 
           localStorage.setItem(
             CUSTOM_CIR_KEYS,
@@ -269,7 +270,7 @@ export function useCustomCircuits(
       // eslint-disable-next-line no-console
       console.log(
         `[BitLab] Custom gate "${name}" registered as type "${type}". Total custom gates:`,
-        library.getCustomGates().length,
+        library.getAllCustom().length,
       );
 
       logFn(

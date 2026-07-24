@@ -15,7 +15,7 @@ import { type BusWireGroup, type PinDir, type PinKind } from "@/lib/types";
 export type { Wire } from "@/engine";
 export type { ComponentInstance as CircuitComp };
 export type { CircuitSnapshot as Circuit } from "@/engine";
-export type { CustomGateMeta } from "@/engine";
+export type { CustomCircuitDefinition } from "@/engine";
 
 /** Returns the canvas (world) position of a bus port on a component. */
 export function busPortPos(

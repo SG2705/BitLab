@@ -55,6 +55,39 @@ export class GraphManager {
   private cachedOrder: ComponentId[] | null = null;
   private cachedRanks: Map<ComponentId, number> | null = null;
 
+  /** Invalidate cached topological order (called after any structural change - addNode/removeNode/addWire/removeWire) */
+  private invalidate(): void {
+    this.cachedOrder = null;
+    this.cachedRanks = null;
+  }
+
+  // ── Queries ────────────────────────────────────────────────────────────────
+
+  /** Component IDs that receive at least one output from compId */
+  getDownstream(compId: ComponentId): ComponentId[] {
+    return Array.from(this.downstream.get(compId) ?? []);
+  }
+
+  /** Component IDs that send at least one output to compId */
+  getUpstream(compId: ComponentId): ComponentId[] {
+    return Array.from(this.upstream.get(compId) ?? []);
+  }
+
+  /** Wire feeding input pin[pinIndex] of compId, or null if unconnected */
+  getInputWire(compId: ComponentId, pinIndex: number): Wire | null {
+    return this.inputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? null;
+  }
+
+  /** All wires leaving output pin[pinIndex] of compId */
+  getOutputWires(compId: ComponentId, pinIndex: number): Wire[] {
+    return this.outputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? [];
+  }
+
+  /** Get all registered component node IDs */
+  getAllNodes(): ComponentId[] {
+    return Array.from(this.downstream.keys());
+  }
+
   // ── Nodes ──────────────────────────────────────────────────────────────────
 
   /** Register a new component node in the graph. Initializes empty adjacency sets. */
@@ -72,7 +105,7 @@ export class GraphManager {
     const wireIds = this.nodeWires.get(id);
 
     if (wireIds) {
-      for (const wid of Array.from(wireIds)) this.removeWire(wid);
+      for (const wId of Array.from(wireIds)) this.removeWire(wId);
     }
 
     this.downstream.delete(id);
@@ -148,33 +181,6 @@ export class GraphManager {
     this.invalidate();
   }
 
-  // ── Queries ────────────────────────────────────────────────────────────────
-
-  /** Component IDs that receive at least one output from compId */
-  getDownstream(compId: ComponentId): ComponentId[] {
-    return Array.from(this.downstream.get(compId) ?? []);
-  }
-
-  /** Component IDs that send at least one output to compId */
-  getUpstream(compId: ComponentId): ComponentId[] {
-    return Array.from(this.upstream.get(compId) ?? []);
-  }
-
-  /** Wire feeding input pin[pinIndex] of compId, or null if unconnected */
-  getInputWire(compId: ComponentId, pinIndex: number): Wire | null {
-    return this.inputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? null;
-  }
-
-  /** All wires leaving output pin[pinIndex] of compId */
-  getOutputWires(compId: ComponentId, pinIndex: number): Wire[] {
-    return this.outputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? [];
-  }
-
-  /** Get all registered component node IDs */
-  getAllNodes(): ComponentId[] {
-    return Array.from(this.downstream.keys());
-  }
-
   // ── Topological sort (Kahn's algorithm) ───────────────────────────────────
 
   /**
@@ -185,26 +191,24 @@ export class GraphManager {
   topologicalSort(): ComponentId[] {
     if (this.cachedOrder) return this.cachedOrder;
 
-    const nodes = Array.from(this.downstream.keys());
-    const inDeg = new Map<ComponentId, number>();
+    const degreeMap = new Map<ComponentId, number>();
 
-    for (const id of nodes) inDeg.set(id, 0);
+    // Setting up the intial degreen based on the nodes
+    for (const id of Array.from(this.downstream.keys())) degreeMap.set(id, 0);
 
-    for (const [id, ds] of this.downstream) {
-      // eslint-disable-next-line no-void
-      void id;
-
-      for (const d of ds) inDeg.set(d, (inDeg.get(d) ?? 0) + 1);
+    for (const [, ds] of this.downstream) {
+      for (const d of ds) degreeMap.set(d, (degreeMap.get(d) ?? 0) + 1);
     }
 
     const queue: ComponentId[] = [];
 
-    for (const [id, deg] of inDeg) {
+    for (const [id, deg] of degreeMap) {
       if (deg === 0) queue.push(id);
     }
 
-    const result: ComponentId[] = [];
+    // If there is cycle then head is not less than queue hence sort will not happen
     let head = 0;
+    const result: ComponentId[] = [];
 
     while (head < queue.length) {
       const node = queue[head];
@@ -214,9 +218,9 @@ export class GraphManager {
       result.push(node);
 
       for (const next of this.downstream.get(node) ?? []) {
-        const newDeg = (inDeg.get(next) ?? 0) - 1;
+        const newDeg = (degreeMap.get(next) ?? 0) - 1;
 
-        inDeg.set(next, newDeg);
+        degreeMap.set(next, newDeg);
 
         if (newDeg === 0) queue.push(next);
       }
@@ -237,9 +241,7 @@ export class GraphManager {
     const order = this.topologicalSort();
     const ranks = new Map<ComponentId, number>();
 
-    for (let i = 0; i < order.length; i += 1) {
-      ranks.set(order[i], i);
-    }
+    for (let i = 0; i < order.length; i += 1) ranks.set(order[i], i);
 
     // Assign high rank to cycle participants so they still get processed
     for (const id of this.downstream.keys()) {
@@ -254,12 +256,6 @@ export class GraphManager {
   /** True if the graph contains at least one cycle */
   hasCycle(): boolean {
     return this.topologicalSort().length < this.downstream.size;
-  }
-
-  /** Invalidate cached topological order (called after any structural change) */
-  private invalidate(): void {
-    this.cachedOrder = null;
-    this.cachedRanks = null;
   }
 }
 
