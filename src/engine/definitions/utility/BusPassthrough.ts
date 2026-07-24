@@ -2,7 +2,7 @@
  * Bus passthrough components: BUS4, BUS8, BUS16 (collect individual wires into a bus).
  */
 import {
-  GATE_CATEGORY_UTILITY,
+  GATE_CATEGORY_BUS,
   GATE_TYPE_BUS4,
   GATE_TYPE_BUS8,
   GATE_TYPE_BUS16,
@@ -18,7 +18,7 @@ export const BusPassthrough: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS4,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC4,
     outputs: PINC4,
     width: 80,
@@ -32,7 +32,7 @@ export const BusPassthrough: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS8,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC8,
     width: 80,
@@ -46,7 +46,7 @@ export const BusPassthrough: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS16,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC16,
     width: 80,

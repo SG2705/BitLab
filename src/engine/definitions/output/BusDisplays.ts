@@ -2,7 +2,7 @@
  * Bus Display components: 4-bit, 8-bit, 16-bit bus signal displays.
  */
 import {
-  GATE_CATEGORY_OUTPUT,
+  GATE_CATEGORY_BUS,
   GATE_TYPE_BUS_DISPLAY,
   GATE_TYPE_BUS_DISPLAY8,
   GATE_TYPE_BUS_DISPLAY16,
@@ -19,7 +19,7 @@ export const BusDisplays: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_DISPLAY,
     label: "",
-    category: GATE_CATEGORY_OUTPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC4,
     outputs: PINC0,
     width: 80,
@@ -37,7 +37,7 @@ export const BusDisplays: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_DISPLAY8,
     label: "",
-    category: GATE_CATEGORY_OUTPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC0,
     width: 80,
@@ -55,7 +55,7 @@ export const BusDisplays: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_DISPLAY16,
     label: "",
-    category: GATE_CATEGORY_OUTPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC0,
     width: 80,

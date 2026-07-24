@@ -17,6 +17,18 @@
       "value": "Outputs"
     }
   ],
+  "/Hbmdf": [
+    {
+      "type": 0,
+      "value": "Tri-State"
+    }
+  ],
+  "/Ry3cR": [
+    {
+      "type": 0,
+      "value": "Select Channel"
+    }
+  ],
   "/UnJ3S": [
     {
       "type": 0,
@@ -311,6 +323,12 @@
       "value": " to import a .json file."
     }
   ],
+  "CXzd0U": [
+    {
+      "type": 0,
+      "value": "— no channel —"
+    }
+  ],
   "CxgWOn": [
     {
       "type": 0,
@@ -445,6 +463,18 @@
       "value": "busWidth"
     }
   ],
+  "Gh9RbN": [
+    {
+      "type": 0,
+      "value": "Transceiver"
+    }
+  ],
+  "GildCq": [
+    {
+      "type": 0,
+      "value": "Ctrl AND 16"
+    }
+  ],
   "GkBxYy": [
     {
       "type": 0,
@@ -547,6 +577,18 @@
     {
       "type": 0,
       "value": "Sequential"
+    }
+  ],
+  "KblJz3": [
+    {
+      "type": 0,
+      "value": "Pin to canvas"
+    }
+  ],
+  "KeO51o": [
+    {
+      "type": 0,
+      "value": "Channel"
     }
   ],
   "KgwdBM": [
@@ -653,6 +695,12 @@
     {
       "type": 0,
       "value": "Bus"
+    }
+  ],
+  "Qsx/Dx": [
+    {
+      "type": 0,
+      "value": "Unpin from canvas"
     }
   ],
   "Qu+roW": [
@@ -763,6 +811,12 @@
       "value": "No propagation data yet. Run the simulation or connect wires"
     }
   ],
+  "WLIag2": [
+    {
+      "type": 0,
+      "value": "Replace with"
+    }
+  ],
   "WUXuuR": [
     {
       "type": 0,
@@ -801,6 +855,12 @@
     {
       "type": 0,
       "value": "Drag a component from the toolbox onto the canvas"
+    }
+  ],
+  "Xd735s": [
+    {
+      "type": 0,
+      "value": "Receiver"
     }
   ],
   "Xkdnen": [
@@ -857,6 +917,12 @@
     {
       "type": 0,
       "value": "Full Adder"
+    }
+  ],
+  "aVd0Px": [
+    {
+      "type": 0,
+      "value": "No broadcasters in circuit"
     }
   ],
   "aXB7Wg": [
@@ -939,6 +1005,12 @@
       "value": "Mux 8:1"
     }
   ],
+  "eOJyfZ": [
+    {
+      "type": 0,
+      "value": "— None —"
+    }
+  ],
   "eVwJCE": [
     {
       "type": 1,
@@ -971,6 +1043,12 @@
     {
       "type": 0,
       "value": "Rerouting..."
+    }
+  ],
+  "gbNumd": [
+    {
+      "type": 0,
+      "value": "✓"
     }
   ],
   "ge+rKb": [
@@ -1015,6 +1093,18 @@
     {
       "type": 1,
       "value": "rows"
+    }
+  ],
+  "hgpzgN": [
+    {
+      "type": 0,
+      "value": "Unique name. Receivers subscribe to this channel"
+    }
+  ],
+  "hh0xW7": [
+    {
+      "type": 0,
+      "value": "Channel Name"
     }
   ],
   "hxKJOS": [
@@ -1115,6 +1205,12 @@
     {
       "type": 0,
       "value": "No entries"
+    }
+  ],
+  "lKPym8": [
+    {
+      "type": 0,
+      "value": "Select a broadcaster to receive its signal"
     }
   ],
   "lLzTuh": [
@@ -1231,6 +1327,20 @@
       "value": "Bus NOT 8"
     }
   ],
+  "pEFFMn": [
+    {
+      "type": 1,
+      "value": "x"
+    },
+    {
+      "type": 0,
+      "value": ", "
+    },
+    {
+      "type": 1,
+      "value": "y"
+    }
+  ],
   "pTk7NT": [
     {
       "type": 0,
@@ -1277,6 +1387,12 @@
       "value": "%"
     }
   ],
+  "rOIb4Q": [
+    {
+      "type": 0,
+      "value": "📡"
+    }
+  ],
   "rS8jJE": [
     {
       "type": 0,
@@ -1319,6 +1435,12 @@
       "value": "Idle"
     }
   ],
+  "sNne9T": [
+    {
+      "type": 0,
+      "value": "Ctrl AND 8"
+    }
+  ],
   "sOyh5x": [
     {
       "type": 0,
@@ -1329,6 +1451,26 @@
     {
       "type": 0,
       "value": "LED"
+    }
+  ],
+  "sWf4Ru": [
+    {
+      "type": 0,
+      "value": "Available Channels"
+    }
+  ],
+  "sdyNn3": [
+    {
+      "type": 0,
+      "value": "Same I/O signature ("
+    },
+    {
+      "type": 1,
+      "value": "sig"
+    },
+    {
+      "type": 0,
+      "value": ")"
     }
   ],
   "sjlqAC": [
@@ -1375,6 +1517,12 @@
       "value": "Digital Logic Simulator Canvas"
     }
   ],
+  "tWxqSS": [
+    {
+      "type": 0,
+      "value": "No compatible gates available"
+    }
+  ],
   "tf1lIh": [
     {
       "type": 0,
@@ -1415,6 +1563,18 @@
     {
       "type": 0,
       "value": "Press"
+    }
+  ],
+  "v0J1vP": [
+    {
+      "type": 0,
+      "value": "Tri-State (inv)"
+    }
+  ],
+  "v7eElJ": [
+    {
+      "type": 0,
+      "value": "Broadcaster"
     }
   ],
   "vCO4sB": [
@@ -1561,16 +1721,10 @@
       "value": "EN"
     }
   ],
-  "vBc3Tx": [
+  "zzmvcO": [
     {
       "type": 0,
-      "value": "Broadcaster"
-    }
-  ],
-  "kRw9Lm": [
-    {
-      "type": 0,
-      "value": "Receiver"
+      "value": "Ctrl AND 4"
     }
   ]
 }

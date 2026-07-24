@@ -2,7 +2,7 @@
  * Bus-wide logic gates: AND, OR, NOT in 4/8/16-bit variants.
  */
 import {
-  GATE_CATEGORY_UTILITY,
+  GATE_CATEGORY_BUS,
   GATE_TYPE_BUS_AND4,
   GATE_TYPE_BUS_AND8,
   GATE_TYPE_BUS_AND16,
@@ -25,7 +25,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_AND4,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC4,
     width: 80,
@@ -40,7 +40,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_AND8,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC8,
     width: 80,
@@ -72,7 +72,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_AND16,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: 32,
     outputs: PINC16,
     width: 80,
@@ -138,7 +138,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_OR4,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC4,
     width: 80,
@@ -153,7 +153,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_OR8,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC8,
     width: 80,
@@ -185,7 +185,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_OR16,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: 32,
     outputs: PINC16,
     width: 80,
@@ -251,7 +251,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_NOT4,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC4,
     outputs: PINC4,
     width: 80,
@@ -266,7 +266,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_NOT8,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC8,
     width: 80,
@@ -281,7 +281,7 @@ export const BusLogicGates: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_BUS_NOT16,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC16,
     width: 80,

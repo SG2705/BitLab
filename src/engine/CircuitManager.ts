@@ -230,6 +230,9 @@ export class CircuitManager {
   removeComponent(id: string): void {
     if (!this.components[id]) return;
 
+    const comp = this.components[id];
+    const isBroadcaster = comp.type === GATE_TYPE_BROADCASTER;
+
     // Remove all wires connected to this component
     const connected = Object.values(this.wires).filter(
       (w) => w.from.comp === id || w.to.comp === id,
@@ -243,6 +246,15 @@ export class CircuitManager {
 
     this.emit({ type: ENGINE_EVENT_TYPE.COMPONENT_REMOVED, payload: { id } });
     this.emit({ type: ENGINE_EVENT_TYPE.SNAPSHOT_CHANGED });
+
+    // When a broadcaster is removed, update all receivers on that channel
+    if (isBroadcaster) {
+      const changed = propagateViaSignals(this.components);
+
+      if (changed.length > 0) {
+        this.triggerPropagate(changed);
+      }
+    }
   }
 
   /** Remove multiple components in one call. Use within a transaction for batching. */

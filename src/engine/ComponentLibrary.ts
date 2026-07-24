@@ -19,6 +19,7 @@ import { MIN_COMP_SIZE } from "@/globals";
 
 import {
   GATE_CATEGORY_ARITHMETIC,
+  GATE_CATEGORY_BUS,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_LOGIC,
@@ -886,11 +887,12 @@ export class ComponentLibrary {
   /** Category → sorted list of types for the toolbox panel */
   getCategories(): Array<{ name: string; gates: string[] }> {
     const ORDER = [
-      GATE_CATEGORY_LOGIC,
       GATE_CATEGORY_INPUT,
       GATE_CATEGORY_OUTPUT,
+      GATE_CATEGORY_LOGIC,
       GATE_CATEGORY_SEQUENTIAL,
       GATE_CATEGORY_ARITHMETIC,
+      GATE_CATEGORY_BUS,
       GATE_CATEGORY_UTILITY,
     ];
 
@@ -931,19 +933,11 @@ export class ComponentLibrary {
         GATE_SEPARATOR,
         GATE_TYPE_VCC,
         GATE_TYPE_GND,
-        GATE_SEPARATOR,
-        GATE_TYPE_BUS_INPUT4,
-        GATE_TYPE_BUS_INPUT8,
-        GATE_TYPE_BUS_INPUT16,
       ],
       [GATE_CATEGORY_OUTPUT]: [
         GATE_TYPE_LED,
         GATE_TYPE_DISPLAY7,
         GATE_TYPE_PROBE,
-        GATE_SEPARATOR,
-        GATE_TYPE_BUS_DISPLAY,
-        GATE_TYPE_BUS_DISPLAY8,
-        GATE_TYPE_BUS_DISPLAY16,
       ],
       [GATE_CATEGORY_SEQUENTIAL]: [
         GATE_TYPE_SR_LATCH,
@@ -974,12 +968,10 @@ export class ComponentLibrary {
         GATE_TYPE_COMPARATOR,
         GATE_TYPE_CMP4,
       ],
-      [GATE_CATEGORY_UTILITY]: [
-        GATE_TYPE_SPLITTER,
-        GATE_TYPE_COMMENT,
-        GATE_SEPARATOR,
-        GATE_TYPE_BROADCASTER,
-        GATE_TYPE_RECEIVER,
+      [GATE_CATEGORY_BUS]: [
+        GATE_TYPE_BUS_INPUT4,
+        GATE_TYPE_BUS_INPUT8,
+        GATE_TYPE_BUS_INPUT16,
         GATE_SEPARATOR,
         GATE_TYPE_BUS4,
         GATE_TYPE_BUS8,
@@ -988,6 +980,10 @@ export class ComponentLibrary {
         GATE_TYPE_DEBUS4,
         GATE_TYPE_DEBUS8,
         GATE_TYPE_DEBUS16,
+        GATE_SEPARATOR,
+        GATE_TYPE_BUS_DISPLAY,
+        GATE_TYPE_BUS_DISPLAY8,
+        GATE_TYPE_BUS_DISPLAY16,
         GATE_SEPARATOR,
         GATE_TYPE_BUS_AND4,
         GATE_TYPE_BUS_AND8,
@@ -1000,6 +996,13 @@ export class ComponentLibrary {
         GATE_TYPE_BUS_NOT4,
         GATE_TYPE_BUS_NOT8,
         GATE_TYPE_BUS_NOT16,
+      ],
+      [GATE_CATEGORY_UTILITY]: [
+        GATE_TYPE_SPLITTER,
+        GATE_TYPE_COMMENT,
+        GATE_SEPARATOR,
+        GATE_TYPE_BROADCASTER,
+        GATE_TYPE_RECEIVER,
         GATE_SEPARATOR,
         GATE_TYPE_UREG4,
         GATE_TYPE_UREG8,

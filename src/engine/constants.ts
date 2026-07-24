@@ -29,6 +29,7 @@ export const GATE_CATEGORY_SEQUENTIAL = "gate_category-sequential";
 export const GATE_CATEGORY_ARITHMETIC = "gate_category-arithmetic";
 export const GATE_CATEGORY_CUSTOM = "gate_category-custom";
 export const GATE_CATEGORY_UTILITY = "gate_category-utility";
+export const GATE_CATEGORY_BUS = "gate_category-bus";
 
 // ── Gate Types ───────────────────────────────────────────────────────────────
 

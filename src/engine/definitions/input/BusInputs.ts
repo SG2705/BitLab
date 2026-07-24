@@ -2,7 +2,7 @@
  * Bus Input components: 4-bit, 8-bit, 16-bit bus signal sources.
  */
 import {
-  GATE_CATEGORY_INPUT,
+  GATE_CATEGORY_BUS,
   GATE_TYPE_BUS_INPUT4,
   GATE_TYPE_BUS_INPUT8,
   GATE_TYPE_BUS_INPUT16,
@@ -19,7 +19,7 @@ export const BusInputs: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_INPUT4,
     label: "",
-    category: GATE_CATEGORY_INPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC0,
     outputs: PINC4,
     width: 80,
@@ -37,7 +37,7 @@ export const BusInputs: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_INPUT8,
     label: "",
-    category: GATE_CATEGORY_INPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC0,
     outputs: PINC8,
     width: 80,
@@ -55,7 +55,7 @@ export const BusInputs: ComponentDefinition[] = [
   hw({
     type: GATE_TYPE_BUS_INPUT16,
     label: "",
-    category: GATE_CATEGORY_INPUT,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC0,
     outputs: PINC16,
     width: 80,

@@ -2,7 +2,7 @@
  * Debus components: DEBUS4, DEBUS8, DEBUS16 (split bus back to individual signals).
  */
 import {
-  GATE_CATEGORY_UTILITY,
+  GATE_CATEGORY_BUS,
   GATE_TYPE_DEBUS4,
   GATE_TYPE_DEBUS8,
   GATE_TYPE_DEBUS16,
@@ -18,7 +18,7 @@ export const Debus: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_DEBUS4,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC4,
     outputs: PINC4,
     width: 80,
@@ -32,7 +32,7 @@ export const Debus: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_DEBUS8,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC8,
     outputs: PINC8,
     width: 80,
@@ -46,7 +46,7 @@ export const Debus: ComponentDefinition[] = [
   cb({
     type: GATE_TYPE_DEBUS16,
     label: "",
-    category: GATE_CATEGORY_UTILITY,
+    category: GATE_CATEGORY_BUS,
     inputs: PINC16,
     outputs: PINC16,
     width: 80,

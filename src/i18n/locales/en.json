@@ -8,6 +8,12 @@
   "+VMoL/": {
     "defaultMessage": "Outputs"
   },
+  "/Hbmdf": {
+    "defaultMessage": "Tri-State"
+  },
+  "/Ry3cR": {
+    "defaultMessage": "Select Channel"
+  },
   "/UnJ3S": {
     "defaultMessage": "Zoom out"
   },
@@ -125,6 +131,9 @@
   "BRqTi+": {
     "defaultMessage": "Build a circuit, add Toggle/Button inputs and LED outputs, then click {save} to save it as a reusable gate — or {upload} to import a .json file."
   },
+  "CXzd0U": {
+    "defaultMessage": "— no channel —"
+  },
   "CxgWOn": {
     "defaultMessage": "[{time}]"
   },
@@ -182,6 +191,12 @@
   "Gb5Mf2": {
     "defaultMessage": "/{busWidth}"
   },
+  "Gh9RbN": {
+    "defaultMessage": "Transceiver"
+  },
+  "GildCq": {
+    "defaultMessage": "Ctrl AND 16"
+  },
   "GkBxYy": {
     "defaultMessage": "Start designing"
   },
@@ -223,6 +238,12 @@
   },
   "KWFusF": {
     "defaultMessage": "Sequential"
+  },
+  "KblJz3": {
+    "defaultMessage": "Pin to canvas"
+  },
+  "KeO51o": {
+    "defaultMessage": "Channel"
   },
   "KgwdBM": {
     "defaultMessage": "Circuit Viewer: {name}"
@@ -275,6 +296,9 @@
   "QbDcBb": {
     "defaultMessage": "Bus"
   },
+  "Qsx/Dx": {
+    "defaultMessage": "Unpin from canvas"
+  },
   "Qu+roW": {
     "defaultMessage": "7 Seg"
   },
@@ -323,6 +347,9 @@
   "VlBIny": {
     "defaultMessage": "No propagation data yet. Run the simulation or connect wires"
   },
+  "WLIag2": {
+    "defaultMessage": "Replace with"
+  },
   "WUXuuR": {
     "defaultMessage": "Hit Rate"
   },
@@ -334,6 +361,9 @@
   },
   "Xco1sn": {
     "defaultMessage": "Drag a component from the toolbox onto the canvas"
+  },
+  "Xd735s": {
+    "defaultMessage": "Receiver"
   },
   "Xkdnen": {
     "defaultMessage": "An unexpected error occurred."
@@ -358,6 +388,9 @@
   },
   "aUbg5p": {
     "defaultMessage": "Full Adder"
+  },
+  "aVd0Px": {
+    "defaultMessage": "No broadcasters in circuit"
   },
   "aXB7Wg": {
     "defaultMessage": "Export JSON"
@@ -395,6 +428,9 @@
   "e7nK/h": {
     "defaultMessage": "Mux 8:1"
   },
+  "eOJyfZ": {
+    "defaultMessage": "— None —"
+  },
   "eVwJCE": {
     "defaultMessage": "{count} wires"
   },
@@ -410,6 +446,9 @@
   "gW8Bt7": {
     "defaultMessage": "Rerouting..."
   },
+  "gbNumd": {
+    "defaultMessage": "✓"
+  },
   "ge+rKb": {
     "defaultMessage": "Evaluations per Delta Cycle"
   },
@@ -421,6 +460,12 @@
   },
   "h9w0Wr": {
     "defaultMessage": "{cols} x {rows}"
+  },
+  "hgpzgN": {
+    "defaultMessage": "Unique name. Receivers subscribe to this channel"
+  },
+  "hh0xW7": {
+    "defaultMessage": "Channel Name"
   },
   "hxKJOS": {
     "defaultMessage": "T Flip-Flop"
@@ -469,6 +514,9 @@
   },
   "l10dAY": {
     "defaultMessage": "No entries"
+  },
+  "lKPym8": {
+    "defaultMessage": "Select a broadcaster to receive its signal"
   },
   "lLzTuh": {
     "defaultMessage": "0-F"
@@ -521,6 +569,9 @@
   "p782Q2": {
     "defaultMessage": "Bus NOT 8"
   },
+  "pEFFMn": {
+    "defaultMessage": "{x}, {y}"
+  },
   "pTk7NT": {
     "defaultMessage": "JK"
   },
@@ -541,6 +592,9 @@
   },
   "qnonu0": {
     "defaultMessage": "{percentage}%"
+  },
+  "rOIb4Q": {
+    "defaultMessage": "📡"
   },
   "rS8jJE": {
     "defaultMessage": "XNOR"
@@ -563,11 +617,20 @@
   "sNY4nx": {
     "defaultMessage": "Idle"
   },
+  "sNne9T": {
+    "defaultMessage": "Ctrl AND 8"
+  },
   "sOyh5x": {
     "defaultMessage": "Bit"
   },
   "sPjOJQ": {
     "defaultMessage": "LED"
+  },
+  "sWf4Ru": {
+    "defaultMessage": "Available Channels"
+  },
+  "sdyNn3": {
+    "defaultMessage": "Same I/O signature ({sig})"
   },
   "sjlqAC": {
     "defaultMessage": "T"
@@ -586,6 +649,9 @@
   },
   "tSOV46": {
     "defaultMessage": "Digital Logic Simulator Canvas"
+  },
+  "tWxqSS": {
+    "defaultMessage": "No compatible gates available"
   },
   "tf1lIh": {
     "defaultMessage": "Free"
@@ -607,6 +673,12 @@
   },
   "uizmax": {
     "defaultMessage": "Press"
+  },
+  "v0J1vP": {
+    "defaultMessage": "Tri-State (inv)"
+  },
+  "v7eElJ": {
+    "defaultMessage": "Broadcaster"
   },
   "vCO4sB": {
     "defaultMessage": "8"
@@ -662,10 +734,7 @@
   "zsr0Bz": {
     "defaultMessage": "EN"
   },
-  "vBc3Tx": {
-    "defaultMessage": "Broadcaster"
-  },
-  "kRw9Lm": {
-    "defaultMessage": "Receiver"
+  "zzmvcO": {
+    "defaultMessage": "Ctrl AND 4"
   }
 }

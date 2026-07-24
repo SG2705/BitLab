@@ -5,6 +5,7 @@ import { defineMessages } from "react-intl";
 // automatically so there's no duplicate data to maintain.
 import {
   GATE_CATEGORY_ARITHMETIC,
+  GATE_CATEGORY_BUS,
   GATE_CATEGORY_CUSTOM,
   GATE_CATEGORY_INPUT,
   GATE_CATEGORY_LOGIC,
@@ -108,6 +109,7 @@ export const MESSAGES = defineMessages({
   lb_ctrl_and16: { id: "GildCq", defaultMessage: "Ctrl AND 16" },
   lb_broadcaster: { id: "v7eElJ", defaultMessage: "Broadcaster" },
   lb_receiver: { id: "Xd735s", defaultMessage: "Receiver" },
+  lb_bus: { id: "QbDcBb", defaultMessage: "Bus" },
 });
 
 export type Messages = keyof typeof MESSAGES;
@@ -160,6 +162,7 @@ export const GATE_CATEGORY_LABELS: Record<
   [GATE_CATEGORY_ARITHMETIC]: { en: "Arithmetic", messageKey: "lb_arithmetic" },
   [GATE_CATEGORY_CUSTOM]: { en: "Custom", messageKey: "lb_custom" },
   [GATE_CATEGORY_UTILITY]: { en: "Utility", messageKey: "lb_utility" },
+  [GATE_CATEGORY_BUS]: { en: "Bus", messageKey: "lb_bus" },
 };
 
 export const GATE_TYPE_LABELS: Record<
