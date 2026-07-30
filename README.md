@@ -161,4 +161,7 @@ src/
 
 ## License
 
-MIT
+This project is dual-licensed:
+
+Community Edition: GNU Affero General Public License v3.0 (AGPL-3.0)
+Commercial Use: A commercial license is required for proprietary or closed-source use that does not comply with the AGPL. See COMMERCIAL_LICENSE.md for details.
