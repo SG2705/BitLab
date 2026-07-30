@@ -659,8 +659,6 @@ If you want to contribute to any of these features:
 
 1. Pick a feature from this list
 2. Open a discussion or issue to refine scope
-3. Check if there's an existing spec in `.kiro/specs/`
-4. If not, create one following the requirements → design → tasks workflow
-5. Submit a PR referencing the feature
+3. Submit a PR referencing the feature
 
 Priority levels are suggestions — community demand and contribution readiness may shift them.

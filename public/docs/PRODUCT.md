@@ -20,6 +20,86 @@ A digital circuit processes information as **ones and zeros** (HIGH and LOW sign
 
 ---
 
+## How to Use BitLab
+
+### Getting Started (5-minute walkthrough)
+
+1. **Open BitLab** — Navigate to the app in your browser. You'll see an empty canvas with a component panel on the left.
+
+2. **Place your first components:**
+   - From the **Inputs** category on the left, drag two **Toggle** switches onto the canvas
+   - From **Logic Gates**, drag an **AND** gate onto the canvas
+   - From **Outputs**, drag an **LED**
+
+3. **Wire them together:**
+   - Click and hold on a Toggle's output pin (small circle on the right edge)
+   - Drag to one of the AND gate's input pins (left edge)
+   - Repeat for the second Toggle → second AND input
+   - Wire the AND gate's output → LED input
+
+4. **Interact:**
+   - Click each Toggle to flip between HIGH and LOW
+   - The LED lights up only when BOTH Toggles are HIGH (that's what AND does)
+
+5. **Run the simulation clock:**
+   - Press the **Play** button in the top bar
+   - Add a **Clock** component — it automatically toggles every tick
+   - Add sequential components (flip-flops) to build circuits that evolve over time
+
+### Common Workflows
+
+#### Building combinational logic (no memory)
+
+1. Place input sources (Toggles, Constants, Buttons)
+2. Add logic gates (AND, OR, NOT, XOR, etc.)
+3. Add output indicators (LEDs, 7-Segment Displays)
+4. Wire everything together
+5. Click inputs to test — outputs respond instantly
+
+#### Building sequential circuits (with memory)
+
+1. Place a **Clock** input — this drives the timing
+2. Add flip-flops or registers
+3. Wire data inputs and connect the Clock to CLK pins
+4. Press **Play** to start the clock
+5. Use **Step** to advance one tick at a time for debugging
+6. Add **Probes** to record and view waveforms over time
+
+#### Observing signal timing with Probes
+
+1. Place a **Probe** component and wire it to any signal you want to watch
+2. Start the simulation (Play)
+3. The Probe records one sample per tick and draws a waveform
+4. Multiple Probes share the same time axis for easy comparison
+
+#### Creating reusable custom components
+
+1. Build a circuit with labeled inputs and outputs
+2. Use meaningful labels on your Toggle/Button/Clock inputs (e.g., "A", "B", "CLK")
+3. Use LEDs as outputs — their labels become output pin names
+4. Click the **Package** icon in the top bar → name your circuit
+5. Your new component appears in the **Custom** category
+6. Drag it onto any circuit like a built-in gate
+
+#### Working with buses (multi-bit signals)
+
+1. Place a **Bus Input 4** (or 8, 16) for multi-bit input
+2. Place a **Bus Display 4** to see the numeric value
+3. Wire them together — a thick bus wire is drawn automatically
+4. Use **Bus AND/OR/NOT** for bitwise operations on the bus
+5. Use **Debus** to split a bus back into individual wires
+
+### Tips
+
+- **Snap to grid** is on by default — components align neatly
+- **⌘K / Ctrl+K** opens the Command Palette for quick access to any action
+- **Right-click** a component for Replace, Duplicate, Pin, or Delete
+- **Fit to screen** (canvas toolbar) auto-zooms to show your entire circuit
+- Use **Comments** (Utility category) to annotate your design
+- **Undo** (⌘Z) works for every action — experiment freely
+
+---
+
 ## Core Concepts (for complete beginners)
 
 ### Signals
@@ -590,30 +670,42 @@ The simulation engine is what makes your circuits "come alive." Understanding it
 When you flip a Toggle switch:
 
 1. The Toggle's output changes from LOW to HIGH
-2. The engine identifies all components connected to that output
-3. Each downstream component recalculates its outputs based on its new inputs
-4. If those outputs change, their downstream components are also recalculated
-5. This continues until no more changes occur (called "settling")
+2. The engine marks all downstream components as "dirty" (needing re-evaluation)
+3. Dirty components are sorted by topological rank (upstream gates first)
+4. Each dirty component recalculates its outputs based on its new inputs
+5. If those outputs change, their downstream components are also marked dirty
+6. This continues until no more changes occur (called "settling")
 
 This all happens **instantly** for combinational circuits (gates without memory).
 
-### 13.2 Clock-Driven Behavior
+### 13.2 Topological Ordering
+
+The engine uses **Kahn's algorithm** to determine the correct evaluation order:
+
+- Components with no upstream dependencies are evaluated first
+- Each component is only evaluated after all its inputs have settled
+- The sort is cached and only recomputed when you add/remove components or wires
+- This guarantees deterministic results regardless of placement order on the canvas
+
+### 13.3 Clock-Driven Behavior
 
 Sequential components (flip-flops, registers, counters) only update on **clock edges**:
 
 - They ignore input changes between clock ticks
 - On each tick, clock components toggle, and sequential components sample their inputs
+- **Snapshot semantics**: Sequential components read a frozen copy of their inputs from _before_ the clock edge, so chained registers (like a shift register) advance correctly in a single tick
 - This allows you to build circuits that execute operations in steps (like a real processor)
 
-### 13.3 Oscillation Detection
+### 13.4 Oscillation Detection
 
 If a circuit creates an infinite feedback loop (output feeds back to input in a way that never settles), the engine detects this and:
 
-- Stops propagation after a safety limit
+- Stops propagation after **64 evaluations** per component per pass
 - Marks involved components as "oscillating"
 - Shows a warning in the Propagation console tab
+- Other components continue working normally
 
-### 13.4 Exception Isolation
+### 13.5 Exception Isolation
 
 If a component throws an error during evaluation:
 
