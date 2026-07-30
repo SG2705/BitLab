@@ -197,7 +197,7 @@ export class ComponentLibrary {
     components.forEach((c) => this.validateAndRegisterComponent(c));
   }
 
-  // Basic type and component checks
+  /** Retrieve a component definition by type. Throws if type is not registered. */
   get(type: string): ComponentDefinition {
     const component = this.componentMap.get(type);
 
@@ -206,22 +206,28 @@ export class ComponentLibrary {
     return component;
   }
 
+  /** Returns true if the given type is registered in the library. */
   has(type: string): boolean {
     return this.componentMap.has(type);
   }
 
+  /** Returns true if the given type is a user-defined custom circuit. */
   isCustom(type: string): boolean {
     return this.customCircuitMap.has(type);
   }
 
+  /** Retrieve the full custom circuit definition (name, labels, circuit snapshot). */
   getCustomCircuit(type: string): CustomCircuitDefinition | undefined {
     return this.customCircuitMap.get(type);
   }
 
-  getAll(): ComponentDefinition[] {
+  /** Returns all registered component definitions (internal use only). */
+  // @ts-expect-error Kept for potential future internal use
+  private getAll(): ComponentDefinition[] {
     return Array.from(this.componentMap.values());
   }
 
+  /** Returns all registered custom circuit definitions. */
   getAllCustom(): CustomCircuitDefinition[] {
     return Array.from(this.customCircuitMap.values());
   }

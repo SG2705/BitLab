@@ -39,9 +39,7 @@ export class EventQueue {
    * If the component is already in the queue, this is a no-op (deduplication).
    */
   enqueue(componentId: string, priority: number): void {
-    if (this.inQueue.has(componentId)) {
-      return;
-    }
+    if (this.inQueue.has(componentId)) return;
 
     this.inQueue.add(componentId);
     this.heap.push({ componentId, priority });
@@ -53,9 +51,7 @@ export class EventQueue {
    * Returns undefined if the queue is empty.
    */
   dequeue(): string | undefined {
-    if (this.heap.length === 0) {
-      return undefined;
-    }
+    if (this.heap.length === 0) return undefined;
 
     const top = this.heap[0];
     const last = this.heap.pop() ?? this.heap[0];
@@ -91,17 +87,19 @@ export class EventQueue {
     return this.heap.length;
   }
 
+  private swap(i: number, j: number) {
+    [this.heap[i], this.heap[j]] = [this.heap[j], this.heap[i]];
+  }
+
   /** Restore heap property by moving a node up toward the root */
   private shiftUp(i: number): void {
     while (i > 0) {
-      // eslint-disable-next-line no-bitwise
-      const parent = (i - 1) >> 1;
+      const parent = Math.floor((i - 1) / 2);
 
-      if (this.heap[parent].priority <= this.heap[i].priority) {
-        break;
-      }
+      if (this.heap[parent].priority <= this.heap[i].priority) break;
 
-      [this.heap[parent], this.heap[i]] = [this.heap[i], this.heap[parent]];
+      this.swap(parent, i);
+
       i = parent;
     }
   }
@@ -126,11 +124,10 @@ export class EventQueue {
         smallest = right;
       }
 
-      if (smallest === i) {
-        break;
-      }
+      if (smallest === i) break;
 
-      [this.heap[smallest], this.heap[i]] = [this.heap[i], this.heap[smallest]];
+      this.swap(smallest, i);
+
       i = smallest;
     }
   }

@@ -90,8 +90,8 @@ export class CircuitManager {
   private transactionSeeds: string[] = [];
   private transactionDirty = false;
 
-  constructor(lib: ComponentLibrary = defaultComponentLibrary) {
-    this.library = lib;
+  constructor(componentLibrary: ComponentLibrary = defaultComponentLibrary) {
+    this.library = componentLibrary;
     this.graph = new GraphManager();
     this.propagator = new SignalPropagator(this.graph, this.library);
     this.engine = new SimulationEngine(

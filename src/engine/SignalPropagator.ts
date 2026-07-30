@@ -28,6 +28,8 @@ import type { ComponentInstance, SignalValue } from "./types";
 import { LogicValue } from "./types";
 import { stateEqual } from "./utils";
 
+const { ZERO: Z } = LogicValue;
+
 /** Maximum delta cycles before declaring oscillation */
 const MAX_DELTA_CYCLES = 128;
 
@@ -90,12 +92,12 @@ export interface PropagationResult {
 
 export class SignalPropagator {
   /** Accumulated metrics from all propagation passes (rolling window) */
-  private metricsHistory: PropagationMetrics[] = [];
   private readonly maxMetricsHistory = 32;
+  private metricsHistory: PropagationMetrics[] = [];
 
   /** Cached downstream adjacency for fan-out optimization (#6, #7) */
-  private downstreamCache: Map<string, string[]> | null = null;
   private graphVersion = 0;
+  private downstreamCache: Map<string, string[]> | null = null;
 
   constructor(
     private readonly graph: GraphManager,
@@ -134,11 +136,11 @@ export class SignalPropagator {
     components: Record<string, ComponentInstance>,
     tick: number = 0,
   ): PropagationResult {
+    let oscillation = false;
     const startTime =
       typeof performance !== "undefined" ? performance.now() : 0;
     const metrics = emptyMetrics();
     const changed = new Set<string>();
-    let oscillation = false;
 
     // Build/refresh downstream cache (#6)
     this.ensureDownstreamCache();
@@ -152,9 +154,7 @@ export class SignalPropagator {
     for (const seedId of seeds) {
       const downstream = this.getDownstreamCached(seedId);
 
-      for (const downId of downstream) {
-        dirtySet.add(downId);
-      }
+      for (const downId of downstream) dirtySet.add(downId);
     }
 
     metrics.maxQueueDepth = dirtySet.size;
@@ -209,11 +209,9 @@ export class SignalPropagator {
 
         // ── Read phase: build inputs from current committed state ──────
         const needsSnapshot = def.isSequential || def.needsInputSnapshot;
-        const liveInputs: SignalValue[] = new Array<SignalValue>(
-          def.inputs,
-        ).fill(LogicValue.ZERO);
+        const liveInputs = new Array<SignalValue>(def.inputs).fill(Z);
         const snapshotInputs = needsSnapshot
-          ? new Array<SignalValue>(def.inputs).fill(LogicValue.ZERO)
+          ? new Array<SignalValue>(def.inputs).fill(Z)
           : undefined;
 
         for (let pin = 0; pin < def.inputs; pin += 1) {
@@ -223,11 +221,9 @@ export class SignalPropagator {
             const liveOutputs = components[wire.from.comp]?.outputs;
             const priorOutputs = outputSnapshot.get(wire.from.comp);
 
-            if (liveOutputs)
-              liveInputs[pin] = liveOutputs[wire.from.pin] ?? LogicValue.ZERO;
+            if (liveOutputs) liveInputs[pin] = liveOutputs[wire.from.pin] ?? Z;
             if (snapshotInputs && priorOutputs)
-              snapshotInputs[pin] =
-                priorOutputs[wire.from.pin] ?? LogicValue.ZERO;
+              snapshotInputs[pin] = priorOutputs[wire.from.pin] ?? Z;
           }
         }
 
@@ -270,9 +266,7 @@ export class SignalPropagator {
           if (outputChanged) {
             const downstream = this.getDownstreamCached(compId);
 
-            for (const downId of downstream) {
-              nextDirty.add(downId);
-            }
+            for (const downId of downstream) nextDirty.add(downId);
           }
 
           // Pattern-based oscillation detection (#4)
@@ -291,9 +285,8 @@ export class SignalPropagator {
             ) {
               oscillation = true;
 
-              if (!metrics.oscillatingComponents.includes(compId)) {
+              if (!metrics.oscillatingComponents.includes(compId))
                 metrics.oscillatingComponents.push(compId);
-              }
             }
           }
 
@@ -311,17 +304,13 @@ export class SignalPropagator {
       const deduped = new Set<string>();
 
       for (const id of nextDirty) {
-        if (!dirtySet.has(id) || changed.has(id)) {
-          deduped.add(id);
-        } else {
-          metrics.skippedEvents += 1;
-        }
+        if (!dirtySet.has(id) || changed.has(id)) deduped.add(id);
+        else metrics.skippedEvents += 1;
       }
 
       // Track max queue depth
-      if (nextDirty.size > metrics.maxQueueDepth) {
+      if (nextDirty.size > metrics.maxQueueDepth)
         metrics.maxQueueDepth = nextDirty.size;
-      }
 
       dirtySet = nextDirty;
 
@@ -329,9 +318,7 @@ export class SignalPropagator {
       if (oscillation) break;
     }
 
-    if (deltaCycle >= MAX_DELTA_CYCLES) {
-      oscillation = true;
-    }
+    if (deltaCycle >= MAX_DELTA_CYCLES) oscillation = true;
 
     // Finalize metrics
     metrics.deltaCycles = deltaCycle;
@@ -363,13 +350,14 @@ export class SignalPropagator {
   recomputeAll(
     components: Record<string, ComponentInstance>,
   ): PropagationResult {
+    let totalEvals = 0;
+    let oscillation = false;
     const startTime =
       typeof performance !== "undefined" ? performance.now() : 0;
     const metrics = emptyMetrics();
-    let totalEvals = 0;
+
     const order = this.graph.topologicalSort();
     const changed = new Set<string>();
-    let oscillation = false;
 
     // Phase 1: Evaluate in topological order
     for (const compId of order) {
@@ -518,9 +506,7 @@ export class SignalPropagator {
     if (!comp || !this.library.has(comp.type)) return [];
 
     const def = this.library.get(comp.type);
-    const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(
-      LogicValue.ZERO,
-    );
+    const inputs: SignalValue[] = new Array<SignalValue>(def.inputs).fill(Z);
 
     for (let pin = 0; pin < def.inputs; pin += 1) {
       const wire = this.graph.getInputWire(compId, pin);
@@ -528,7 +514,7 @@ export class SignalPropagator {
       if (wire) {
         const src = components[wire.from.comp];
 
-        if (src) inputs[pin] = src.outputs[wire.from.pin] ?? LogicValue.ZERO;
+        if (src) inputs[pin] = src.outputs[wire.from.pin] ?? Z;
       }
     }
 
@@ -567,9 +553,7 @@ export class SignalPropagator {
           }
         }
 
-        if (!snapshot.has(id)) {
-          snapshot.set(id, c.outputs.slice());
-        }
+        if (!snapshot.has(id)) snapshot.set(id, c.outputs.slice());
       }
     }
 

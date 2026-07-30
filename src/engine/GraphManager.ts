@@ -78,8 +78,9 @@ export class GraphManager {
     return this.inputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? null;
   }
 
-  /** All wires leaving output pin[pinIndex] of compId */
-  getOutputWires(compId: ComponentId, pinIndex: number): Wire[] {
+  /** All wires leaving output pin[pinIndex] of compId (internal use only). */
+  // @ts-expect-error Kept for potential future internal use
+  private getOutputWires(compId: ComponentId, pinIndex: number): Wire[] {
     return this.outputWires.get(`${compId}${KEY_SEPARATOR}${pinIndex}`) ?? [];
   }
 
@@ -253,8 +254,9 @@ export class GraphManager {
     return ranks;
   }
 
-  /** True if the graph contains at least one cycle */
-  hasCycle(): boolean {
+  /** True if the graph contains at least one cycle (internal use only). */
+  // @ts-expect-error Kept for potential future internal use
+  private hasCycle(): boolean {
     return this.topologicalSort().length < this.downstream.size;
   }
 }
