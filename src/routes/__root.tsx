@@ -87,7 +87,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
               <FormattedMessage id="FazwRl" defaultMessage="Try again" />
             </button>
             <a
-              href="/"
+              href={import.meta.env.BASE_URL}
               className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
             >
               <FormattedMessage id="SWMHO+" defaultMessage="Go home" />

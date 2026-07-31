@@ -29,8 +29,8 @@ function DocsPanel({ onClose }: DocsPanelProps) {
 
       try {
         const [productRes, futureRes] = await Promise.all([
-          fetch("/docs/PRODUCT.md"),
-          fetch("/docs/FUTURE.md"),
+          fetch(`${import.meta.env.BASE_URL}docs/PRODUCT.md`),
+          fetch(`${import.meta.env.BASE_URL}docs/FUTURE.md`),
         ]);
 
         if (productRes.ok) {

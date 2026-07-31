@@ -106,7 +106,7 @@ function TopBar({
     <header className="h-12 shrink-0 border-b border-border bg-panel/80 backdrop-blur flex items-center gap-2 px-3">
       <div className="flex items-center gap-2 mr-2">
         <img
-          src="/logo.png"
+          src={`${import.meta.env.BASE_URL}logo.png`}
           alt={intl.formatMessage({ id: "SbT8HW", defaultMessage: "BitLab" })}
           className="h-7 w-7 rounded-lg object-contain"
         />
