@@ -11,6 +11,7 @@ export { default as WirePath } from "./WirePath";
 export { default as EmptyCanvas } from "./EmptyCanvas";
 export { default as ErrorBoundary } from "./ErrorBoundary";
 export { default as RightClickMenu } from "./RightClickMenu";
+export { default as MobileWarning } from "./MobileWarning";
 
 // Types
 export type { ButtonProps } from "./Button";

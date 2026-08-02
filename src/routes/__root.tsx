@@ -8,6 +8,7 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 
+import { MobileWarning } from "@/components/ui";
 import { defaultLocale } from "@/i18n";
 // eslint-disable-next-line import/extensions
 import enMessages from "@/i18n/locales/en.json";
@@ -117,6 +118,7 @@ function RootComponent() {
   return (
     <IntlProvider {...intlProps}>
       <QueryClientProvider client={queryClient}>
+        <MobileWarning />
         <Outlet />
       </QueryClientProvider>
     </IntlProvider>
