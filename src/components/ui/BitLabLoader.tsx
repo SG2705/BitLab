@@ -15,7 +15,7 @@ function BitLabLoader({ message = "Booting BitLab…" }: BitLabLoaderProps) {
       <div className="relative flex items-center justify-center">
         {/* Inner pulsing logo */}
         <img
-          src="/logo.png"
+          src={`${import.meta.env.BASE_URL}/logo.png`}
           // eslint-disable-next-line formatjs/no-literal-string-in-jsx
           alt="BitLab"
           className="h-24 w-24 rounded-lg object-contain"
